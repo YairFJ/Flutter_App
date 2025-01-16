@@ -1,0 +1,2 @@
+C:/Users/User/OneDrive/Desktop/FLUTTAPP/componentes/project_flutter/flutter_app/android/app/.cxx/Debug/1d2b6m1l/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/User/OneDrive/Desktop/FLUTTAPP/componentes/project_flutter/flutter_app/android/app/.cxx/Debug/1d2b6m1l/x86_64/CMakeFiles/rebuild_cache.dir
