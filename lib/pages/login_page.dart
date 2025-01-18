@@ -16,14 +16,10 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Obtener las dimensiones de la pantalla
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: const Color(0xFF96B4D8),
       body: SafeArea(
-        child: SingleChildScrollView(  // Envuelve todo el contenido en un SingleChildScrollView
+        child: SingleChildScrollView(
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -44,7 +40,6 @@ class LoginPage extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 17,
-                
                   ),
                 ),
 
@@ -76,7 +71,7 @@ class LoginPage extends StatelessWidget {
                     children: [
                       Text(
                         'Forgot Password?',
-                        style: TextStyle(color: Colors.black,),
+                        style: TextStyle(color: Colors.black),
                       ),
                     ],
                   ),
@@ -125,12 +120,8 @@ class LoginPage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    // google button
                     SquareTile(imagePath: 'lib/images/google.png'),
-
                     SizedBox(width: 25),
-
-                    // apple button
                     SquareTile(imagePath: 'lib/images/apple.png')
                   ],
                 ),
@@ -146,15 +137,21 @@ class LoginPage extends StatelessWidget {
                       style: TextStyle(color: Colors.black),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Register now',
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/register'); // Navegar a la página de registro
+                      },
+                      child: const Text(
+                        'Register now',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 20), // Añado un pequeño espacio al final
               ],
             ),
