@@ -4,6 +4,7 @@ import 'package:flutter_app/components/my_textfield.dart';
 import 'package:flutter_app/components/square_tile.dart';
 
 class LoginPage extends StatelessWidget {
+  // Constructor
   LoginPage({super.key});
 
   // text editing controllers
@@ -16,54 +17,39 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF96B4D8), //Color(0xFFd6e3bb) //Color(0xFF96B4D8)
+      backgroundColor: const Color(0xFF96B4D8),
       body: SafeArea(
-        child: SingleChildScrollView(  // Envuelve todo el contenido en un SingleChildScrollView
+        child: SingleChildScrollView(
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 50),
-
-                // logo
                 const Icon(
                   Icons.person_sharp,
                   size: 100,
                 ),
-
                 const SizedBox(height: 50),
-
-                // welcome back, you've been missed!
                 Text(
                   'Welcome back you\'ve been missed!',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 17,
-                
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
-                // username textfield
                 MyTextField(
                   controller: usernameController,
                   hintText: 'Username',
                   obscureText: false,
                 ),
-
                 const SizedBox(height: 10),
-
-                // password textfield
                 MyTextField(
                   controller: passwordController,
                   hintText: 'Password',
                   obscureText: true,
                 ),
-
                 const SizedBox(height: 10),
-
-                // forgot password?
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -71,22 +57,16 @@ class LoginPage extends StatelessWidget {
                     children: [
                       Text(
                         'Forgot Password?',
-                        style: TextStyle(color: Colors.black,),
+                        style: TextStyle(color: Colors.black),
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
-                // sign in button
                 MyButton(
                   onTap: signUserIn,
                 ),
-
                 const SizedBox(height: 50),
-
-                // or continue with
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -113,26 +93,16 @@ class LoginPage extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 50),
-
-                // google + apple sign in buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    // google button
                     SquareTile(imagePath: 'lib/images/google.png'),
-
                     SizedBox(width: 25),
-
-                    // apple button
-                    SquareTile(imagePath: 'lib/images/apple.png')
+                    SquareTile(imagePath: 'lib/images/apple.png'),
                   ],
                 ),
-
                 const SizedBox(height: 20),
-
-                // not a member? register now
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -141,16 +111,22 @@ class LoginPage extends StatelessWidget {
                       style: TextStyle(color: Colors.black),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Register now',
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 255, 255, 255),
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () {
+                        // Navegar a la página de registro
+                        Navigator.pushNamed(context, '/register');
+                      },
+                      child: const Text(
+                        'Register now',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20), // Añado un pequeño espacio al final
+                const SizedBox(height: 20),
               ],
             ),
           ),
