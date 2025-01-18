@@ -7,49 +7,68 @@ class LoginPage extends StatelessWidget {
   // Constructor
   LoginPage({super.key});
 
-  // text editing controllers
+  // Text editing controllers
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
-  // sign user in method
+  // Sign user in method
   void signUserIn() {}
 
   @override
   Widget build(BuildContext context) {
+    // Obtener las dimensiones de la pantalla
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: const Color(0xFF96B4D8),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: SingleChildScrollView(  // Envuelve todo el contenido en un SingleChildScrollView
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 50),
+
+                // logo
                 const Icon(
                   Icons.person_sharp,
                   size: 100,
                 ),
+
                 const SizedBox(height: 50),
+
+                // welcome back, you've been missed!
                 Text(
                   'Welcome back you\'ve been missed!',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 17,
+                
                   ),
                 ),
+
                 const SizedBox(height: 25),
+
+                // username textfield
                 MyTextField(
                   controller: usernameController,
                   hintText: 'Username',
                   obscureText: false,
                 ),
+
                 const SizedBox(height: 10),
+
+                // password textfield
                 MyTextField(
                   controller: passwordController,
                   hintText: 'Password',
                   obscureText: true,
                 ),
+
                 const SizedBox(height: 10),
+
+                // forgot password?
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -57,16 +76,22 @@ class LoginPage extends StatelessWidget {
                     children: [
                       Text(
                         'Forgot Password?',
-                        style: TextStyle(color: Colors.black),
+                        style: TextStyle(color: Colors.black,),
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 25),
+
+                // sign in button
                 MyButton(
                   onTap: signUserIn,
                 ),
+
                 const SizedBox(height: 50),
+
+                // or continue with
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -93,16 +118,26 @@ class LoginPage extends StatelessWidget {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 50),
+
+                // google + apple sign in buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
+                    // google button
                     SquareTile(imagePath: 'lib/images/google.png'),
+
                     SizedBox(width: 25),
-                    SquareTile(imagePath: 'lib/images/apple.png'),
+
+                    // apple button
+                    SquareTile(imagePath: 'lib/images/apple.png')
                   ],
                 ),
+
                 const SizedBox(height: 20),
+
+                // not a member? register now
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -111,22 +146,16 @@ class LoginPage extends StatelessWidget {
                       style: TextStyle(color: Colors.black),
                     ),
                     const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () {
-                        // Navegar a la página de registro
-                        Navigator.pushNamed(context, '/register');
-                      },
-                      child: const Text(
-                        'Register now',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    const Text(
+                      'Register now',
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 255, 255, 255),
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 20), // Añado un pequeño espacio al final
               ],
             ),
           ),
