@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'restaurante-app-6e13d.firebasestorage.app',
     iosBundleId: 'com.example.flutterApp',
   );
+
 }

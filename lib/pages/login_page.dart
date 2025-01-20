@@ -5,7 +5,7 @@ import 'package:flutter_app/components/square_tile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
-  LoginPage({super.key});
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -35,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
 
   // Sign user in method
-  void signUserIn(BuildContext context) async {
+  Future<void> signUserIn(BuildContext context) async {
     try {
       // Mostrar indicador de carga
       showDialog(
@@ -48,46 +48,40 @@ class _LoginPageState extends State<LoginPage> {
         },
       );
 
+      final email = usernameController.text.trim();
+      final password = passwordController.text.trim();
+
+      // Reiniciar la instancia de Firebase Auth
+      await FirebaseAuth.instance.signOut();
+      
+      // Esperar un momento antes de intentar el login
+      await Future.delayed(const Duration(milliseconds: 500));
+
       // Intentar iniciar sesión
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: usernameController.text.trim(),
-        password: passwordController.text.trim(),
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
 
-      // Si llegamos aquí, el login fue exitoso
       if (context.mounted) {
         Navigator.pop(context); // Cerrar el indicador de carga
-        Navigator.pushReplacementNamed(context, '/home');
+        
+        if (userCredential.user != null) {
+          Navigator.of(context).pushReplacementNamed('/');
+        }
       }
 
     } on FirebaseAuthException catch (e) {
-      // Cerrar el indicador de carga
       if (context.mounted) Navigator.pop(context);
       
-      // Manejar errores específicos
-      String errorMessage;
-      switch (e.code) {
-        case 'user-not-found':
-          errorMessage = 'No existe una cuenta con este correo';
-          break;
-        case 'wrong-password':
-          errorMessage = 'Contraseña incorrecta';
-          break;
-        case 'invalid-email':
-          errorMessage = 'El formato del correo no es válido';
-          break;
-        case 'user-disabled':
-          errorMessage = 'Esta cuenta ha sido deshabilitada';
-          break;
-        case 'too-many-requests':
-          errorMessage = 'Demasiados intentos. Intenta más tarde';
-          break;
-        default:
-          errorMessage = 'Error al iniciar sesión: ${e.code}';
-          break;
-      }
-      
-      // Mostrar el error
+      String errorMessage = switch (e.code) {
+        'user-not-found' => 'No existe una cuenta con este correo',
+        'wrong-password' => 'Contraseña incorrecta',
+        'invalid-email' => 'El formato del correo no es válido',
+        'network-request-failed' => 'Error de conexión. Verifica tu internet',
+        _ => 'Error de autenticación: ${e.message}',
+      };
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -97,11 +91,8 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } catch (e) {
-      // Cerrar el indicador de carga
-      if (context.mounted) Navigator.pop(context);
-      
-      // Mostrar error general
       if (context.mounted) {
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error inesperado: $e'),
