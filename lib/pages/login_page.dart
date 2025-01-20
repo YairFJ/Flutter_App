@@ -2,17 +2,115 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/components/my_button.dart';
 import 'package:flutter_app/components/my_textfield.dart';
 import 'package:flutter_app/components/square_tile.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class LoginPage extends StatelessWidget {
-  // Constructor
+class LoginPage extends StatefulWidget {
   LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  @override
+  void initState() {
+    super.initState();
+    verificarEstadoLogin();
+  }
+
+  void verificarEstadoLogin() {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user == null) {
+        print('Usuario NO está logueado');
+      } else {
+        print('Usuario está logueado');
+        print('Email: ${user.email}');
+        print('UID: ${user.uid}');
+      }
+    });
+  }
 
   // Text editing controllers
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
   // Sign user in method
-  void signUserIn() {}
+  void signUserIn(BuildContext context) async {
+    try {
+      // Mostrar indicador de carga
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      // Intentar iniciar sesión
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: usernameController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      // Si llegamos aquí, el login fue exitoso
+      if (context.mounted) {
+        Navigator.pop(context); // Cerrar el indicador de carga
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+
+    } on FirebaseAuthException catch (e) {
+      // Cerrar el indicador de carga
+      if (context.mounted) Navigator.pop(context);
+      
+      // Manejar errores específicos
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'No existe una cuenta con este correo';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Contraseña incorrecta';
+          break;
+        case 'invalid-email':
+          errorMessage = 'El formato del correo no es válido';
+          break;
+        case 'user-disabled':
+          errorMessage = 'Esta cuenta ha sido deshabilitada';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Demasiados intentos. Intenta más tarde';
+          break;
+        default:
+          errorMessage = 'Error al iniciar sesión: ${e.code}';
+          break;
+      }
+      
+      // Mostrar el error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Cerrar el indicador de carga
+      if (context.mounted) Navigator.pop(context);
+      
+      // Mostrar error general
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error inesperado: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +179,7 @@ class LoginPage extends StatelessWidget {
 
                 // sign in button
                 MyButton(
-                  onTap: signUserIn,
+                  onTap: () => signUserIn(context),
                 ),
 
                 const SizedBox(height: 50),
