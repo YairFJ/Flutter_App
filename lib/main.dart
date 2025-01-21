@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
+import 'models/pigeon_user_detail.dart';
+import 'screens/signup_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,24 +33,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: const AuthWrapper(),
       routes: {
-        '/login': (context) =>  LoginPage(),
-        '/register': (context) =>  RegisterPage(),
+        //'/': (context) => const HomePage(),
+        '/login': (context) => const LoginPage(),
+        '/register': (context) => const SignUpScreen(),
       },
-    );
-  }
-}
-
-// Definir la clase PigeonUserDetail para manejar los detalles del usuario
-class PigeonUserDetail {
-  final String? email;
-  final String? name;
-
-  PigeonUserDetail({required this.email, required this.name});
-
-  factory PigeonUserDetail.fromUser(User user) {
-    return PigeonUserDetail(
-      email: user.email,
-      name: user.displayName,
     );
   }
 }
