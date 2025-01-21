@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/components/my_button.dart';
 import 'package:flutter_app/components/my_textfield.dart';
 import 'package:flutter_app/components/square_tile.dart';
+import 'package:flutter_app/services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -17,6 +18,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final passwordController = TextEditingController();
   final usernameController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
   Future<void> _signUp() async {
@@ -46,6 +48,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
             _isLoading = false;
           });
         }
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return; // Evitar múltiples clicks
+
+    try {
+      setState(() => _isLoading = true);
+      
+      final userCredential = await _authService.signInWithGoogle();
+      
+      if (userCredential != null && mounted) {
+        print('Usuario logueado: ${userCredential.user?.email}');
+        setState(() => _isLoading = false); // Detener la carga antes de navegar
+        // Navegar a la pantalla principal después del login exitoso
+        Navigator.of(context).pushReplacementNamed('/');
+      } else {
+        // Si no hay userCredential, también detenemos la carga
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se pudo iniciar sesión')),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error al iniciar sesión con Google: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al iniciar sesión con Google')),
+        );
       }
     }
   }
@@ -172,7 +207,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SquareTile(imagePath: 'lib/images/google.png'),
+                            _isLoading 
+                              ? const CircularProgressIndicator()
+                              : GestureDetector(
+                                  onTap: _handleGoogleSignIn,
+                                  child: const SquareTile(imagePath: 'lib/images/google.png'),
+                                ),
                             SizedBox(width: maxWidth * 0.05),
                             const SquareTile(imagePath: 'lib/images/apple.png'),
                           ],
