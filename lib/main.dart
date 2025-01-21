@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
-import 'pages/register_page.dart';
 import 'models/pigeon_user_detail.dart';
 import 'screens/signup_screen.dart';
 
