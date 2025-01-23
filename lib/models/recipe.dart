@@ -4,7 +4,7 @@ class Recipe {
   final String description;
   final List<String> ingredients;
   final List<String> steps;
-  final String? imageUrl;
+  //final String? imageUrl;
   final Duration cookingTime;
 
   Recipe({
@@ -13,7 +13,7 @@ class Recipe {
     required this.description,
     required this.ingredients,
     required this.steps,
-    this.imageUrl,
+    //this.imageUrl,
     required this.cookingTime,
   });
 
@@ -24,7 +24,7 @@ class Recipe {
       description: map['description'] ?? '',
       ingredients: List<String>.from(map['ingredients'] ?? []),
       steps: List<String>.from(map['steps'] ?? []),
-      imageUrl: map['imageUrl'],
+      //imageUrl: map['imageUrl'],
       cookingTime: Duration(minutes: map['cookingTimeMinutes'] ?? 0),
     );
   }
@@ -35,7 +35,7 @@ class Recipe {
       'description': description,
       'ingredients': ingredients,
       'steps': steps,
-      'imageUrl': imageUrl,
+      //'imageUrl': imageUrl,
       'cookingTimeMinutes': cookingTime.inMinutes,
     };
   }
