@@ -5,6 +5,10 @@ import 'firebase_options.dart';
 import 'pages/login_page.dart';
 import 'models/pigeon_user_detail.dart';
 import 'screens/signup_screen.dart';
+import 'models/recipe.dart';
+import 'screens/add_recipe_screen.dart';
+import 'screens/recipe_detail_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,7 +88,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inicio'),
+        title: const Text('Recetas'),
         actions: [
           IconButton(
             onPressed: signUserOut,
@@ -92,24 +96,116 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('recipes').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No hay recetas disponibles'));
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              final doc = snapshot.data!.docs[index];
+              final recipe = Recipe.fromMap(
+                doc.data() as Map<String, dynamic>,
+                doc.id as int,
+              );
+
+              return RecipeCard(recipe: recipe);
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddRecipeScreen(),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class RecipeCard extends StatelessWidget {
+  final Recipe recipe;
+
+  const RecipeCard({super.key, required this.recipe});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 4,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RecipeDetailScreen(recipe: recipe),
+            ),
+          );
+        },
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Bienvenido',
-              style: TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Email: ${userData.email}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            if (userData.name != null)
-              Text(
-                'Nombre: ${userData.name}',
-                style: const TextStyle(fontSize: 16),
+            //if (recipe.imageUrl != null)
+              //Image.network(
+                //recipe.imageUrl!,
+                //height: 200,
+                //width: double.infinity,
+                //fit: BoxFit.cover,
+                //errorBuilder: (context, error, stackTrace) {
+                  //return Container(
+                    //height: 200,
+                    //color: Colors.grey[300],
+                    //child: const Icon(Icons.error),
+                  //);
+                //},
+              //),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recipe.title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    recipe.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.timer, size: 16),
+                      const SizedBox(width: 4),
+                      Text('${recipe.cookingTime.inMinutes} minutos'),
+                    ],
+                  ),
+                ],
               ),
+            ),
           ],
         ),
       ),
