@@ -20,8 +20,8 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     
-    // Reiniciar Firebase Auth
-    await FirebaseAuth.instance.signOut();
+    // Remover el signOut automático
+    // await FirebaseAuth.instance.signOut();  // Eliminar esta línea
   } catch (e) {
     debugPrint('Error inicializando Firebase: $e');
   }
@@ -54,20 +54,19 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        // Manejar estados de conexión
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
-        // Comprobar si hay datos en el snapshot
-        if (snapshot.hasData && snapshot.data != null) {
-          // Convertir User de Firebase a PigeonUserDetail
-          final PigeonUserDetail userData = PigeonUserDetail.fromUser(snapshot.data!);
+        // Manejar errores
+        if (snapshot.hasError) {
+          return const Center(child: Text('Algo salió mal'));
+        }
 
-          // Pasar userData a HomeScreen
+        // Verificar autenticación
+        if (snapshot.hasData && snapshot.data != null) {
+          final userData = PigeonUserDetail.fromUser(snapshot.data!);
           return HomeScreen(userData: userData);
         }
 
@@ -431,7 +430,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
@@ -441,14 +440,10 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
         backgroundColor: primaryColor,
-        icon: const Icon(Icons.add, color: Colors.white, size: 24),
-        label: const Text(
-          'Nueva Receta',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 30, // Aumenté el tamaño para mejor visibilidad
         ),
       ),
     );

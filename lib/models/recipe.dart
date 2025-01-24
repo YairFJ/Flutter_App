@@ -1,5 +1,6 @@
 class Recipe {
   final String id;
+  final String userId;
   final String title;
   final String description;
   final List<String> ingredients;
@@ -10,6 +11,7 @@ class Recipe {
 
   Recipe({
     required this.id,
+    required this.userId,
     required this.title,
     required this.description,
     required this.ingredients,
@@ -22,6 +24,7 @@ class Recipe {
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
     return Recipe(
       id: id,
+      userId: map['userId'] ?? '',
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       ingredients: List<String>.from(map['ingredients'] ?? []),
@@ -34,6 +37,7 @@ class Recipe {
 
   Map<String, dynamic> toMap() {
     return {
+      'userId': userId,
       'title': title,
       'description': description,
       'ingredients': ingredients,

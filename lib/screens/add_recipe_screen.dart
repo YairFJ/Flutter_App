@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_app/constants/categories.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({super.key});
@@ -17,11 +18,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final List<TextEditingController> _ingredientControllers = [TextEditingController()];
   final List<TextEditingController> _stepControllers = [TextEditingController()];
   String _selectedCategory = 'Platos Principales';
+  String? _imageUrl;
 
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // Mostrar indicador de carga
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -30,7 +31,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
         );
 
-        // Filtrar ingredientes y pasos vacíos
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser == null) {
+          throw Exception('Usuario no autenticado');
+        }
+
         final ingredients = _ingredientControllers
             .map((controller) => controller.text.trim())
             .where((text) => text.isNotEmpty)
@@ -41,29 +46,21 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             .where((text) => text.isNotEmpty)
             .toList();
 
-        // Verificar que haya al menos un ingrediente y un paso
-        if (ingredients.isEmpty || steps.isEmpty) {
-          Navigator.pop(context); // Cerrar el indicador de carga
-          throw 'Debes añadir al menos un ingrediente y un paso';
-        }
-
-        // Crear el documento en Firestore
         await FirebaseFirestore.instance.collection('recipes').add({
           'title': _titleController.text.trim(),
           'description': _descriptionController.text.trim(),
           'cookingTimeMinutes': int.parse(_cookingTimeController.text.trim()),
           'ingredients': ingredients,
           'steps': steps,
-          'createdAt': FieldValue.serverTimestamp(),
+          'imageUrl': _imageUrl,
           'category': _selectedCategory,
+          'userId': currentUser.uid,
+          'createdAt': FieldValue.serverTimestamp(),
         });
 
         if (mounted) {
-          // Cerrar el indicador de carga
           Navigator.pop(context);
-          // Volver a la pantalla anterior
           Navigator.pop(context);
-          // Mostrar mensaje de éxito
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('¡Receta guardada con éxito!'),
@@ -72,17 +69,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           );
         }
       } catch (e) {
-        // Cerrar el indicador de carga si está visible
-        if (mounted && Navigator.canPop(context)) {
+        if (mounted) {
           Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al guardar la receta: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
-        // Mostrar mensaje de error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar la receta: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     }
   }
