@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_app/constants/categories.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_app/models/ingredient.dart';
+import 'package:flutter_app/widgets/add_ingredient_dialog.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({super.key});
@@ -20,6 +22,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   String _selectedCategory = 'Platos Principales';
   String? _imageUrl;
   bool _isPrivate = false;
+  List<Ingredient> _ingredients = [];
 
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
@@ -37,11 +40,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           throw Exception('Usuario no autenticado');
         }
 
-        final ingredients = _ingredientControllers
-            .map((controller) => controller.text.trim())
-            .where((text) => text.isNotEmpty)
-            .toList();
-
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
             .where((text) => text.isNotEmpty)
@@ -51,7 +49,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           'title': _titleController.text.trim(),
           'description': _descriptionController.text.trim(),
           'cookingTimeMinutes': int.parse(_cookingTimeController.text.trim()),
-          'ingredients': ingredients,
+          'ingredients': _ingredients.map((ingredient) => ingredient.toMap()).toList(),
           'steps': steps,
           'imageUrl': _imageUrl,
           'category': _selectedCategory,
@@ -82,6 +80,25 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         }
       }
     }
+  }
+
+  Future<void> _addIngredient() async {
+    final ingredient = await showDialog<Ingredient>(
+      context: context,
+      builder: (context) => const AddIngredientDialog(),
+    );
+
+    if (ingredient != null) {
+      setState(() {
+        _ingredients.add(ingredient);
+      });
+    }
+  }
+
+  void _removeIngredient(int index) {
+    setState(() {
+      _ingredients.removeAt(index);
+    });
   }
 
   @override
@@ -238,55 +255,27 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _ingredientControllers.length,
+          itemCount: _ingredients.length,
           itemBuilder: (context, index) {
+            final ingredient = _ingredients[index];
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Ingrediente ${index + 1}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () => _removeIngredient(index),
-                          color: Colors.red,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          iconSize: 20,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    TextFormField(
-                      controller: _ingredientControllers[index],
-                      decoration: const InputDecoration(
-                        hintText: 'Escribe el ingrediente',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      maxLines: null,
-                      textInputAction: TextInputAction.next,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
+              child: ListTile(
+                title: Text(ingredient.name),
+                subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: () => _removeIngredient(index),
+                  color: Colors.red,
                 ),
               ),
             );
           },
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton(
+          onPressed: _addIngredient,
+          child: const Text('Agregar Ingrediente'),
         ),
       ],
     );
@@ -340,12 +329,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ),
       ],
     );
-  }
-
-  void _removeIngredient(int index) {
-    setState(() {
-      _ingredientControllers.removeAt(index);
-    });
   }
 
   @override

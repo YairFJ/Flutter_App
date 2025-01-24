@@ -4,6 +4,7 @@ import '../models/recipe.dart';
 import '../constants/categories.dart';
 import './recipe_detail_screen.dart';
 import '../main.dart';
+import '../models/ingredient.dart';
 
 class EditRecipeScreen extends StatefulWidget {
   final Recipe recipe;
@@ -20,11 +21,11 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _cookingTimeController;
-  late List<TextEditingController> _ingredientControllers;
   late List<TextEditingController> _stepControllers;
   late String _selectedCategory;
   String? _imageUrl;
   late bool _isPrivate;
+  late List<Ingredient> _ingredients;
 
   @override
   void initState() {
@@ -34,9 +35,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _cookingTimeController = TextEditingController(
       text: widget.recipe.cookingTime.inMinutes.toString()
     );
-    _ingredientControllers = widget.recipe.ingredients
-        .map((ingredient) => TextEditingController(text: ingredient))
-        .toList();
+    _ingredients = widget.recipe.ingredients;
     _stepControllers = widget.recipe.steps
         .map((step) => TextEditingController(text: step))
         .toList();
@@ -45,25 +44,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     //_imageUrl = widget.recipe.imageUrl;
 
     // Asegurar que haya al menos un ingrediente y un paso
-    if (_ingredientControllers.isEmpty) {
-      _ingredientControllers.add(TextEditingController());
-    }
     if (_stepControllers.isEmpty) {
       _stepControllers.add(TextEditingController());
     }
-  }
-
-  void _addIngredient() {
-    setState(() {
-      _ingredientControllers.add(TextEditingController());
-    });
-  }
-
-  void _removeIngredient(int index) {
-    setState(() {
-      _ingredientControllers[index].dispose();
-      _ingredientControllers.removeAt(index);
-    });
   }
 
   void _addStep() {
@@ -240,75 +223,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
               ),
               const Divider(),
 
-              // Ingredientes
-              const Text(
-                'Ingredientes',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _ingredientControllers.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Ingrediente ${index + 1}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.remove_circle_outline),
-                                onPressed: () => _removeIngredient(index),
-                                color: Colors.red,
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                iconSize: 20,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          TextFormField(
-                            controller: _ingredientControllers[index],
-                            decoration: const InputDecoration(
-                              hintText: 'Escribe el ingrediente',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                            ),
-                            maxLines: null,
-                            textInputAction: TextInputAction.next,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              ElevatedButton.icon(
-                onPressed: _addIngredient,
-                icon: const Icon(Icons.add),
-                label: const Text('Agregar Ingrediente'),
-              ),
-              const SizedBox(height: 24),
-
               // Pasos
               const Text(
                 'Pasos',
@@ -370,11 +284,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           ),
         );
 
-        final ingredients = _ingredientControllers
-            .map((controller) => controller.text.trim())
-            .where((text) => text.isNotEmpty)
-            .toList();
-
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
             .where((text) => text.isNotEmpty)
@@ -388,7 +297,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           'title': _titleController.text.trim(),
           'description': _descriptionController.text.trim(),
           'cookingTimeMinutes': int.parse(_cookingTimeController.text.trim()),
-          'ingredients': ingredients,
+          'ingredients': _ingredients.map((i) => i.toMap()).toList(),
           'steps': steps,
           'imageUrl': _imageUrl,
           'category': _selectedCategory,
@@ -404,7 +313,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             id: widget.recipe.id,
             title: _titleController.text.trim(),
             description: _descriptionController.text.trim(),
-            ingredients: ingredients,
+            ingredients: _ingredients,
             steps: steps,
             //imageUrl: _imageUrl,
             cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
@@ -443,9 +352,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _cookingTimeController.dispose();
-    for (var controller in _ingredientControllers) {
-      controller.dispose();
-    }
     for (var controller in _stepControllers) {
       controller.dispose();
     }

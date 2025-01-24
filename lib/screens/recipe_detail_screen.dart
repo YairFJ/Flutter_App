@@ -174,12 +174,10 @@ class RecipeDetailScreen extends StatelessWidget {
                               child: RichText(
                                 textAlign: TextAlign.justify,
                                 text: TextSpan(
-                                  text: recipe.ingredients[index],
+                                  text: '${recipe.ingredients[index].quantity} ${recipe.ingredients[index].unit} de ${recipe.ingredients[index].name}',
                                   style: TextStyle(
                                     fontSize: 16,
                                     height: 1.5,
-                                    letterSpacing: 0.2,
-                                    wordSpacing: 1.2,
                                     color: Colors.black87,
                                     fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
                                   ),
