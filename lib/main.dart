@@ -10,6 +10,7 @@ import 'screens/add_recipe_screen.dart';
 import 'screens/recipe_detail_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pages/profile_page.dart';
+import 'constants/categories.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,31 +79,230 @@ class AuthWrapper extends StatelessWidget {
 
 class HomeScreen extends StatefulWidget {
   final PigeonUserDetail userData;
-  
-  static const Color primaryColor = Color(0xFF96B4D8);
-  static const Color secondaryColor = Color(0xFFD6E3BB);
 
   const HomeScreen({super.key, required this.userData});
+
+  // Definimos los colores como constantes estáticas
+  static const Color primaryColor = Color(0xFF96B4D8);
+  static const Color secondaryColor = Color(0xFFD6E3BB);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Usar los colores definidos en HomeScreen
+  Color get primaryColor => HomeScreen.primaryColor;
+  Color get secondaryColor => HomeScreen.secondaryColor;
+
   final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'Todas';
-  final List<String> _categories = [
-    'Todas',
-    'Desayunos',
-    'Platos Principales',
-    'Postres',
-    'Bebidas',
-    'Saludable',
-    'Snacks',
-  ];
 
   void signUserOut() {
     FirebaseAuth.instance.signOut();
+  }
+
+  Widget _buildCategoryCarousel(String category, List<Recipe> recipes) {
+    final categoryRecipes = category == RecipeCategories.sinCategoria
+        ? recipes.where((recipe) => 
+            recipe.category.isEmpty || 
+            !RecipeCategories.categories.contains(recipe.category)
+          ).toList()
+        : recipes.where((recipe) => recipe.category == category).toList();
+
+    if (categoryRecipes.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    RecipeCategories.getIconForCategory(category),
+                    color: RecipeCategories.getColorForCategory(category),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    category,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                '${categoryRecipes.length} recetas',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 280, // Altura del carrusel
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: categoryRecipes.length,
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: 200, // Ancho de cada tarjeta
+                child: Card(
+                  margin: const EdgeInsets.all(4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 4,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RecipeDetailScreen(
+                            recipe: categoryRecipes[index],
+                          ),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        //ClipRRect(
+                          //borderRadius: const BorderRadius.vertical(
+                            //top: Radius.circular(16),
+                          //),
+                         // child: Image.network(
+                           // categoryRecipes[index].imageUrl ?? 
+                                //'https://via.placeholder.com/150',
+                            //height: 150,
+                            //width: double.infinity,
+                            //fit: BoxFit.cover,
+                          //),
+                        //),
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                categoryRecipes[index].title,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                categoryRecipes[index].description,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.timer_outlined,
+                                    size: 16,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${categoryRecipes[index].cookingTime.inMinutes} min',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecipeList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('recipes')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        final recipes = snapshot.data?.docs.map((doc) {
+          return Recipe.fromMap(
+            doc.data() as Map<String, dynamic>,
+            doc.id,
+          );
+        }).toList() ?? [];
+
+        // Filtrar por búsqueda si hay texto
+        if (_searchController.text.isNotEmpty) {
+          final searchTerm = _searchController.text.toLowerCase();
+          recipes.removeWhere((recipe) =>
+            !recipe.title.toLowerCase().contains(searchTerm) &&
+            !recipe.description.toLowerCase().contains(searchTerm)
+          );
+        }
+
+        if (recipes.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.restaurant_menu, 
+                  size: 64, 
+                  color: Colors.grey[400]
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No hay recetas disponibles',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView(
+          children: RecipeCategories.categories.map((category) {
+            return _buildCategoryCarousel(category, recipes);
+          }).toList(),
+        );
+      },
+    );
   }
 
   @override
@@ -111,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: HomeScreen.primaryColor,
+        backgroundColor: primaryColor,
         title: const Text(
           'Recetas',
           style: TextStyle(
@@ -134,8 +334,8 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(
-                color: HomeScreen.primaryColor,
+              decoration: BoxDecoration(
+                color: primaryColor,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,12 +343,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: HomeScreen.secondaryColor,
+                    backgroundColor: secondaryColor,
                     child: Text(
                       FirebaseAuth.instance.currentUser?.email?.substring(0, 1).toUpperCase() ?? 'U',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
-                        color: HomeScreen.primaryColor,
+                        color: primaryColor,
                       ),
                     ),
                   ),
@@ -220,102 +420,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
-            ),
-          ),
-          // Categorías
-          SizedBox(
-            height: 50,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final category = _categories[index];
-                final isSelected = category == _selectedCategory;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: FilterChip(
-                    selected: isSelected,
-                    label: Text(category),
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = category;
-                      });
-                    },
-                    backgroundColor: Colors.white,
-                    selectedColor: HomeScreen.secondaryColor,
-                    checkmarkColor: HomeScreen.primaryColor,
-                    labelStyle: TextStyle(
-                      color: isSelected ? HomeScreen.primaryColor : Colors.grey[800],
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                );
+              onChanged: (value) {
+                setState(() {}); // Actualizar la lista al buscar
               },
             ),
           ),
-          // Lista de recetas
+          // Lista de recetas por categoría
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('recipes').snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: HomeScreen.primaryColor),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Error: ${snapshot.error}',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  );
-                }
-
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.restaurant_menu, size: 64, color: HomeScreen.primaryColor.withOpacity(0.5)),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'No hay recetas disponibles',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: snapshot.data!.docs.length,
-                    itemBuilder: (context, index) {
-                      final doc = snapshot.data!.docs[index];
-                      final recipe = Recipe.fromMap(
-                        doc.data() as Map<String, dynamic>,
-                        doc.id,
-                      );
-
-                      return RecipeCard(recipe: recipe);
-                    },
-                  ),
-                );
-              },
-            ),
+            child: _buildRecipeList(),
           ),
         ],
       ),
@@ -328,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
-        backgroundColor: HomeScreen.primaryColor,
+        backgroundColor: primaryColor,
         icon: const Icon(Icons.add, color: Colors.white, size: 24),
         label: const Text(
           'Nueva Receta',
@@ -428,7 +540,7 @@ class RecipeCard extends StatelessWidget {
                     const Spacer(),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.timer_outlined,
                           size: 20,
                           color: HomeScreen.primaryColor,
@@ -436,7 +548,7 @@ class RecipeCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(
                           '${recipe.cookingTime.inMinutes} min',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             color: HomeScreen.primaryColor,
                             fontWeight: FontWeight.w500,
@@ -445,18 +557,17 @@ class RecipeCard extends StatelessWidget {
                         const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: HomeScreen.secondaryColor.withOpacity(0.2),
+                            color: HomeScreen.secondaryColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             '${recipe.ingredients.length} ing.',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                            style: TextStyle(
+                              fontSize: 10,
                               color: HomeScreen.primaryColor,
                             ),
                           ),

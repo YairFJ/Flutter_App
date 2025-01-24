@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_app/constants/categories.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({super.key});
@@ -15,6 +16,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _cookingTimeController = TextEditingController();
   final List<TextEditingController> _ingredientControllers = [TextEditingController()];
   final List<TextEditingController> _stepControllers = [TextEditingController()];
+  String _selectedCategory = 'Platos Principales';
 
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
@@ -53,6 +55,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           'ingredients': ingredients,
           'steps': steps,
           'createdAt': FieldValue.serverTimestamp(),
+          'category': _selectedCategory,
         });
 
         if (mounted) {
@@ -141,6 +144,44 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedCategory,
+                  isExpanded: true,
+                  hint: const Text('Selecciona una categoría'),
+                  items: RecipeCategories.categories.map((String category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Row(
+                        children: [
+                          Icon(
+                            RecipeCategories.getIconForCategory(category),
+                            color: RecipeCategories.getColorForCategory(category),
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(category),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedCategory = newValue;
+                      });
+                    }
+                  },
+                ),
+              ),
             ),
             const SizedBox(height: 24),
             _buildIngredientsList(),

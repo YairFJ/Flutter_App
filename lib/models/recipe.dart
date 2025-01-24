@@ -6,6 +6,7 @@ class Recipe {
   final List<String> steps;
   //final String? imageUrl;
   final Duration cookingTime;
+  final String category;
 
   Recipe({
     required this.id,
@@ -15,6 +16,7 @@ class Recipe {
     required this.steps,
     //this.imageUrl,
     required this.cookingTime,
+    required this.category,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
@@ -26,6 +28,7 @@ class Recipe {
       steps: List<String>.from(map['steps'] ?? []),
       //imageUrl: map['imageUrl'],
       cookingTime: Duration(minutes: map['cookingTimeMinutes'] ?? 0),
+      category: map['category'] ?? 'Otras',
     );
   }
 
@@ -37,6 +40,7 @@ class Recipe {
       'steps': steps,
       //'imageUrl': imageUrl,
       'cookingTimeMinutes': cookingTime.inMinutes,
+      'category': category,
     };
   }
 } 
