@@ -19,6 +19,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final List<TextEditingController> _stepControllers = [TextEditingController()];
   String _selectedCategory = 'Platos Principales';
   String? _imageUrl;
+  bool _isPrivate = false;
 
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
@@ -55,6 +56,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           'imageUrl': _imageUrl,
           'category': _selectedCategory,
           'userId': currentUser.uid,
+          'isPrivate': _isPrivate,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
@@ -86,7 +88,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Añadir Receta'),
+        title: const Text('Nueva Receta'),
       ),
       body: Form(
         key: _formKey,
@@ -183,6 +185,26 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             const SizedBox(height: 24),
             _buildStepsList(),
             const SizedBox(height: 24),
+            SwitchListTile(
+              title: const Text('Receta Privada'),
+              subtitle: Text(
+                _isPrivate 
+                    ? 'Solo tú podrás ver esta receta'
+                    : 'Todos podrán ver esta receta',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
+              value: _isPrivate,
+              onChanged: (bool value) {
+                setState(() {
+                  _isPrivate = value;
+                });
+              },
+              activeColor: Theme.of(context).primaryColor,
+            ),
+            const Divider(),
             ElevatedButton(
               onPressed: _saveRecipe,
               style: ElevatedButton.styleFrom(
@@ -218,34 +240,51 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _ingredientControllers.length,
           itemBuilder: (context, index) {
-            return Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _ingredientControllers[index],
-                    decoration: InputDecoration(
-                      labelText: 'Ingrediente ${index + 1}',
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Ingrediente ${index + 1}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: () => _removeIngredient(index),
+                          color: Colors.red,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          iconSize: 20,
+                        ),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    TextFormField(
+                      controller: _ingredientControllers[index],
+                      decoration: const InputDecoration(
+                        hintText: 'Escribe el ingrediente',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      maxLines: null,
+                      textInputAction: TextInputAction.next,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    setState(() {
-                      _ingredientControllers.add(TextEditingController());
-                    });
-                  },
-                ),
-                if (_ingredientControllers.length > 1)
-                  IconButton(
-                    icon: const Icon(Icons.remove),
-                    onPressed: () {
-                      setState(() {
-                        _ingredientControllers.removeAt(index);
-                      });
-                    },
-                  ),
-              ],
+              ),
             );
           },
         ),
@@ -301,6 +340,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ),
       ],
     );
+  }
+
+  void _removeIngredient(int index) {
+    setState(() {
+      _ingredientControllers.removeAt(index);
+    });
   }
 
   @override

@@ -67,7 +67,10 @@ class RecipeDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(recipe.title),
+        title: Text(
+          recipe.title,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: isOwner ? [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -78,7 +81,6 @@ class RecipeDetailScreen extends StatelessWidget {
                   builder: (context) => EditRecipeScreen(recipe: recipe),
                 ),
               );
-              
               if (updatedRecipe != null && context.mounted) {
                 Navigator.pushReplacement(
                   context,
@@ -98,22 +100,55 @@ class RecipeDetailScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            //if (recipe.imageUrl != null)
-              //Image.network(
-                //recipe.imageUrl!,
-                //height: 250,
-                //width: double.infinity,
-                //fit: BoxFit.cover,
-              //),
+          children: [/*
+            if (recipe.imageUrl != null)
+              Image.network(
+                recipe.imageUrl!,
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+              ),*/
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    recipe.description,
-                    style: const TextStyle(fontSize: 16),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.timer, size: 20),
+                          const SizedBox(width: 4),
+                          Text('${recipe.cookingTime.inMinutes} min'),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.category, size: 20),
+                          const SizedBox(width: 4),
+                          Text(recipe.category),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  RichText(
+                    textAlign: TextAlign.justify,
+                    text: TextSpan(
+                      text: recipe.description,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        letterSpacing: 0.2,
+                        wordSpacing: 1.2,
+                        color: Colors.black87,
+                        fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -124,18 +159,38 @@ class RecipeDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...recipe.ingredients.map((ingredient) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.fiber_manual_record, size: 12),
-                          const SizedBox(width: 8),
-                          Text(ingredient),
-                        ],
-                      ),
-                    );
-                  }),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: recipe.ingredients.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('• ', style: TextStyle(fontSize: 16)),
+                            Expanded(
+                              child: RichText(
+                                textAlign: TextAlign.justify,
+                                text: TextSpan(
+                                  text: recipe.ingredients[index],
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    height: 1.5,
+                                    letterSpacing: 0.2,
+                                    wordSpacing: 1.2,
+                                    color: Colors.black87,
+                                    fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 24),
                   const Text(
                     'Pasos:',
@@ -145,24 +200,52 @@ class RecipeDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...recipe.steps.asMap().entries.map((entry) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 12,
-                            child: Text('${entry.key + 1}'),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(entry.value),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: recipe.steps.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(right: 12),
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${index + 1}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: RichText(
+                                textAlign: TextAlign.justify,
+                                text: TextSpan(
+                                  text: recipe.steps[index],
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    height: 1.5,
+                                    letterSpacing: 0.2,
+                                    wordSpacing: 1.2,
+                                    color: Colors.black87,
+                                    fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

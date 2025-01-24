@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
 import '../constants/categories.dart';
 import './recipe_detail_screen.dart';
+import '../main.dart';
 
 class EditRecipeScreen extends StatefulWidget {
   final Recipe recipe;
@@ -15,6 +16,7 @@ class EditRecipeScreen extends StatefulWidget {
 
 class _EditRecipeScreenState extends State<EditRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
+  final Color primaryColor = HomeScreen.primaryColor;
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _cookingTimeController;
@@ -22,6 +24,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late List<TextEditingController> _stepControllers;
   late String _selectedCategory;
   String? _imageUrl;
+  late bool _isPrivate;
 
   @override
   void initState() {
@@ -38,6 +41,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
         .map((step) => TextEditingController(text: step))
         .toList();
     _selectedCategory = widget.recipe.category;
+    _isPrivate = widget.recipe.isPrivate;
     //_imageUrl = widget.recipe.imageUrl;
 
     // Asegurar que haya al menos un ingrediente y un paso
@@ -214,6 +218,28 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
               ),
               const SizedBox(height: 24),
 
+              // Switch de privacidad
+              SwitchListTile(
+                title: const Text('Receta Privada'),
+                subtitle: Text(
+                  _isPrivate 
+                      ? 'Solo tú podrás ver esta receta'
+                      : 'Todos podrán ver esta receta',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+                value: _isPrivate,
+                onChanged: (bool value) {
+                  setState(() {
+                    _isPrivate = value;
+                  });
+                },
+                activeColor: primaryColor,
+              ),
+              const Divider(),
+
               // Ingredientes
               const Text(
                 'Ingredientes',
@@ -228,25 +254,50 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _ingredientControllers.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _ingredientControllers[index],
-                            decoration: InputDecoration(
-                              labelText: 'Ingrediente ${index + 1}',
-                              border: const OutlineInputBorder(),
-                            ),
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Ingrediente ${index + 1}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline),
+                                onPressed: () => _removeIngredient(index),
+                                color: Colors.red,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                iconSize: 20,
+                              ),
+                            ],
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () => _removeIngredient(index),
-                          color: Colors.red,
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          TextFormField(
+                            controller: _ingredientControllers[index],
+                            decoration: const InputDecoration(
+                              hintText: 'Escribe el ingrediente',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            maxLines: null,
+                            textInputAction: TextInputAction.next,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -341,6 +392,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           'steps': steps,
           'imageUrl': _imageUrl,
           'category': _selectedCategory,
+          'isPrivate': _isPrivate,
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
@@ -358,6 +410,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
             category: _selectedCategory,
             userId: widget.recipe.userId,
+            isPrivate: _isPrivate,
           );
 
           // Volver con la receta actualizada

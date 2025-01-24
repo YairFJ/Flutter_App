@@ -54,23 +54,20 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Manejar estados de conexión
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Manejar errores
         if (snapshot.hasError) {
-          return const Center(child: Text('Algo salió mal'));
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
 
-        // Verificar autenticación
-        if (snapshot.hasData && snapshot.data != null) {
-          final userData = PigeonUserDetail.fromUser(snapshot.data!);
-          return HomeScreen(userData: userData);
+        final user = snapshot.data;
+        if (user == null) {
+          return const LoginPage();
         }
 
-        return const LoginPage();
+        return HomeScreen(userData: PigeonUserDetail.fromUser(user));
       },
     );
   }
@@ -243,6 +240,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRecipeList() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('recipes')
@@ -257,12 +256,15 @@ class _HomeScreenState extends State<HomeScreen> {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
 
-        final recipes = snapshot.data?.docs.map((doc) {
+        final recipes = snapshot.data!.docs.map((doc) {
           return Recipe.fromMap(
             doc.data() as Map<String, dynamic>,
             doc.id,
           );
-        }).toList() ?? [];
+        }).where((recipe) {
+          // Mostrar recetas públicas y las privadas propias
+          return !recipe.isPrivate || recipe.userId == currentUser?.uid;
+        }).toList();
 
         // Filtrar por búsqueda si hay texto
         if (_searchController.text.isNotEmpty) {

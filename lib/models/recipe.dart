@@ -8,6 +8,7 @@ class Recipe {
   //final String? imageUrl;
   final Duration cookingTime;
   final String category;
+  final bool isPrivate;
 
   Recipe({
     required this.id,
@@ -19,6 +20,7 @@ class Recipe {
     //this.imageUrl,
     required this.cookingTime,
     required this.category,
+    required this.isPrivate,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
@@ -32,6 +34,7 @@ class Recipe {
       //imageUrl: map['imageUrl'],
       cookingTime: Duration(minutes: map['cookingTimeMinutes'] ?? 0),
       category: map['category'] ?? 'Otras',
+      isPrivate: map['isPrivate'] ?? false,
     );
   }
 
@@ -45,6 +48,7 @@ class Recipe {
       //'imageUrl': imageUrl,
       'cookingTimeMinutes': cookingTime.inMinutes,
       'category': category,
+      'isPrivate': isPrivate,
     };
   }
 } 
