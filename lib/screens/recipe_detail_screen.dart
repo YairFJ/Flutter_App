@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
+import '../models/ingredient.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_recipe_screen.dart';
+import 'conversion_calculator_screen.dart';
+import '../widgets/conversion_table_dialog.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
 
   const RecipeDetailScreen({super.key, required this.recipe});
 
+  @override
+  State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -35,10 +43,10 @@ class RecipeDetailScreen extends StatelessWidget {
       try {
         await FirebaseFirestore.instance
             .collection('recipes')
-            .doc(recipe.id)
+            .doc(widget.recipe.id)
             .delete();
         
-        if (context.mounted) {
+        if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -48,7 +56,7 @@ class RecipeDetailScreen extends StatelessWidget {
           );
         }
       } catch (e) {
-        if (context.mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Error al eliminar la receta'),
@@ -63,12 +71,12 @@ class RecipeDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    final isOwner = currentUser?.uid == recipe.userId;
+    final isOwner = currentUser?.uid == widget.recipe.userId;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          recipe.title,
+          widget.recipe.title,
           overflow: TextOverflow.ellipsis,
         ),
         actions: isOwner ? [
@@ -78,10 +86,10 @@ class RecipeDetailScreen extends StatelessWidget {
               final updatedRecipe = await Navigator.push<Recipe>(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditRecipeScreen(recipe: recipe),
+                  builder: (context) => EditRecipeScreen(recipe: widget.recipe),
                 ),
               );
-              if (updatedRecipe != null && context.mounted) {
+              if (updatedRecipe != null && mounted) {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
@@ -95,15 +103,28 @@ class RecipeDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.delete),
             onPressed: () => _deleteRecipe(context),
           ),
+          IconButton(
+            icon: const Icon(Icons.calculate),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ConversionCalculatorScreen(
+                    ingredientes: widget.recipe.ingredients,
+                  ),
+                ),
+              );
+            },
+          ),
         ] : null,
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [/*
-            if (recipe.imageUrl != null)
+            if (widget.recipe.imageUrl != null)
               Image.network(
-                recipe.imageUrl!,
+                widget.recipe.imageUrl!,
                 width: double.infinity,
                 height: 200,
                 fit: BoxFit.cover,
@@ -122,7 +143,7 @@ class RecipeDetailScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.timer, size: 20),
                           const SizedBox(width: 4),
-                          Text('${recipe.cookingTime.inMinutes} min'),
+                          Text('${widget.recipe.cookingTime.inMinutes} min'),
                         ],
                       ),
                       Row(
@@ -130,7 +151,7 @@ class RecipeDetailScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.category, size: 20),
                           const SizedBox(width: 4),
-                          Text(recipe.category),
+                          Text(widget.recipe.category),
                         ],
                       ),
                     ],
@@ -139,7 +160,7 @@ class RecipeDetailScreen extends StatelessWidget {
                   RichText(
                     textAlign: TextAlign.justify,
                     text: TextSpan(
-                      text: recipe.description,
+                      text: widget.recipe.description,
                       style: TextStyle(
                         fontSize: 16,
                         height: 1.5,
@@ -162,7 +183,7 @@ class RecipeDetailScreen extends StatelessWidget {
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: recipe.ingredients.length,
+                    itemCount: widget.recipe.ingredients.length,
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -171,23 +192,96 @@ class RecipeDetailScreen extends StatelessWidget {
                           children: [
                             const Text('• ', style: TextStyle(fontSize: 16)),
                             Expanded(
-                              child: RichText(
-                                textAlign: TextAlign.justify,
-                                text: TextSpan(
-                                  text: '${recipe.ingredients[index].quantity} ${recipe.ingredients[index].unit} de ${recipe.ingredients[index].name}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    height: 1.5,
-                                    color: Colors.black87,
-                                    fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
-                                  ),
-                                ),
+                              child: Text(
+                                widget.recipe.ingredients[index].toString(),
+                                style: const TextStyle(fontSize: 16),
                               ),
                             ),
                           ],
                         ),
                       );
                     },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final ingredientesActualizados = await showDialog<List<Ingredient>>(
+                          context: context,
+                          builder: (context) => ConversionTableDialog(
+                            originalIngredients: widget.recipe.ingredients,
+                          ),
+                        );
+
+                        if (ingredientesActualizados != null && ingredientesActualizados.isNotEmpty) {
+                          try {
+                            final nuevosIngredientes = List<Ingredient>.from(widget.recipe.ingredients);
+                            
+                            for (var ingredienteActualizado in ingredientesActualizados) {
+                              final index = nuevosIngredientes.indexWhere(
+                                (ing) => ing.name == ingredienteActualizado.name
+                              );
+                              if (index != -1) {
+                                nuevosIngredientes[index] = ingredienteActualizado;
+                              }
+                            }
+
+                            await FirebaseFirestore.instance
+                                .collection('recipes')
+                                .doc(widget.recipe.id)
+                                .update({
+                              'ingredients': nuevosIngredientes.map((i) => i.toMap()).toList(),
+                            });
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Receta actualizada con éxito'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RecipeDetailScreen(
+                                    recipe: Recipe(
+                                      id: widget.recipe.id,
+                                      title: widget.recipe.title,
+                                      description: widget.recipe.description,
+                                      ingredients: nuevosIngredientes,
+                                      steps: widget.recipe.steps,
+                                      imageUrl: widget.recipe.imageUrl,
+                                      cookingTime: widget.recipe.cookingTime,
+                                      category: widget.recipe.category,
+                                      userId: widget.recipe.userId,
+                                      isPrivate: widget.recipe.isPrivate,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error al actualizar la receta: ${e.toString()}'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.calculate),
+                      label: const Text('Convertir Ingredientes'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -201,7 +295,7 @@ class RecipeDetailScreen extends StatelessWidget {
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: recipe.steps.length,
+                    itemCount: widget.recipe.steps.length,
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -227,7 +321,7 @@ class RecipeDetailScreen extends StatelessWidget {
                               child: RichText(
                                 textAlign: TextAlign.justify,
                                 text: TextSpan(
-                                  text: recipe.steps[index],
+                                  text: widget.recipe.steps[index],
                                   style: TextStyle(
                                     fontSize: 16,
                                     height: 1.5,
