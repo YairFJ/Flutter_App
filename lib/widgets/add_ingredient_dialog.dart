@@ -3,33 +3,49 @@ import '../models/ingredient.dart';
 import '../utils/measurement_units.dart';
 
 class AddIngredientDialog extends StatefulWidget {
-  const AddIngredientDialog({super.key});
+  final Ingredient? initialIngredient;
+  
+  const AddIngredientDialog({
+    super.key, 
+    this.initialIngredient,
+  });
 
   @override
   State<AddIngredientDialog> createState() => _AddIngredientDialogState();
 }
 
 class _AddIngredientDialogState extends State<AddIngredientDialog> {
-  final _nameController = TextEditingController();
-  final _quantityController = TextEditingController();
-  String _selectedUnit = MeasurementUnits.categories['Unidades']?.first ?? '';
-  String _selectedCategory = 'Unidades'; // Inicializamos con una categoría por defecto
+  late TextEditingController _nameController;
+  late TextEditingController _quantityController;
+  late String _selectedUnit;
+  late String _selectedCategory;
 
   @override
   void initState() {
     super.initState();
-    // Asegurarnos de que tengamos valores iniciales válidos
-    if (MeasurementUnits.categories.isNotEmpty) {
-      _selectedCategory = MeasurementUnits.categories.keys.first;
-      if (MeasurementUnits.categories[_selectedCategory]?.isNotEmpty ?? false) {
-        _selectedUnit = MeasurementUnits.categories[_selectedCategory]!.first;
-      }
-    }
     
-    // Imprimir estado inicial para depuración
-    print('Estado inicial:');
-    print('Categoría seleccionada: $_selectedCategory');
-    print('Unidad seleccionada: $_selectedUnit');
+    // Inicializar con valores existentes si hay un ingrediente inicial
+    _nameController = TextEditingController(
+      text: widget.initialIngredient?.name ?? ''
+    );
+    _quantityController = TextEditingController(
+      text: widget.initialIngredient?.quantity.toString() ?? ''
+    );
+
+    // Inicializar categoría y unidad
+    if (widget.initialIngredient != null) {
+      // Encontrar la categoría que contiene la unidad del ingrediente
+      _selectedCategory = MeasurementUnits.categories.entries
+          .firstWhere(
+            (entry) => entry.value.contains(widget.initialIngredient!.unit),
+            orElse: () => MapEntry('Unidades', [widget.initialIngredient!.unit])
+          )
+          .key;
+      _selectedUnit = widget.initialIngredient!.unit;
+    } else {
+      _selectedCategory = MeasurementUnits.categories.keys.first;
+      _selectedUnit = MeasurementUnits.categories[_selectedCategory]!.first;
+    }
   }
 
   @override

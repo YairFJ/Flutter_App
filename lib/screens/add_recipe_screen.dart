@@ -22,7 +22,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   String _selectedCategory = 'Platos Principales';
   String? _imageUrl;
   bool _isPrivate = false;
-  List<Ingredient> _ingredients = [];
+  final List<Ingredient> _ingredients = [];
 
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {

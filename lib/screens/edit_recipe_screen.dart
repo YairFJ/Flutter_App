@@ -5,6 +5,7 @@ import '../constants/categories.dart';
 import './recipe_detail_screen.dart';
 import '../main.dart';
 import '../models/ingredient.dart';
+import '../widgets/add_ingredient_dialog.dart';
 
 class EditRecipeScreen extends StatefulWidget {
   final Recipe recipe;
@@ -25,7 +26,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late String _selectedCategory;
   String? _imageUrl;
   late bool _isPrivate;
-  late List<Ingredient> _ingredients;
+  List<Ingredient> _ingredients = [];
 
   @override
   void initState() {
@@ -35,13 +36,13 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _cookingTimeController = TextEditingController(
       text: widget.recipe.cookingTime.inMinutes.toString()
     );
-    _ingredients = widget.recipe.ingredients;
     _stepControllers = widget.recipe.steps
         .map((step) => TextEditingController(text: step))
         .toList();
     _selectedCategory = widget.recipe.category;
     _isPrivate = widget.recipe.isPrivate;
-    //_imageUrl = widget.recipe.imageUrl;
+    _imageUrl = widget.recipe.imageUrl;
+    _ingredients = List.from(widget.recipe.ingredients);
 
     // Asegurar que haya al menos un ingrediente y un paso
     if (_stepControllers.isEmpty) {
@@ -60,6 +61,41 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       _stepControllers[index].dispose();
       _stepControllers.removeAt(index);
     });
+  }
+
+  Future<void> _addIngredient() async {
+    final ingredient = await showDialog<Ingredient>(
+      context: context,
+      builder: (context) => const AddIngredientDialog(),
+    );
+
+    if (ingredient != null) {
+      setState(() {
+        _ingredients.add(ingredient);
+      });
+    }
+  }
+
+  void _removeIngredient(int index) {
+    setState(() {
+      _ingredients.removeAt(index);
+    });
+  }
+
+  void _editIngredient(int index) async {
+    final currentIngredient = _ingredients[index];
+    final editedIngredient = await showDialog<Ingredient>(
+      context: context,
+      builder: (context) => AddIngredientDialog(
+        initialIngredient: currentIngredient,
+      ),
+    );
+
+    if (editedIngredient != null) {
+      setState(() {
+        _ingredients[index] = editedIngredient;
+      });
+    }
   }
 
   @override
@@ -266,6 +302,51 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 icon: const Icon(Icons.add),
                 label: const Text('Agregar Paso'),
               ),
+
+              // Sección de ingredientes
+              const Text(
+                'Ingredientes',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _ingredients.length,
+                itemBuilder: (context, index) {
+                  final ingredient = _ingredients[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      title: Text(ingredient.name),
+                      subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _editIngredient(index),
+                            color: Colors.blue,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => _removeIngredient(index),
+                            color: Colors.red,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              ElevatedButton.icon(
+                onPressed: _addIngredient,
+                icon: const Icon(Icons.add),
+                label: const Text('Agregar Ingrediente'),
+              ),
             ],
           ),
         ),
@@ -289,7 +370,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             .where((text) => text.isNotEmpty)
             .toList();
 
-        // Actualizar en Firestore
         await FirebaseFirestore.instance
             .collection('recipes')
             .doc(widget.recipe.id)
@@ -315,27 +395,27 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             description: _descriptionController.text.trim(),
             ingredients: _ingredients,
             steps: steps,
-            //imageUrl: _imageUrl,
-            cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
+            imageUrl: _imageUrl,
+            cookingTime: Duration(
+              minutes: int.parse(_cookingTimeController.text.trim())
+            ),
             category: _selectedCategory,
             userId: widget.recipe.userId,
             isPrivate: _isPrivate,
           );
 
-          // Volver con la receta actualizada
-          Navigator.of(context).pop(updatedRecipe);
+          Navigator.pop(context, updatedRecipe);
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Receta actualizada con éxito'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
             ),
           );
         }
       } catch (e) {
         if (mounted) {
-          Navigator.pop(context); // Cierra el diálogo de carga
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error al actualizar la receta: ${e.toString()}'),
