@@ -21,28 +21,54 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
 
   late List<IngredienteTabla> _ingredientes;
 
-  // Lista fija de unidades disponibles
+  // Mapa de conversión de unidades antiguas a nuevas
+  final Map<String, String> _convertirUnidadAntigua = {
+    'gr': 'g',
+    'kg': 'kg',
+    'ml': 'ml',
+    'l': 'l',
+    'taza': 'tz',
+    'cucharada': 'cda',
+    'cucharadita': 'cdta',
+    'unidad': 'u',
+    'oz': 'oz',
+    'lb': 'lb',
+  };
+
   final List<String> _unidadesDisponibles = [
-    'gr',
-    'kg',
-    'ml',
-    'l',
-    'taza',
-    'cucharada',
-    'cucharadita',
-    'unidad',
-    'oz',
-    'lb',
+    'g',    // gramos
+    'kg',   // kilogramos
+    'ml',   // mililitros
+    'l',    // litros
+    'tz',   // taza
+    'cda',  // cucharada
+    'cdta', // cucharadita
+    'u',    // unidad
+    'oz',   // onzas
+    'lb',   // libras
   ];
+
+  final Map<String, String> _unidadesCompletas = {
+    'g': 'gramos',
+    'kg': 'kilogramos',
+    'ml': 'mililitros',
+    'l': 'litros',
+    'tz': 'taza',
+    'cda': 'cucharada',
+    'cdta': 'cucharadita',
+    'u': 'unidad',
+    'oz': 'onzas',
+    'lb': 'libras',
+  };
 
   @override
   void initState() {
     super.initState();
-    // Convertimos los ingredientes de la receta al formato de la tabla
+    // Convertir las unidades antiguas a nuevas al inicializar
     _ingredientes = widget.ingredientes.map((ing) => IngredienteTabla(
       nombre: ing.name,
       cantidad: ing.quantity,
-      unidad: ing.unit,
+      unidad: _convertirUnidadAntigua[ing.unit] ?? 'g', // Unidad por defecto si no se encuentra
     )).toList();
   }
 
@@ -136,263 +162,290 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
       appBar: AppBar(
         title: const Text('Calculadora de Conversiones'),
       ),
-      body: SingleChildScrollView(
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Calculadora existente
-            const Text(
-              'CALCULADORA DE CONVERSIÓN',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+        children: [
+          const Text(
+            'CALCULADORA DE CONVERSIÓN',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
             ),
-            const SizedBox(height: 16),
-            // Tabla de conversión
-            Table(
-              border: TableBorder.all(color: Colors.grey.shade300),
-              columnWidths: const {
-                0: FlexColumnWidth(2),
-                1: FlexColumnWidth(2),
-                2: FlexColumnWidth(2),
-              },
+          ),
+          const SizedBox(height: 16),
+          // Calculadora existente con padding horizontal
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
               children: [
-                // Encabezados
-                TableRow(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                  ),
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'CANTIDAD',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
+                // Tabla de conversión
+                Table(
+                  border: TableBorder.all(color: Colors.grey.shade300),
+                  columnWidths: const {
+                    0: FlexColumnWidth(2),
+                    1: FlexColumnWidth(2),
+                    2: FlexColumnWidth(2),
+                  },
+                  children: [
+                    // Encabezados
+                    TableRow(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
                       ),
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'CANTIDAD',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'DE',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'A',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'DE',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'A',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
+                    // Fila de entrada
+                    TableRow(
+                      children: [
+                        // Cantidad
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextField(
+                            controller: _cantidadController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                            onChanged: (value) => _calcularConversion(),
+                          ),
+                        ),
+                        // Unidad origen
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: DropdownButtonFormField<String>(
+                            value: _unidadOrigen,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                            items: _obtenerUnidadesCompatibles(_unidadDestino)
+                                .map((String unidad) {
+                              return DropdownMenuItem<String>(
+                                value: unidad,
+                                child: Text(unidad),
+                              );
+                            }).toList(),
+                            onChanged: (String? value) {
+                              if (value != null) {
+                                setState(() {
+                                  _unidadOrigen = value;
+                                  _calcularConversion();
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        // Unidad destino
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: DropdownButtonFormField<String>(
+                            value: _unidadDestino,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                            items: _obtenerUnidadesCompatibles(_unidadOrigen)
+                                .map((String unidad) {
+                              return DropdownMenuItem<String>(
+                                value: unidad,
+                                child: Text(unidad),
+                              );
+                            }).toList(),
+                            onChanged: (String? value) {
+                              if (value != null) {
+                                setState(() {
+                                  _unidadDestino = value;
+                                  _calcularConversion();
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                // Fila de entrada
-                TableRow(
-                  children: [
-                    // Cantidad
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        controller: _cantidadController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        textAlign: TextAlign.center,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                const SizedBox(height: 24),
+                // Resultado
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Resultado: ',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                        onChanged: (value) => _calcularConversion(),
                       ),
-                    ),
-                    // Unidad origen
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DropdownButtonFormField<String>(
-                        value: _unidadOrigen,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      Text(
+                        '${_resultado.toStringAsFixed(3)} $_unidadDestino',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
                         ),
-                        items: _obtenerUnidadesCompatibles(_unidadDestino)
-                            .map((String unidad) {
-                          return DropdownMenuItem<String>(
-                            value: unidad,
-                            child: Text(unidad),
-                          );
-                        }).toList(),
-                        onChanged: (String? value) {
-                          if (value != null) {
-                            setState(() {
-                              _unidadOrigen = value;
-                              _calcularConversion();
-                            });
-                          }
-                        },
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  'TABLA DE INGREDIENTES',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+          
+          // Encabezados
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: const [
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'INGREDIENTE',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
                     ),
-                    // Unidad destino
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DropdownButtonFormField<String>(
-                        value: _unidadDestino,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                        items: _obtenerUnidadesCompatibles(_unidadOrigen)
-                            .map((String unidad) {
-                          return DropdownMenuItem<String>(
-                            value: unidad,
-                            child: Text(unidad),
-                          );
-                        }).toList(),
-                        onChanged: (String? value) {
-                          if (value != null) {
-                            setState(() {
-                              _unidadDestino = value;
-                              _calcularConversion();
-                            });
-                          }
-                        },
-                      ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'CANTIDAD',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
                     ),
-                  ],
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'UNIDAD',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            // Resultado
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Resultado: ',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '${_resultado.toStringAsFixed(3)} $_unidadDestino',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
-                ],
+          ),
+          
+          // Filas de ingredientes
+          ..._ingredientes.map((ingrediente) => Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Colors.grey.shade300),
+                left: BorderSide(color: Colors.grey.shade300),
+                right: BorderSide(color: Colors.grey.shade300),
               ),
             ),
-            const SizedBox(height: 32),
-            
-            // Nueva tabla de ingredientes
-            const Text(
-              'TABLA DE INGREDIENTES',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Table(
-              border: TableBorder.all(color: Colors.grey.shade300),
-              columnWidths: const {
-                0: FlexColumnWidth(2),  // Ingrediente
-                1: FlexColumnWidth(1),  // Cantidad
-                2: FlexColumnWidth(1),  // Unidad
-              },
+            child: Row(
               children: [
-                // Encabezados
-                TableRow(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: TextField(
+                      controller: ingrediente.nombreController,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                        isDense: true,
+                      ),
+                      onChanged: (value) => ingrediente.nombre = value,
+                    ),
                   ),
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'INGREDIENTE',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'CANTIDAD',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'UNIDAD',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
                 ),
-                // Filas de ingredientes
-                ..._ingredientes.map((ingrediente) => TableRow(
-                  children: [
-                    // Nombre del ingrediente
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        controller: ingrediente.nombreController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                        onChanged: (value) => ingrediente.nombre = value,
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: TextField(
+                      controller: ingrediente.cantidadController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                        isDense: true,
                       ),
-                    ),
-                    // Cantidad
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        controller: ingrediente.cantidadController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                        onChanged: (value) {
-                          if (value.isNotEmpty) {
-                            try {
-                              ingrediente.cantidad = double.parse(value);
-                            } catch (e) {
-                              // Manejar error
-                            }
+                      onChanged: (value) {
+                        if (value.isNotEmpty) {
+                          try {
+                            ingrediente.cantidad = double.parse(value);
+                          } catch (e) {
+                            // Manejar error
                           }
-                        },
-                      ),
+                        }
+                      },
                     ),
-                    // Unidad
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Tooltip(
+                      message: _unidadesCompletas[ingrediente.unidad] ?? ingrediente.unidad,
                       child: DropdownButtonFormField<String>(
                         value: ingrediente.unidad,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                          isDense: true,
                         ),
                         items: _unidadesDisponibles.map((String unidad) {
                           return DropdownMenuItem<String>(
                             value: unidad,
-                            child: Text(unidad),
+                            child: Tooltip(
+                              message: _unidadesCompletas[unidad] ?? unidad,
+                              child: Text(unidad),
+                            ),
                           );
                         }).toList(),
                         onChanged: (String? value) {
@@ -404,25 +457,24 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                         },
                       ),
                     ),
-                  ],
-                )).toList(),
+                  ),
+                ),
               ],
             ),
-          ],
-        ),
+          )).toList(),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() {
             _ingredientes.add(IngredienteTabla(
               nombre: '',
-              cantidad: 0.0,
-              unidad: 'gr',
+              cantidad: 0,
+              unidad: _unidadesDisponibles[0],
             ));
           });
         },
         child: const Icon(Icons.add),
-        tooltip: 'Agregar ingrediente',
       ),
     );
   }
