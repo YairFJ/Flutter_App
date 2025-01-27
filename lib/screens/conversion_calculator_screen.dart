@@ -461,7 +461,7 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                 ),
               ],
             ),
-          )).toList(),
+          )),
         ],
       ),
       floatingActionButton: FloatingActionButton(

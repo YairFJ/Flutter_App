@@ -4,7 +4,7 @@ class Recipe {
   final String id;
   final String title;
   final String description;
-  final List<Ingredient> ingredients;
+  List<Ingredient> ingredients;
   final List<String> steps;
   final String? imageUrl;
   final Duration cookingTime;

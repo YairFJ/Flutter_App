@@ -5,7 +5,7 @@ import '../constants/categories.dart';
 import './recipe_detail_screen.dart';
 import '../main.dart';
 import '../models/ingredient.dart';
-import '../widgets/add_ingredient_dialog.dart';
+import '../widgets/ingredient_table_widget.dart';
 
 class EditRecipeScreen extends StatefulWidget {
   final Recipe recipe;
@@ -22,11 +22,11 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _cookingTimeController;
-  late List<TextEditingController> _stepControllers;
   late String _selectedCategory;
   String? _imageUrl;
   late bool _isPrivate;
   List<Ingredient> _ingredients = [];
+  late List<String> _steps;
 
   @override
   void initState() {
@@ -36,66 +36,138 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _cookingTimeController = TextEditingController(
       text: widget.recipe.cookingTime.inMinutes.toString()
     );
-    _stepControllers = widget.recipe.steps
-        .map((step) => TextEditingController(text: step))
-        .toList();
+    _steps = List.from(widget.recipe.steps);
     _selectedCategory = widget.recipe.category;
     _isPrivate = widget.recipe.isPrivate;
     _imageUrl = widget.recipe.imageUrl;
     _ingredients = List.from(widget.recipe.ingredients);
 
     // Asegurar que haya al menos un ingrediente y un paso
-    if (_stepControllers.isEmpty) {
-      _stepControllers.add(TextEditingController());
+    if (_steps.isEmpty) {
+      _steps.add('');
     }
   }
 
   void _addStep() {
     setState(() {
-      _stepControllers.add(TextEditingController());
+      _steps.add('');
     });
   }
 
   void _removeStep(int index) {
     setState(() {
-      _stepControllers[index].dispose();
-      _stepControllers.removeAt(index);
+      _steps.removeAt(index);
     });
   }
 
-  Future<void> _addIngredient() async {
-    final ingredient = await showDialog<Ingredient>(
+  void _editIngredients() async {
+    final ingredientesConvertidos = _ingredients.map((ing) => Ingredient(
+      name: ing.name,
+      quantity: ing.quantity,
+      unit: _convertirUnidadAntigua(ing.unit),
+    )).toList();
+
+    final result = await showDialog<List<Ingredient>>(
       context: context,
-      builder: (context) => const AddIngredientDialog(),
-    );
-
-    if (ingredient != null) {
-      setState(() {
-        _ingredients.add(ingredient);
-      });
-    }
-  }
-
-  void _removeIngredient(int index) {
-    setState(() {
-      _ingredients.removeAt(index);
-    });
-  }
-
-  void _editIngredient(int index) async {
-    final currentIngredient = _ingredients[index];
-    final editedIngredient = await showDialog<Ingredient>(
-      context: context,
-      builder: (context) => AddIngredientDialog(
-        initialIngredient: currentIngredient,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        insetPadding: EdgeInsets.zero,
+        child: Container(
+          width: double.infinity,
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Editar Ingredientes',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(_ingredients),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: IngredientTableWidget(
+                    ingredientes: ingredientesConvertidos,
+                    onIngredientsChanged: (ingredients) {
+                      setState(() {
+                        _ingredients = ingredients;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(_ingredients),
+                      child: const Text('Cancelar'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(_ingredients);
+                      },
+                      child: const Text('Guardar'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
 
-    if (editedIngredient != null) {
+    if (result != null) {
       setState(() {
-        _ingredients[index] = editedIngredient;
+        _ingredients = result;
       });
     }
+  }
+
+  String _convertirUnidadAntigua(String unidadAntigua) {
+    final Map<String, String> conversion = {
+      'gramos': 'g',
+      'gr': 'g',
+      'kilogramos': 'kg',
+      'kg': 'kg',
+      'mililitros': 'ml',
+      'ml': 'ml',
+      'litros': 'l',
+      'l': 'l',
+      'taza': 'tz',
+      'cucharada': 'cda',
+      'cucharadita': 'cdta',
+      'unidad': 'u',
+      'onzas': 'oz',
+      'oz': 'oz',
+      'libras': 'lb',
+      'lb': 'lb',
+    };
+    return conversion[unidadAntigua.toLowerCase()] ?? 'g';
   }
 
   @override
@@ -271,7 +343,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _stepControllers.length,
+                itemCount: _steps.length,
                 itemBuilder: (context, index) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -279,12 +351,17 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                       children: [
                         Expanded(
                           child: TextFormField(
-                            controller: _stepControllers[index],
+                            initialValue: _steps[index],
                             decoration: InputDecoration(
                               labelText: 'Paso ${index + 1}',
                               border: const OutlineInputBorder(),
                             ),
                             maxLines: 2,
+                            onChanged: (value) {
+                              setState(() {
+                                _steps[index] = value;
+                              });
+                            },
                           ),
                         ),
                         IconButton(
@@ -304,49 +381,48 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
               ),
 
               // Sección de ingredientes
-              const Text(
-                'Ingredientes',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _ingredients.length,
-                itemBuilder: (context, index) {
-                  final ingredient = _ingredients[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(ingredient.name),
-                      subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => _editIngredient(index),
-                            color: Colors.blue,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () => _removeIngredient(index),
-                            color: Colors.red,
-                          ),
-                        ],
-                      ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Ingredientes',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-                },
+                  ),
+                  TextButton.icon(
+                    onPressed: _editIngredients,
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Editar ingredientes'),
+                  ),
+                ],
               ),
-              ElevatedButton.icon(
-                onPressed: _addIngredient,
-                icon: const Icon(Icons.add),
-                label: const Text('Agregar Ingrediente'),
-              ),
+              if (_ingredients.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _ingredients.length,
+                  itemBuilder: (context, index) {
+                    final ingredient = _ingredients[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text(ingredient.name),
+                        subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            setState(() {
+                              _ingredients.removeAt(index);
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ],
           ),
         ),
@@ -365,8 +441,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           ),
         );
 
-        final steps = _stepControllers
-            .map((controller) => controller.text.trim())
+        final steps = _steps
+            .map((step) => step.trim())
             .where((text) => text.isNotEmpty)
             .toList();
 
@@ -432,9 +508,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _cookingTimeController.dispose();
-    for (var controller in _stepControllers) {
-      controller.dispose();
-    }
     super.dispose();
   }
 } 
