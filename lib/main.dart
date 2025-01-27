@@ -11,6 +11,10 @@ import 'screens/recipe_detail_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pages/profile_page.dart';
 import 'constants/categories.dart';
+import 'pages/recipes_page.dart';
+import 'pages/conversion_table_page.dart';
+import 'pages/timer_page.dart';
+import 'pages/stopwatch_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +91,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+  
+  // Lista de páginas/widgets para cada elemento del menú
+  final List<Widget> _pages = [
+    const RecipesPage(),
+    const ConversionTablePage(),
+    const TimerPage(),
+    const StopwatchPage(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   // Usar los colores definidos en HomeScreen
   Color get primaryColor => HomeScreen.primaryColor;
   Color get secondaryColor => HomeScreen.secondaryColor;
@@ -403,36 +423,34 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          // Buscador
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Buscar recetas...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              onChanged: (value) {
-                setState(() {}); // Actualizar la lista al buscar
-              },
-            ),
+      body: _pages[_selectedIndex], // Mostrar la página seleccionada
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: Colors.grey,
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.restaurant_menu),
+            label: 'Recetas',
           ),
-          // Lista de recetas por categoría
-          Expanded(
-            child: _buildRecipeList(),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calculate),
+            label: 'Conversión',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.timer),
+            label: 'Temporizador',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.timer_outlined),
+            label: 'Cronómetro',
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
@@ -447,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.white,
           size: 30, // Aumenté el tamaño para mejor visibilidad
         ),
-      ),
+      ) : null,
     );
   }
 }
