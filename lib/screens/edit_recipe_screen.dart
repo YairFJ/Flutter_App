@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
+import '../models/ingrediente_tabla.dart';
 import '../constants/categories.dart';
 import './recipe_detail_screen.dart';
 import '../main.dart';
@@ -61,10 +62,10 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   }
 
   void _editIngredients() async {
-    final ingredientesConvertidos = _ingredients.map((ing) => Ingredient(
-      name: ing.name,
-      quantity: ing.quantity,
-      unit: _convertirUnidadAntigua(ing.unit),
+    final ingredientesConvertidos = widget.recipe.ingredients.map((ing) => IngredienteTabla(
+      nombre: ing.name,
+      cantidad: ing.quantity,
+      unidad: _convertirUnidadAntigua(ing.unit),
     )).toList();
 
     final result = await showDialog<List<Ingredient>>(
@@ -109,7 +110,11 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                     ingredientes: ingredientesConvertidos,
                     onIngredientsChanged: (ingredients) {
                       setState(() {
-                        _ingredients = ingredients;
+                        _ingredients = ingredients.map((ing) => Ingredient(
+                          name: ing.nombre,
+                          quantity: ing.cantidad ?? 0,
+                          unit: ing.unidad,
+                        )).toList();
                       });
                     },
                   ),

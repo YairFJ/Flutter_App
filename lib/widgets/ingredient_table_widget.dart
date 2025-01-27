@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/ingredient.dart';
+import '../models/ingrediente_tabla.dart';
 
 class IngredientTableWidget extends StatefulWidget {
-  final List<Ingredient> ingredientes;
-  final Function(List<Ingredient>) onIngredientsChanged;
+  final List<IngredienteTabla> ingredientes;
+  final Function(List<IngredienteTabla>) onIngredientsChanged;
   final bool showAddButton;
 
   const IngredientTableWidget({
@@ -18,7 +18,7 @@ class IngredientTableWidget extends StatefulWidget {
 }
 
 class _IngredientTableWidgetState extends State<IngredientTableWidget> {
-  late List<IngredienteTabla> _ingredientes;
+  late final List<IngredienteTabla> _ingredientes;
 
   final List<String> _unidadesDisponibles = [
     'g',    // gramos
@@ -49,40 +49,11 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
   @override
   void initState() {
     super.initState();
-    _initializeIngredientes();
-  }
-
-  void _initializeIngredientes() {
-    _ingredientes = widget.ingredientes.map((ing) => IngredienteTabla(
-      nombre: ing.name,
-      cantidad: ing.quantity,
-      unidad: _convertirUnidadAntigua(ing.unit),
-    )).toList();
-  }
-
-  String _convertirUnidadAntigua(String unidadAntigua) {
-    final Map<String, String> conversion = {
-      'gr': 'g',
-      'kg': 'kg',
-      'ml': 'ml',
-      'l': 'l',
-      'taza': 'tz',
-      'cucharada': 'cda',
-      'cucharadita': 'cdta',
-      'unidad': 'u',
-      'oz': 'oz',
-      'lb': 'lb',
-    };
-    return conversion[unidadAntigua] ?? 'g';
+    _ingredientes = widget.ingredientes.toList();
   }
 
   void _actualizarIngredientes() {
-    final ingredientesActualizados = _ingredientes.map((ing) => Ingredient(
-      name: ing.nombre,
-      quantity: ing.cantidad,
-      unit: ing.unidad,
-    )).toList();
-    widget.onIngredientsChanged(ingredientesActualizados);
+    widget.onIngredientsChanged(_ingredientes);
   }
 
   @override
@@ -254,19 +225,4 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
       ),
     );
   }
-}
-
-class IngredienteTabla {
-  String nombre;
-  double cantidad;
-  String unidad;
-  final TextEditingController nombreController;
-  final TextEditingController cantidadController;
-
-  IngredienteTabla({
-    required this.nombre,
-    required this.cantidad,
-    required this.unidad,
-  }) : nombreController = TextEditingController(text: nombre),
-       cantidadController = TextEditingController(text: cantidad.toString());
 } 

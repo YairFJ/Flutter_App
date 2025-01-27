@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../models/ingredient.dart';
+import '../models/ingrediente_tabla.dart';
 import '../widgets/ingredient_table_widget.dart';
 
 class RecipeFormScreen extends StatefulWidget {
@@ -80,10 +81,18 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: IngredientTableWidget(
-                    ingredientes: ingredientesConvertidos,
+                    ingredientes: ingredientesConvertidos.map((ing) => IngredienteTabla(
+                      nombre: ing.name,
+                      cantidad: ing.quantity,
+                      unidad: ing.unit,
+                    )).toList(),
                     onIngredientsChanged: (ingredients) {
                       setState(() {
-                        _ingredients = ingredients;
+                        _ingredients = ingredients.map((ing) => Ingredient(
+                          name: ing.nombre,
+                          quantity: ing.cantidad ?? 0,
+                          unit: ing.unidad,
+                        )).toList();
                       });
                     },
                   ),

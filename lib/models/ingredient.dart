@@ -3,11 +3,15 @@ class Ingredient {
   final double quantity;
   final String unit;
 
-  Ingredient({
+  const Ingredient({
     required this.name,
     required this.quantity,
     required this.unit,
   });
+
+  bool isValid() {
+    return name.trim().isNotEmpty && quantity > 0 && unit.isNotEmpty;
+  }
 
   Map<String, dynamic> toMap() {
     return {

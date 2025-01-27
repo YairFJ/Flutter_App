@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
-import '../models/ingredient.dart';
+//import '../models/ingredient.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_recipe_screen.dart';
 import 'conversion_calculator_screen.dart';
-import '../widgets/conversion_table_dialog.dart';
+// import '../widgets/conversion_table_dialog.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -201,87 +201,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         ),
                       );
                     },
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final ingredientesActualizados = await showDialog<List<Ingredient>>(
-                          context: context,
-                          builder: (context) => ConversionTableDialog(
-                            originalIngredients: widget.recipe.ingredients,
-                          ),
-                        );
-
-                        if (ingredientesActualizados != null && ingredientesActualizados.isNotEmpty) {
-                          try {
-                            final nuevosIngredientes = List<Ingredient>.from(widget.recipe.ingredients);
-                            
-                            for (var ingredienteActualizado in ingredientesActualizados) {
-                              final index = nuevosIngredientes.indexWhere(
-                                (ing) => ing.name == ingredienteActualizado.name
-                              );
-                              if (index != -1) {
-                                nuevosIngredientes[index] = ingredienteActualizado;
-                              }
-                            }
-
-                            await FirebaseFirestore.instance
-                                .collection('recipes')
-                                .doc(widget.recipe.id)
-                                .update({
-                              'ingredients': nuevosIngredientes.map((i) => i.toMap()).toList(),
-                            });
-
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Receta actualizada con éxito'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => RecipeDetailScreen(
-                                    recipe: Recipe(
-                                      id: widget.recipe.id,
-                                      title: widget.recipe.title,
-                                      description: widget.recipe.description,
-                                      ingredients: nuevosIngredientes,
-                                      steps: widget.recipe.steps,
-                                      imageUrl: widget.recipe.imageUrl,
-                                      cookingTime: widget.recipe.cookingTime,
-                                      category: widget.recipe.category,
-                                      userId: widget.recipe.userId,
-                                      isPrivate: widget.recipe.isPrivate,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error al actualizar la receta: ${e.toString()}'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.calculate),
-                      label: const Text('Convertir Ingredientes'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 24),
                   const Text(

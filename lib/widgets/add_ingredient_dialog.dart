@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/ingredient.dart';
 import 'ingredient_table_widget.dart';
+import '../models/ingrediente_tabla.dart';
 
 class AddIngredientDialog extends StatefulWidget {
   const AddIngredientDialog({super.key});
@@ -10,7 +11,7 @@ class AddIngredientDialog extends StatefulWidget {
 }
 
 class _AddIngredientDialogState extends State<AddIngredientDialog> {
-  final List<Ingredient> _tempIngredients = [];
+  final List<IngredienteTabla> _tempIngredients = <IngredienteTabla>[];
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +39,7 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop([]),
+                    onPressed: () => Navigator.of(context).pop(<Ingredient>[]),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -53,8 +54,9 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                   ingredientes: _tempIngredients,
                   onIngredientsChanged: (ingredients) {
                     setState(() {
-                      _tempIngredients.clear();
-                      _tempIngredients.addAll(ingredients);
+                      _tempIngredients
+                        ..clear()
+                        ..addAll(ingredients);
                     });
                   },
                 ),
@@ -67,13 +69,27 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop([]),
+                    onPressed: () => Navigator.of(context).pop(<Ingredient>[]),
                     child: const Text('Cancelar'),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pop(_tempIngredients);
+                      if (_tempIngredients.every((ing) => ing.isValid())) {
+                        final updatedIngredients = _tempIngredients.map((ing) => Ingredient(
+                          name: ing.nombre,
+                          quantity: double.parse(ing.cantidadController.text),
+                          unit: ing.unidad,
+                        )).toList();
+                        Navigator.of(context).pop(updatedIngredients);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Por favor, complete todos los campos correctamente'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     },
                     child: const Text('Agregar'),
                   ),

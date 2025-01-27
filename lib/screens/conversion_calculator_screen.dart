@@ -156,6 +156,28 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
     return unidades.toList()..sort();
   }
 
+  String _formatResult(double value, String unit) {
+    if (value == 0) return '0 $unit';
+    
+    // Si el número es entero, no mostrar decimales
+    if (value == value.roundToDouble()) {
+      return '${value.toInt()} $unit';
+    }
+    
+    // Si el número es menor que 0.01, mostrar 4 decimales
+    if (value.abs() < 0.01) {
+      return '${value.toStringAsFixed(4)} $unit';
+    }
+    
+    // Si el número es menor que 1, mostrar 3 decimales
+    if (value.abs() < 1) {
+      return '${value.toStringAsFixed(3)} $unit';
+    }
+    
+    // Para otros números, mostrar solo 2 decimales
+    return '${value.toStringAsFixed(2)} $unit';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -312,7 +334,7 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                         ),
                       ),
                       Text(
-                        '${_resultado.toStringAsFixed(3)} $_unidadDestino',
+                        _formatResult(_resultado, _unidadDestino),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -395,12 +417,12 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                     padding: const EdgeInsets.all(4.0),
                     child: TextField(
                       controller: ingrediente.nombreController,
+                      readOnly: true,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(horizontal: 8),
                         isDense: true,
                       ),
-                      onChanged: (value) => ingrediente.nombre = value,
                     ),
                   ),
                 ),
@@ -409,21 +431,13 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                     padding: const EdgeInsets.all(4.0),
                     child: TextField(
                       controller: ingrediente.cantidadController,
+                      readOnly: true,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(horizontal: 8),
                         isDense: true,
                       ),
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          try {
-                            ingrediente.cantidad = double.parse(value);
-                          } catch (e) {
-                            // Manejar error
-                          }
-                        }
-                      },
                     ),
                   ),
                 ),
@@ -432,29 +446,14 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                     padding: const EdgeInsets.all(4.0),
                     child: Tooltip(
                       message: _unidadesCompletas[ingrediente.unidad] ?? ingrediente.unidad,
-                      child: DropdownButtonFormField<String>(
-                        value: ingrediente.unidad,
+                      child: TextField(
+                        readOnly: true,
+                        controller: TextEditingController(text: ingrediente.unidad),
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 8),
                           isDense: true,
                         ),
-                        items: _unidadesDisponibles.map((String unidad) {
-                          return DropdownMenuItem<String>(
-                            value: unidad,
-                            child: Tooltip(
-                              message: _unidadesCompletas[unidad] ?? unidad,
-                              child: Text(unidad),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? value) {
-                          if (value != null) {
-                            setState(() {
-                              ingrediente.unidad = value;
-                            });
-                          }
-                        },
                       ),
                     ),
                   ),
@@ -463,18 +462,6 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
             ),
           )),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _ingredientes.add(IngredienteTabla(
-              nombre: '',
-              cantidad: 0,
-              unidad: _unidadesDisponibles[0],
-            ));
-          });
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }
