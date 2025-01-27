@@ -83,14 +83,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   }
 
   Future<void> _addIngredient() async {
-    final ingredient = await showDialog<Ingredient>(
+    final ingredients = await showDialog<List<Ingredient>>(
       context: context,
       builder: (context) => const AddIngredientDialog(),
     );
 
-    if (ingredient != null) {
+    if (ingredients != null) {
       setState(() {
-        _ingredients.add(ingredient);
+        _ingredients.addAll(ingredients);
       });
     }
   }

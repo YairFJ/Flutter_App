@@ -38,7 +38,7 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => Navigator.of(context).pop([]),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -67,15 +67,13 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => Navigator.of(context).pop([]),
                     child: const Text('Cancelar'),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      if (_tempIngredients.isNotEmpty) {
-                        Navigator.of(context).pop(_tempIngredients);
-                      }
+                      Navigator.of(context).pop(_tempIngredients);
                     },
                     child: const Text('Agregar'),
                   ),
