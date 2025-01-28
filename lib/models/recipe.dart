@@ -1,4 +1,6 @@
 import 'ingredient.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Recipe {
   final String id;
@@ -11,6 +13,12 @@ class Recipe {
   final String category;
   final String userId;
   final bool isPrivate;
+  bool isFavorite;
+  String? _userEmail;
+  String? _userName;
+  final String creatorName;
+  final String creatorEmail;
+  
 
   Recipe({
     required this.id,
@@ -23,7 +31,93 @@ class Recipe {
     required this.category,
     required this.userId,
     this.isPrivate = false,
-  });
+    this.isFavorite = false,
+    required this.creatorName,
+    required this.creatorEmail,
+  }) {
+    _initializeUserInfo();
+  }
+
+  Future<void> _initializeUserInfo() async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        _userName = userData['displayName'];
+        _userEmail = userData['email'];
+      }
+    } catch (e) {
+      print('Error al obtener información del usuario: $e');
+    }
+  }
+
+  // Método para obtener la información del usuario
+  static Future<Map<String, dynamic>?> getUserInfo(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      return userDoc.exists ? userDoc.data() : null;
+    } catch (e) {
+      print('Error al obtener información del usuario: $e');
+      return null;
+    }
+  }
+
+  // Método para obtener el nombre del usuario según su userId
+  Future<String> getUserName() async {
+    try {
+      final userRecord = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (userRecord.exists) {
+        final userData = userRecord.data() as Map<String, dynamic>;
+        return userData['name'] ?? 
+               userData['email']?.toString().split('@')[0] ?? 
+               'Usuario';
+      }
+      return creatorName;
+    } catch (e) {
+      print('Error al obtener nombre del usuario: $e');
+      return creatorName;
+    }
+  }
+
+  // Actualiza el getter para usar el email como identificador principal
+  Future<String> get userIdentifier async {
+    final userName = await getUserName();
+    return userName;
+  }
+
+  // Método para guardar la receta con la información del usuario
+  Future<void> saveRecipe() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Guarda la información del usuario si no existe
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set({
+        'email': user.email,
+        'displayName': user.displayName,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Guarda la receta con el userId
+      await FirebaseFirestore.instance
+          .collection('recipes')
+          .doc(id)
+          .set(toMap());
+    }
+  }
 
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
     return Recipe(
@@ -49,9 +143,13 @@ class Recipe {
       category: map['category'] ?? '',
       userId: map['userId'] ?? '',
       isPrivate: map['isPrivate'] ?? false,
+      isFavorite: map['isFavorite'] ?? false,
+      creatorName: map['creatorName'] ?? '',
+      creatorEmail: map['creatorEmail'] ?? '',
     );
   }
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'title': title,
@@ -61,8 +159,12 @@ class Recipe {
       'imageUrl': imageUrl,
       'cookingTimeMinutes': cookingTime.inMinutes,
       'category': category,
-      'userId': userId,
+      'userId': userId, // Este es el ID del creador original
       'isPrivate': isPrivate,
+      'isFavorite': isFavorite,
+      'createdAt': FieldValue.serverTimestamp(),
+      'creatorName': creatorName,
+      'creatorEmail': creatorEmail,
     };
   }
 } 

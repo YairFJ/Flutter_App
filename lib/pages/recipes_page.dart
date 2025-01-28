@@ -116,6 +116,7 @@ class RecipesPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: categoryRecipes.length,
             itemBuilder: (context, index) {
+              final recipe = categoryRecipes[index];
               return SizedBox(
                 width: 200,
                 child: Card(
@@ -124,27 +125,26 @@ class RecipesPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   elevation: 4,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RecipeDetailScreen(
-                            recipe: categoryRecipes[index],
-                          ),
-                        ),
-                      );
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
+                  child: Stack(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RecipeDetailScreen(
+                                recipe: recipe,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                categoryRecipes[index].title,
+                                recipe.title,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -154,7 +154,7 @@ class RecipesPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                categoryRecipes[index].description,
+                                recipe.description,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -172,7 +172,7 @@ class RecipesPage extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${categoryRecipes[index].cookingTime.inMinutes} min',
+                                    '${recipe.cookingTime.inMinutes} min',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Theme.of(context).primaryColor,
@@ -180,11 +180,94 @@ class RecipesPage extends StatelessWidget {
                                   ),
                                 ],
                               ),
+                              const Spacer(),
+                              // Información del usuario usando los datos de la receta
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                    child: Text(
+                                      recipe.creatorName.isNotEmpty 
+                                          ? recipe.creatorName[0].toUpperCase()
+                                          : 'U',
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      recipe.creatorName.isNotEmpty 
+                                          ? recipe.creatorName 
+                                          : 'Usuario',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      // Botón de favorito
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: StreamBuilder<DocumentSnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser?.uid)
+                                .collection('favorites')
+                                .doc(recipe.id)
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              final isFavorite = snapshot.hasData && snapshot.data!.exists;
+                              
+                              return IconButton(
+                                icon: Icon(
+                                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                                  color: isFavorite ? Colors.red : Colors.grey,
+                                  size: 20,
+                                ),
+                                onPressed: () async {
+                                  final userId = FirebaseAuth.instance.currentUser?.uid;
+                                  if (userId == null) return;
+
+                                  final favoriteRef = FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(userId)
+                                      .collection('favorites')
+                                      .doc(recipe.id);
+
+                                  if (isFavorite) {
+                                    await favoriteRef.delete();
+                                  } else {
+                                    await favoriteRef.set({
+                                      'recipeId': recipe.id,
+                                      'addedAt': FieldValue.serverTimestamp(),
+                                    });
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -193,5 +276,32 @@ class RecipesPage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> createRecipe(Recipe recipe) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Guardar información del usuario si no existe
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set({
+        'uid': user.uid,
+        'email': user.email,
+        'name': user.email?.split('@')[0] ?? 'Usuario',
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Crear la receta con la información del usuario
+      await FirebaseFirestore.instance
+          .collection('recipes')
+          .add({
+        ...recipe.toMap(),
+        'userId': user.uid,
+        'creatorName': user.email?.split('@')[0] ?? 'Usuario',
+        'creatorEmail': user.email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
   }
 } 
