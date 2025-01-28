@@ -477,11 +477,12 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             ingredients: _ingredients,
             steps: steps,
             imageUrl: _imageUrl,
-            cookingTime: Duration(
-              minutes: int.parse(_cookingTimeController.text.trim())
-            ),
+            cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
             category: _selectedCategory,
             userId: widget.recipe.userId,
+            creatorName: widget.recipe.creatorName,
+            creatorEmail: widget.recipe.creatorEmail,
+            favoritedBy: widget.recipe.favoritedBy,
             isPrivate: _isPrivate,
           );
 

@@ -116,6 +116,10 @@ class RecipesPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: categoryRecipes.length,
             itemBuilder: (context, index) {
+              final recipe = categoryRecipes[index];
+              final currentUser = FirebaseAuth.instance.currentUser;
+              final isFavorite = currentUser != null && recipe.favoritedBy.contains(currentUser.uid);
+
               return SizedBox(
                 width: 200,
                 child: Card(
@@ -129,9 +133,7 @@ class RecipesPage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => RecipeDetailScreen(
-                            recipe: categoryRecipes[index],
-                          ),
+                          builder: (context) => RecipeDetailScreen(recipe: recipe),
                         ),
                       );
                     },
@@ -144,7 +146,7 @@ class RecipesPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                categoryRecipes[index].title,
+                                recipe.title,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -154,7 +156,7 @@ class RecipesPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                categoryRecipes[index].description,
+                                recipe.description,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -164,19 +166,39 @@ class RecipesPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Icon(
-                                    Icons.timer_outlined,
-                                    size: 16,
-                                    color: Theme.of(context).primaryColor,
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.timer_outlined,
+                                        size: 16,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${recipe.cookingTime.inMinutes} min',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${categoryRecipes[index].cookingTime.inMinutes} min',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context).primaryColor,
+                                  IconButton(
+                                    icon: AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 300),
+                                      transitionBuilder: (Widget child, Animation<double> animation) {
+                                        return ScaleTransition(scale: animation, child: child);
+                                      },
+                                      child: Icon(
+                                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                                        key: ValueKey<bool>(isFavorite),
+                                        color: isFavorite ? Colors.red : Colors.grey,
+                                        size: 20,
+                                      ),
                                     ),
+                                    onPressed: () => _toggleFavorite(context, recipe),
                                   ),
                                 ],
                               ),
@@ -193,5 +215,57 @@ class RecipesPage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _toggleFavorite(BuildContext context, Recipe recipe) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes iniciar sesión para guardar favoritos'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final recipeRef = FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
+    
+    try {
+      if (recipe.favoritedBy.contains(currentUser.uid)) {
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
+        });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Receta eliminada de favoritos'),
+              backgroundColor: Colors.grey,
+            ),
+          );
+        }
+      } else {
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
+        });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Receta guardada en favoritos'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al actualizar favoritos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 } 

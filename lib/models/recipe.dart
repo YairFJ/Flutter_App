@@ -1,16 +1,21 @@
 import 'ingredient.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Recipe {
   final String id;
   final String title;
   final String description;
+  final String userId;
+  final String creatorEmail;
   List<Ingredient> ingredients;
   final List<String> steps;
   final String? imageUrl;
   final Duration cookingTime;
   final String category;
-  final String userId;
   final bool isPrivate;
+  final List<String> favoritedBy;
+  final String creatorName;
+  final DateTime? createdAt;
 
   Recipe({
     required this.id,
@@ -22,8 +27,12 @@ class Recipe {
     required this.cookingTime,
     required this.category,
     required this.userId,
+    required this.creatorEmail,
+    required this.creatorName,
+    List<String>? favoritedBy,
     this.isPrivate = false,
-  });
+    this.createdAt,
+  }) : favoritedBy = favoritedBy ?? [];
 
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
     return Recipe(
@@ -48,7 +57,11 @@ class Recipe {
       cookingTime: Duration(minutes: map['cookingTimeMinutes'] ?? 0),
       category: map['category'] ?? '',
       userId: map['userId'] ?? '',
+      creatorEmail: map['creatorEmail'] ?? 'No disponible',
+      favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
+      creatorName: map['creatorName'] ?? 'Usuario',
       isPrivate: map['isPrivate'] ?? false,
+      createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -62,7 +75,11 @@ class Recipe {
       'cookingTimeMinutes': cookingTime.inMinutes,
       'category': category,
       'userId': userId,
+      'creatorEmail': creatorEmail,
+      'favoritedBy': favoritedBy,
+      'creatorName': creatorName,
       'isPrivate': isPrivate,
+      'createdAt': createdAt ?? FieldValue.serverTimestamp(),
     };
   }
 } 

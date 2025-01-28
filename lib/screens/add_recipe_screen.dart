@@ -54,7 +54,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           'imageUrl': _imageUrl,
           'category': _selectedCategory,
           'userId': currentUser.uid,
+          'creatorEmail': currentUser.email ?? 'No disponible',
+          'creatorName': currentUser.displayName ?? 'Usuario',
           'isPrivate': _isPrivate,
+          'favoritedBy': [],
           'createdAt': FieldValue.serverTimestamp(),
         });
 

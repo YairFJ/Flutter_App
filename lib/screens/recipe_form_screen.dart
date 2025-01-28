@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
 import '../models/ingredient.dart';
 import '../models/ingrediente_tabla.dart';
 import '../widgets/ingredient_table_widget.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? recipe; // null si es nueva receta
@@ -332,11 +334,30 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     );
   }
 
-  void _saveRecipe() {
+  void _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      // Aquí va la lógica para guardar la receta
-      // Los ingredientes ya están actualizados en _ingredients
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      // Crear la receta
+      final newRecipe = Recipe(
+        id: '', 
+        title: _title,
+        description: _description,
+        userId: currentUser?.uid ?? '',
+        creatorEmail: currentUser?.email ?? 'No disponible',
+        creatorName: currentUser?.displayName ?? 'Usuario',
+        ingredients: _ingredients,
+        steps: _steps,
+        cookingTime: Duration(minutes: int.parse(_cookingTime)),
+        category: _category,
+        isPrivate: _isPrivate,
+        favoritedBy: [],
+      );
+
+      // Guardar en Firestore
+      await FirebaseFirestore.instance.collection('recipes').add(newRecipe.toMap());
+      Navigator.pop(context); // Regresar a la pantalla anterior
     }
   }
 } 

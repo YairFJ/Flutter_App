@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../screens/favorite_recipes_screen.dart';
+import '../screens/my_recipes_screen.dart';
 
 class ProfilePage extends StatelessWidget {
   final User user;
@@ -53,15 +55,25 @@ class ProfilePage extends StatelessWidget {
               title: 'Mis Recetas',
               subtitle: 'Gestiona tus recetas creadas',
               onTap: () {
-                // Navegar a mis recetas
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyRecipesScreen(),
+                  ),
+                );
               },
             ),
             _buildProfileSection(
               icon: Icons.favorite,
-              title: 'Favoritos',
+              title: 'Recetas Favoritas',
               subtitle: 'Recetas guardadas como favoritas',
               onTap: () {
-                // Navegar a favoritos
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FavoriteRecipesScreen(),
+                  ),
+                );
               },
             ),
             _buildProfileSection(
