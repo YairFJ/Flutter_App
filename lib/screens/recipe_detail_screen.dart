@@ -79,30 +79,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           widget.recipe.title,
           overflow: TextOverflow.ellipsis,
         ),
-        actions: isOwner ? [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final updatedRecipe = await Navigator.push<Recipe>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditRecipeScreen(recipe: widget.recipe),
-                ),
-              );
-              if (updatedRecipe != null && mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RecipeDetailScreen(recipe: updatedRecipe),
-                  ),
-                );
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () => _deleteRecipe(context),
-          ),
+        actions: [
           IconButton(
             icon: const Icon(Icons.calculate),
             onPressed: () {
@@ -116,7 +93,32 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               );
             },
           ),
-        ] : null,
+          if (isOwner) ...[
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                final updatedRecipe = await Navigator.push<Recipe>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditRecipeScreen(recipe: widget.recipe),
+                  ),
+                );
+                if (updatedRecipe != null && mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RecipeDetailScreen(recipe: updatedRecipe),
+                    ),
+                  );
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () => _deleteRecipe(context),
+            ),
+          ],
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
