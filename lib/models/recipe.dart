@@ -1,4 +1,5 @@
 import 'ingredient.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Recipe {
   final String id;
@@ -11,6 +12,9 @@ class Recipe {
   final String category;
   final String userId;
   final bool isPrivate;
+  final String creatorName;
+  final List<String> favoritedBy;
+  final Timestamp? createdAt;
 
   Recipe({
     required this.id,
@@ -23,7 +27,10 @@ class Recipe {
     required this.category,
     required this.userId,
     this.isPrivate = false,
-  });
+    required this.creatorName,
+    List<String>? favoritedBy,
+    this.createdAt,
+  }) : favoritedBy = favoritedBy ?? [];
 
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
     return Recipe(
@@ -49,11 +56,15 @@ class Recipe {
       category: map['category'] ?? '',
       userId: map['userId'] ?? '',
       isPrivate: map['isPrivate'] ?? false,
+      creatorName: map['creatorName'] ?? 'Usuario desconocido',
+      favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
+      createdAt: map['createdAt'] as Timestamp?,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'title': title,
       'description': description,
       'ingredients': ingredients.map((ingredient) => ingredient.toMap()).toList(),
@@ -63,6 +74,9 @@ class Recipe {
       'category': category,
       'userId': userId,
       'isPrivate': isPrivate,
+      'creatorName': creatorName,
+      'favoritedBy': favoritedBy,
+      if (createdAt != null) 'createdAt': createdAt,
     };
   }
 } 

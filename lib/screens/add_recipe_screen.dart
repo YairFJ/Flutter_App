@@ -4,6 +4,7 @@ import 'package:flutter_app/constants/categories.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/models/ingredient.dart';
 import 'package:flutter_app/widgets/add_ingredient_dialog.dart';
+import 'package:flutter_app/models/recipe.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({super.key});
@@ -40,23 +41,40 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           throw Exception('Usuario no autenticado');
         }
 
+        // Obtener el nombre del usuario actual
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+        
+        final userName = userDoc.data()?['name'] ?? 'Usuario desconocido';
+
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
             .where((text) => text.isNotEmpty)
             .toList();
 
-        await FirebaseFirestore.instance.collection('recipes').add({
-          'title': _titleController.text.trim(),
-          'description': _descriptionController.text.trim(),
-          'cookingTimeMinutes': int.parse(_cookingTimeController.text.trim()),
-          'ingredients': _ingredients.map((ingredient) => ingredient.toMap()).toList(),
-          'steps': steps,
-          'imageUrl': _imageUrl,
-          'category': _selectedCategory,
-          'userId': currentUser.uid,
-          'isPrivate': _isPrivate,
+        final recipe = Recipe(
+          id: '',
+          title: _titleController.text,
+          description: _descriptionController.text,
+          userId: currentUser.uid,
+          creatorName: userName,
+          favoritedBy: [],
+          cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
+          ingredients: _ingredients,
+          steps: steps,
+          imageUrl: _imageUrl,
+          category: _selectedCategory,
+          isPrivate: _isPrivate,
+        );
+
+        final recipeData = {
+          ...recipe.toMap(),
           'createdAt': FieldValue.serverTimestamp(),
-        });
+        };
+
+        await FirebaseFirestore.instance.collection('recipes').add(recipeData);
 
         if (mounted) {
           Navigator.pop(context);

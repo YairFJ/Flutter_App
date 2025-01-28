@@ -13,6 +13,7 @@ import 'pages/conversion_table_page.dart';
 import 'pages/timer_page.dart';
 import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
+import 'screens/favorite_recipes_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -195,7 +196,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(fontSize: 16),
               ),
               onTap: () {
-                // Navegar a favoritos
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FavoriteRecipesScreen(),
+                  ),
+                );
               },
             ),
             const Divider(),

@@ -7,8 +7,13 @@ import '../models/recipe.dart';
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
+  final VoidCallback onTap;
 
-  const RecipeCard({super.key, required this.recipe});
+  const RecipeCard({
+    Key? key,
+    required this.recipe,
+    required this.onTap,
+  }) : super(key: key);
 
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -60,10 +65,35 @@ class RecipeCard extends StatelessWidget {
     }
   }
 
+  Future<void> _toggleFavorite(BuildContext context) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final recipeRef = FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
+    
+    try {
+      if (recipe.favoritedBy.contains(currentUser.uid)) {
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
+        });
+      } else {
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
+        });
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al actualizar favoritos')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    final isOwner = currentUser?.uid == recipe.userId;
+    final isFavorite = currentUser != null && recipe.favoritedBy.contains(currentUser.uid);
 
     return Card(
       elevation: 4,
@@ -73,14 +103,7 @@ class RecipeCard extends StatelessWidget {
       child: Stack(
         children: [
           InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => RecipeDetailScreen(recipe: recipe),
-                ),
-              );
-            },
+            onTap: onTap,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -117,13 +140,39 @@ class RecipeCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Creado por: ${recipe.creatorName}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            recipe.category,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              isFavorite ? Icons.favorite : Icons.favorite_border,
+                              color: isFavorite ? Colors.red : null,
+                            ),
+                            onPressed: () => _toggleFavorite(context),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          if (isOwner)
+          if (currentUser?.uid == recipe.userId)
             Positioned(
               top: 8,
               right: 8,

@@ -483,6 +483,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             category: _selectedCategory,
             userId: widget.recipe.userId,
             isPrivate: _isPrivate,
+            creatorName: widget.recipe.creatorName,
+            favoritedBy: widget.recipe.favoritedBy,
           );
 
           Navigator.pop(context, updatedRecipe);
