@@ -103,14 +103,13 @@ class RecipesPage extends StatelessWidget {
                 '${categoryRecipes.length} recetas',
                 style: TextStyle(
                   color: Colors.grey[600],
-                  fontSize: 14,
                 ),
               ),
             ],
           ),
         ),
         SizedBox(
-          height: 280,
+          height: 220,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -121,13 +120,13 @@ class RecipesPage extends StatelessWidget {
               final isFavorite = currentUser != null && recipe.favoritedBy.contains(currentUser.uid);
 
               return SizedBox(
-                width: 200,
+                width: 180,
                 child: Card(
                   margin: const EdgeInsets.all(4),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  elevation: 4,
+                  elevation: 3,
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -137,75 +136,106 @@ class RecipesPage extends StatelessWidget {
                         ),
                       );
                     },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            recipe.title,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            recipe.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                recipe.title,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                recipe.description,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.timer_outlined,
-                                        size: 16,
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${recipe.cookingTime.inMinutes} min',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                      ),
-                                    ],
+                                  Icon(
+                                    Icons.timer_outlined,
+                                    size: 14,
+                                    color: Theme.of(context).primaryColor,
                                   ),
-                                  IconButton(
-                                    icon: AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 300),
-                                      transitionBuilder: (Widget child, Animation<double> animation) {
-                                        return ScaleTransition(scale: animation, child: child);
-                                      },
-                                      child: Icon(
-                                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                                        key: ValueKey<bool>(isFavorite),
-                                        color: isFavorite ? Colors.red : Colors.grey,
-                                        size: 20,
-                                      ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${recipe.cookingTime.inMinutes} min',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context).primaryColor,
                                     ),
-                                    onPressed: () => _toggleFavorite(context, recipe),
                                   ),
                                 ],
                               ),
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: Icon(
+                                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                                  size: 18,
+                                  color: isFavorite ? Colors.red : Colors.grey,
+                                ),
+                                onPressed: () => _toggleFavorite(context, recipe),
+                              ),
                             ],
                           ),
-                        ),
-                      ],
+                          const Divider(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.person_outline,
+                                  size: 16,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        recipe.creatorName,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        recipe.creatorEmail,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

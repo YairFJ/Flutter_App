@@ -40,6 +40,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           throw Exception('Usuario no autenticado');
         }
 
+        // Obtener los datos del usuario desde Firestore
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        // Obtener el nombre del usuario desde Firestore
+        final userName = userDoc.data()?['name'] ?? currentUser.displayName ?? 'Usuario';
+
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
             .where((text) => text.isNotEmpty)
@@ -55,7 +64,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           'category': _selectedCategory,
           'userId': currentUser.uid,
           'creatorEmail': currentUser.email ?? 'No disponible',
-          'creatorName': currentUser.displayName ?? 'Usuario',
+          'creatorName': userName,
           'isPrivate': _isPrivate,
           'favoritedBy': [],
           'createdAt': FieldValue.serverTimestamp(),
