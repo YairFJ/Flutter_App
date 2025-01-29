@@ -28,6 +28,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
       try {
+        // Mostrar indicador de carga
+        if (!mounted) return;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -46,6 +48,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             .collection('users')
             .doc(currentUser.uid)
             .get();
+        
+        if (!userDoc.exists) {
+          throw Exception('No se encontraron datos del usuario');
+        }
         
         final userName = userDoc.data()?['name'] ?? 'Usuario desconocido';
 
@@ -77,26 +83,31 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
         await FirebaseFirestore.instance.collection('recipes').add(recipeData);
 
-        if (mounted) {
-          Navigator.pop(context);
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('¡Receta guardada con éxito!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
+        if (!mounted) return;
+        
+        // Cerrar el diálogo de carga
+        Navigator.pop(context);
+        // Volver a la pantalla anterior
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Receta guardada con éxito!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } catch (e) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al guardar la receta: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        if (!mounted) return;
+        
+        // Asegurarse de cerrar el diálogo de carga si está abierto
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar la receta: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

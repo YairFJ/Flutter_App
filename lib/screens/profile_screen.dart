@@ -5,29 +5,78 @@ import '../screens/favorite_recipes_screen.dart';
 import '../screens/user_recipes_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
+
+  Future<void> _updateUserName(BuildContext context, String currentName) async {
+    final TextEditingController nameController = TextEditingController(text: currentName);
+    
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Actualizar Nombre'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Nombre',
+            hintText: 'Ingresa tu nombre',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newName = nameController.text.trim();
+              if (newName.isNotEmpty) {
+                try {
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  if (currentUser != null) {
+                    // Actualizar en Firestore
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(currentUser.uid)
+                        .update({'name': newName});
+                    
+                    // Actualizar en Firebase Auth
+                    await currentUser.updateDisplayName(newName);
+                    
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Nombre actualizado con éxito'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error al actualizar el nombre: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-
-    void _navigateToMyRecipes() {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const UserRecipesScreen(),
-        ),
-      );
-    }
-
-    void _navigateToFavorites() {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const FavoriteRecipesScreen(),
-        ),
-      );
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -57,7 +106,7 @@ class ProfileScreen extends StatelessWidget {
               CircleAvatar(
                 radius: 50,
                 child: Text(
-                  userName[0].toUpperCase(),
+                  userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
                   style: const TextStyle(fontSize: 40),
                 ),
               ),
@@ -84,14 +133,35 @@ class ProfileScreen extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.restaurant_menu),
                       title: const Text('Mis Recetas'),
-                      onTap: _navigateToMyRecipes,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserRecipesScreen(),
+                          ),
+                        );
+                      },
                       trailing: const Icon(Icons.arrow_forward_ios),
                     ),
                     const Divider(),
                     ListTile(
                       leading: const Icon(Icons.favorite),
                       title: const Text('Recetas Favoritas'),
-                      onTap: _navigateToFavorites,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FavoriteRecipesScreen(),
+                          ),
+                        );
+                      },
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.person_outline),
+                      title: const Text('Cambiar Nombre de Usuario'),
+                      onTap: () => _updateUserName(context, userName),
                       trailing: const Icon(Icons.arrow_forward_ios),
                     ),
                   ],

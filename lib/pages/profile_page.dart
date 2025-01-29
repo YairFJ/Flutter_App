@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../screens/favorite_recipes_screen.dart';
 import '../screens/my_recipes_screen.dart';
 
@@ -8,6 +9,98 @@ class ProfilePage extends StatelessWidget {
 
   const ProfilePage({super.key, required this.user});
 
+  Future<void> _createUserDocument() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set({
+        'name': user.displayName ?? 'Usuario',
+        'email': user.email,
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Error creating user document: $e');
+    }
+  }
+
+  Future<void> _updateUserName(BuildContext context) async {
+    if (!context.mounted) return;
+    
+    final TextEditingController nameController = TextEditingController();
+    
+    // Obtener el nombre actual del usuario desde Firestore
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    
+    if (!context.mounted) return;  // Agregar verificación después de operación async
+    
+    final currentName = userDoc.data()?['name'] ?? '';
+    nameController.text = currentName;
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cambiar Nombre de Usuario'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Nombre',
+            hintText: 'Ingresa tu nombre',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newName = nameController.text.trim();
+              if (newName.isNotEmpty) {
+                try {
+                  // Actualizar en Firestore
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .update({'name': newName});
+                  
+                  // Actualizar en Firebase Auth
+                  await user.updateDisplayName(newName);
+                  
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Nombre actualizado con éxito'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error al actualizar el nombre'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,77 +108,108 @@ class ProfilePage extends StatelessWidget {
         title: const Text('Mi Perfil'),
         backgroundColor: const Color(0xFF96B4D8),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              color: const Color(0xFF96B4D8),
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Center(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: const Color(0xFFD6E3BB),
-                      child: Text(
-                        user.email?.substring(0, 1).toUpperCase() ?? 'U',
-                        style: const TextStyle(
-                          fontSize: 40,
-                          color: Color(0xFF96B4D8),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          print('Estado de la conexión: ${snapshot.connectionState}');
+          print('Tiene datos: ${snapshot.hasData}');
+          print('Existe el documento: ${snapshot.data?.exists}');
+          print('ID del usuario: ${user.uid}');
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Si el documento no existe, lo creamos
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            _createUserDocument();
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final userData = snapshot.data!.data() as Map<String, dynamic>;
+          final userName = userData['name'] as String? ?? 'Usuario';
+          
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  color: const Color(0xFF96B4D8),
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: const Color(0xFFD6E3BB),
+                          child: Text(
+                            userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                            style: const TextStyle(
+                              fontSize: 40,
+                              color: Color(0xFF96B4D8),
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        Text(
+                          userName,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          user.email ?? 'Usuario',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      user.email ?? 'Usuario',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                _buildProfileSection(
+                  icon: Icons.restaurant_menu,
+                  title: 'Mis Recetas',
+                  subtitle: 'Gestiona tus recetas creadas',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyRecipesScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildProfileSection(
+                  icon: Icons.favorite,
+                  title: 'Recetas Favoritas',
+                  subtitle: 'Recetas guardadas como favoritas',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FavoriteRecipesScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildProfileSection(
+                  icon: Icons.settings,
+                  title: 'Configuración',
+                  subtitle: 'Cambiar nombre de usuario',
+                  onTap: () => _updateUserName(context),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            _buildProfileSection(
-              icon: Icons.restaurant_menu,
-              title: 'Mis Recetas',
-              subtitle: 'Gestiona tus recetas creadas',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyRecipesScreen(),
-                  ),
-                );
-              },
-            ),
-            _buildProfileSection(
-              icon: Icons.favorite,
-              title: 'Recetas Favoritas',
-              subtitle: 'Recetas guardadas como favoritas',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const FavoriteRecipesScreen(),
-                  ),
-                );
-              },
-            ),
-            _buildProfileSection(
-              icon: Icons.settings,
-              title: 'Configuración',
-              subtitle: 'Ajustes de la aplicación',
-              onTap: () {
-                // Navegar a configuración
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
