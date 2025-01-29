@@ -35,19 +35,6 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
     'lb': 'lb',
   };
 
-  final List<String> _unidadesDisponibles = [
-    'g',    // gramos
-    'kg',   // kilogramos
-    'ml',   // mililitros
-    'l',    // litros
-    'tz',   // taza
-    'cda',  // cucharada
-    'cdta', // cucharaditaÑ
-    'u',    // unidad
-    'oz',   // onzas
-    'lb',   // libras
-  ];
-
   final Map<String, String> _unidadesCompletas = {
     'g': 'gramos',
     'kg': 'kilogramos',
@@ -278,6 +265,10 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
       'volumen': 'ml',
     };
 
+    // Obtener tipo de medida y unidad base
+    String tipoMedida = _determinarTipoMedida(desde);
+    String unidadBase = unidadesBase[tipoMedida] ?? desde;  // Usar la variable
+
     // Factores de conversión a unidad base
     final factoresABase = {
       // Peso
@@ -292,10 +283,6 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
       'cda': 15,
       'cdta': 5,
     };
-
-    // Obtener tipo de medida
-    String tipoMedida = _determinarTipoMedida(desde);
-    if (tipoMedida == 'unidad') return cantidad; // No convertir unidades
 
     // Convertir a unidad base
     double cantidadBase = cantidad * (factoresABase[desde] ?? 1);

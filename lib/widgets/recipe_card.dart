@@ -6,20 +6,13 @@ import '../models/recipe.dart';
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const RecipeCard({
-<<<<<<< HEAD
-    Key? key,
-    required this.recipe,
-    required this.onTap,
-  }) : super(key: key);
-=======
     super.key,
     required this.recipe,
-    required this.onTap,
+    this.onTap,
   });
->>>>>>> main
 
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -73,9 +66,6 @@ class RecipeCard extends StatelessWidget {
 
   Future<void> _toggleFavorite(BuildContext context) async {
     final currentUser = FirebaseAuth.instance.currentUser;
-<<<<<<< HEAD
-    if (currentUser == null) return;
-=======
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -85,7 +75,6 @@ class RecipeCard extends StatelessWidget {
       );
       return;
     }
->>>>>>> main
 
     final recipeRef = FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
     
@@ -94,8 +83,6 @@ class RecipeCard extends StatelessWidget {
         await recipeRef.update({
           'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
         });
-<<<<<<< HEAD
-=======
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -104,13 +91,10 @@ class RecipeCard extends StatelessWidget {
             ),
           );
         }
->>>>>>> main
       } else {
         await recipeRef.update({
           'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
         });
-<<<<<<< HEAD
-=======
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -119,19 +103,14 @@ class RecipeCard extends StatelessWidget {
             ),
           );
         }
->>>>>>> main
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-<<<<<<< HEAD
-          const SnackBar(content: Text('Error al actualizar favoritos')),
-=======
           const SnackBar(
             content: Text('Error al actualizar favoritos'),
             backgroundColor: Colors.red,
           ),
->>>>>>> main
         );
       }
     }
@@ -151,24 +130,6 @@ class RecipeCard extends StatelessWidget {
         children: [
           InkWell(
             onTap: onTap,
-<<<<<<< HEAD
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                //ClipRRect(
-                  //borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  //child: Image.network(
-                    //recipe.imageUrl ?? 'https://via.placeholder.com/150',
-                    //height: 150,
-                    //width: double.infinity,
-                    //fit: BoxFit.cover,
-                  //),
-                //),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-=======
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -196,7 +157,6 @@ class RecipeCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
->>>>>>> main
                     children: [
                       Row(
                         children: [

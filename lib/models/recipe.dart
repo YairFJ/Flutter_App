@@ -13,15 +13,10 @@ class Recipe {
   final Duration cookingTime;
   final String category;
   final bool isPrivate;
-<<<<<<< HEAD
   final String creatorName;
   final List<String> favoritedBy;
   final Timestamp? createdAt;
-=======
-  final List<String> favoritedBy;
-  final String creatorName;
-  final DateTime? createdAt;
->>>>>>> main
+
 
   Recipe({
     required this.id,
@@ -37,11 +32,6 @@ class Recipe {
     required this.creatorName,
     List<String>? favoritedBy,
     this.isPrivate = false,
-<<<<<<< HEAD
-    required this.creatorName,
-    List<String>? favoritedBy,
-=======
->>>>>>> main
     this.createdAt,
   }) : favoritedBy = favoritedBy ?? [];
 
@@ -72,13 +62,7 @@ class Recipe {
       favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
       creatorName: map['creatorName'] ?? 'Usuario',
       isPrivate: map['isPrivate'] ?? false,
-<<<<<<< HEAD
-      creatorName: map['creatorName'] ?? 'Usuario desconocido',
-      favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
       createdAt: map['createdAt'] as Timestamp?,
-=======
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
->>>>>>> main
     );
   }
 
@@ -97,13 +81,7 @@ class Recipe {
       'favoritedBy': favoritedBy,
       'creatorName': creatorName,
       'isPrivate': isPrivate,
-<<<<<<< HEAD
-      'creatorName': creatorName,
-      'favoritedBy': favoritedBy,
-      if (createdAt != null) 'createdAt': createdAt,
-=======
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
->>>>>>> main
     };
   }
 } 

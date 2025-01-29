@@ -83,8 +83,8 @@ class MyRecipesScreen extends StatelessWidget {
           }).toList() ?? [];
 
           recipes.sort((a, b) {
-            final aTime = a.createdAt ?? DateTime.now();
-            final bTime = b.createdAt ?? DateTime.now();
+            final aTime = a.createdAt?.toDate() ?? DateTime.now();
+            final bTime = b.createdAt?.toDate() ?? DateTime.now();
             return bTime.compareTo(aTime);
           });
 
