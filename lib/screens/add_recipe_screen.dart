@@ -41,19 +41,30 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           throw Exception('Usuario no autenticado');
         }
 
+<<<<<<< HEAD
         // Obtener el nombre del usuario actual
+=======
+        // Obtener los datos del usuario desde Firestore
+>>>>>>> main
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
             .get();
+<<<<<<< HEAD
         
         final userName = userDoc.data()?['name'] ?? 'Usuario desconocido';
+=======
+
+        // Obtener el nombre del usuario desde Firestore
+        final userName = userDoc.data()?['name'] ?? currentUser.displayName ?? 'Usuario';
+>>>>>>> main
 
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
             .where((text) => text.isNotEmpty)
             .toList();
 
+<<<<<<< HEAD
         final recipe = Recipe(
           id: '',
           title: _titleController.text,
@@ -71,6 +82,21 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
         final recipeData = {
           ...recipe.toMap(),
+=======
+        await FirebaseFirestore.instance.collection('recipes').add({
+          'title': _titleController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'cookingTimeMinutes': int.parse(_cookingTimeController.text.trim()),
+          'ingredients': _ingredients.map((ingredient) => ingredient.toMap()).toList(),
+          'steps': steps,
+          'imageUrl': _imageUrl,
+          'category': _selectedCategory,
+          'userId': currentUser.uid,
+          'creatorEmail': currentUser.email ?? 'No disponible',
+          'creatorName': userName,
+          'isPrivate': _isPrivate,
+          'favoritedBy': [],
+>>>>>>> main
           'createdAt': FieldValue.serverTimestamp(),
         };
 

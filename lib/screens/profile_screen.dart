@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+<<<<<<< HEAD
 import 'package:firebase_firestore/firebase_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:recipe_app/screens/favorite_recipes_screen.dart';
@@ -6,12 +7,25 @@ import 'package:recipe_app/screens/user_recipes_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
+=======
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import '../screens/favorite_recipes_screen.dart';
+import '../screens/user_recipes_screen.dart';
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+>>>>>>> main
 
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
 
+<<<<<<< HEAD
     void _navigateToMyRecipes() {
+=======
+    void navigateToMyRecipes() {
+>>>>>>> main
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -20,7 +34,11 @@ class ProfileScreen extends StatelessWidget {
       );
     }
 
+<<<<<<< HEAD
     void _navigateToFavorites() {
+=======
+    void navigateToFavorites() {
+>>>>>>> main
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -84,14 +102,22 @@ class ProfileScreen extends StatelessWidget {
                     ListTile(
                       leading: const Icon(Icons.restaurant_menu),
                       title: const Text('Mis Recetas'),
+<<<<<<< HEAD
                       onTap: _navigateToMyRecipes,
+=======
+                      onTap: navigateToMyRecipes,
+>>>>>>> main
                       trailing: const Icon(Icons.arrow_forward_ios),
                     ),
                     const Divider(),
                     ListTile(
                       leading: const Icon(Icons.favorite),
                       title: const Text('Recetas Favoritas'),
+<<<<<<< HEAD
                       onTap: _navigateToFavorites,
+=======
+                      onTap: navigateToFavorites,
+>>>>>>> main
                       trailing: const Icon(Icons.arrow_forward_ios),
                     ),
                   ],

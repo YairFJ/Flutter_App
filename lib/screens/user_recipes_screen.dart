@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+<<<<<<< HEAD
 import 'package:firebase_firestore/firebase_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:recipe_app/models/recipe.dart';
@@ -6,6 +7,16 @@ import 'package:recipe_app/screens/recipe_detail_screen.dart';
 
 class UserRecipesScreen extends StatelessWidget {
   const UserRecipesScreen({Key? key}) : super(key: key);
+=======
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import '../models/recipe.dart';
+import '../screens/recipe_detail_screen.dart';
+import '../widgets/recipe_card.dart';
+
+class UserRecipesScreen extends StatelessWidget {
+  const UserRecipesScreen({super.key});
+>>>>>>> main
 
   @override
   Widget build(BuildContext context) {

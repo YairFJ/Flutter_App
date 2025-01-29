@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../screens/recipe_detail_screen.dart';
 import '../screens/edit_recipe_screen.dart';
 import '../models/recipe.dart';
 
@@ -10,10 +9,17 @@ class RecipeCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const RecipeCard({
+<<<<<<< HEAD
     Key? key,
     required this.recipe,
     required this.onTap,
   }) : super(key: key);
+=======
+    super.key,
+    required this.recipe,
+    required this.onTap,
+  });
+>>>>>>> main
 
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -67,7 +73,19 @@ class RecipeCard extends StatelessWidget {
 
   Future<void> _toggleFavorite(BuildContext context) async {
     final currentUser = FirebaseAuth.instance.currentUser;
+<<<<<<< HEAD
     if (currentUser == null) return;
+=======
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes iniciar sesión para guardar favoritos'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+>>>>>>> main
 
     final recipeRef = FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
     
@@ -76,15 +94,44 @@ class RecipeCard extends StatelessWidget {
         await recipeRef.update({
           'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
         });
+<<<<<<< HEAD
+=======
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Receta eliminada de favoritos'),
+              backgroundColor: Colors.grey,
+            ),
+          );
+        }
+>>>>>>> main
       } else {
         await recipeRef.update({
           'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
         });
+<<<<<<< HEAD
+=======
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Receta guardada en favoritos'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+>>>>>>> main
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
+<<<<<<< HEAD
           const SnackBar(content: Text('Error al actualizar favoritos')),
+=======
+          const SnackBar(
+            content: Text('Error al actualizar favoritos'),
+            backgroundColor: Colors.red,
+          ),
+>>>>>>> main
         );
       }
     }
@@ -104,6 +151,7 @@ class RecipeCard extends StatelessWidget {
         children: [
           InkWell(
             onTap: onTap,
+<<<<<<< HEAD
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -120,25 +168,67 @@ class RecipeCard extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+=======
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recipe.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    recipe.description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+>>>>>>> main
                     children: [
-                      Text(
-                        recipe.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.timer_outlined,
+                            size: 16,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${recipe.cookingTime.inMinutes} min',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        recipe.description,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                      IconButton(
+                        icon: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (Widget child, Animation<double> animation) {
+                            return ScaleTransition(scale: animation, child: child);
+                          },
+                          child: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            key: ValueKey<bool>(isFavorite),
+                            color: isFavorite ? Colors.red : Colors.grey,
+                            size: 20,
+                          ),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        onPressed: () => _toggleFavorite(context),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -168,8 +258,45 @@ class RecipeCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const Divider(),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.person_outline,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Creado por: ${recipe.creatorName}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              recipe.creatorEmail,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           if (currentUser?.uid == recipe.userId)

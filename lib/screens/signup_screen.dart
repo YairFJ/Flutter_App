@@ -4,6 +4,7 @@ import 'package:flutter_app/components/my_button.dart';
 import 'package:flutter_app/components/my_textfield.dart';
 import 'package:flutter_app/components/square_tile.dart';
 import 'package:flutter_app/services/auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -14,10 +15,10 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final usernameController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
@@ -28,20 +29,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
 
       try {
+        // Crear usuario con email y contraseña
         final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text,
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
         );
 
-        await userCredential.user?.updateDisplayName(usernameController.text.trim());
-        
+        // Actualizar el perfil del usuario con su nombre en Firebase Auth
+        await userCredential.user?.updateDisplayName(_nameController.text.trim());
+
+        // Esperar un momento para asegurar que el displayName se actualice
+        await Future.delayed(const Duration(seconds: 1));
+
+        // Crear un documento en Firestore para el usuario
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user?.uid)
+            .set({
+          'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Recargar el usuario para asegurar que tenemos la información más reciente
+        await userCredential.user?.reload();
+
         if (mounted) {
           Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Registro exitoso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
         }
-      } on FirebaseAuthException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Error al registrar usuario')),
-        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al registrar: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } finally {
         if (mounted) {
           setState(() {
@@ -135,7 +165,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                         // Campos de texto
                         MyTextField(
-                          controller: usernameController,
+                          controller: _nameController,
                           hintText: 'Username',
                           obscureText: false,
                         ),
@@ -143,7 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         SizedBox(height: verticalSpacing),
 
                         MyTextField(
-                          controller: emailController,
+                          controller: _emailController,
                           hintText: 'Email',
                           obscureText: false,
                         ),
@@ -151,7 +181,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         SizedBox(height: verticalSpacing),
 
                         MyTextField(
-                          controller: passwordController,
+                          controller: _passwordController,
                           hintText: 'Password',
                           obscureText: true,
                         ),
@@ -159,7 +189,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         SizedBox(height: verticalSpacing),
 
                         MyTextField(
-                          controller: confirmPasswordController,
+                          controller: _confirmPasswordController,
                           hintText: 'Confirm Password',
                           obscureText: true,
                         ),
@@ -256,10 +286,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    usernameController.dispose();
-    confirmPasswordController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 } 
