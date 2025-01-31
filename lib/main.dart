@@ -7,12 +7,13 @@ import 'models/pigeon_user_detail.dart';
 import 'screens/signup_screen.dart';
 import 'screens/add_recipe_screen.dart';
 import 'screens/recipe_detail_screen.dart';
-import 'pages/profile_page.dart';
 import 'pages/recipes_page.dart';
 import 'pages/conversion_table_page.dart';
 import 'pages/timer_page.dart';
 import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
+import 'pages/profile_page.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,9 +39,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'Restaurante App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
       home: const AuthWrapper(),
       routes: {
-        //'/': (context) => const HomePage(),
+        '/profile': (context) => ProfilePage(user: FirebaseAuth.instance.currentUser!),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const SignUpScreen(),
       },
@@ -143,24 +149,17 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             DrawerHeader(
               decoration: BoxDecoration(
-                color: primaryColor,
+                color: Theme.of(context).primaryColor,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: secondaryColor,
-                    child: Text(
-                      FirebaseAuth.instance.currentUser?.email?.substring(0, 1).toUpperCase() ?? 'U',
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: primaryColor,
-                      ),
-                    ),
+                  const Icon(
+                    Icons.restaurant_menu,
+                    size: 64,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Text(
                     FirebaseAuth.instance.currentUser?.email ?? 'Usuario',
                     style: const TextStyle(
@@ -172,41 +171,35 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.person, size: 26),
-              title: const Text(
-                'Mi Perfil',
-                style: TextStyle(fontSize: 16),
-              ),
+              leading: const Icon(Icons.home),
+              title: const Text('Inicio'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfilePage(
-                      user: FirebaseAuth.instance.currentUser!,
-                    ),
-                  ),
-                );
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/');
               },
             ),
             ListTile(
-              leading: const Icon(Icons.favorite, size: 26),
-              title: const Text(
-                'Favoritos',
-                style: TextStyle(fontSize: 16),
-              ),
+              leading: const Icon(Icons.person),
+              title: const Text('Mi Perfil'),
               onTap: () {
-                // Navegar a favoritos
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/profile');
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, size: 26),
-              title: const Text(
-                'Cerrar Sesión',
-                style: TextStyle(fontSize: 16),
+            if (FirebaseAuth.instance.currentUser != null) ...[
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.exit_to_app),
+                title: const Text('Cerrar Sesión'),
+                onTap: () async {
+                  await FirebaseAuth.instance.signOut();
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    Navigator.pushReplacementNamed(context, '/');
+                  }
+                },
               ),
-              onTap: signUserOut,
-            ),
+            ],
           ],
         ),
       ),

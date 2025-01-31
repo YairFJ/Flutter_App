@@ -1,24 +1,35 @@
 import 'ingredient.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+<<<<<<< HEAD
 import 'package:firebase_auth/firebase_auth.dart';
+=======
+>>>>>>> main
 
 class Recipe {
   final String id;
   final String title;
   final String description;
+  final String userId;
+  final String creatorEmail;
   List<Ingredient> ingredients;
   final List<String> steps;
   final String? imageUrl;
   final Duration cookingTime;
   final String category;
-  final String userId;
   final bool isPrivate;
+<<<<<<< HEAD
   bool isFavorite;
   String? _userEmail;
   String? _userName;
   final String creatorName;
   final String creatorEmail;
   
+=======
+  final String creatorName;
+  final List<String> favoritedBy;
+  final Timestamp? createdAt;
+
+>>>>>>> main
 
   Recipe({
     required this.id,
@@ -30,7 +41,11 @@ class Recipe {
     required this.cookingTime,
     required this.category,
     required this.userId,
+    required this.creatorEmail,
+    required this.creatorName,
+    List<String>? favoritedBy,
     this.isPrivate = false,
+<<<<<<< HEAD
     this.isFavorite = false,
     required this.creatorName,
     required this.creatorEmail,
@@ -118,6 +133,10 @@ class Recipe {
           .set(toMap());
     }
   }
+=======
+    this.createdAt,
+  }) : favoritedBy = favoritedBy ?? [];
+>>>>>>> main
 
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
     return Recipe(
@@ -142,16 +161,24 @@ class Recipe {
       cookingTime: Duration(minutes: map['cookingTimeMinutes'] ?? 0),
       category: map['category'] ?? '',
       userId: map['userId'] ?? '',
+      creatorEmail: map['creatorEmail'] ?? 'No disponible',
+      favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
+      creatorName: map['creatorName'] ?? 'Usuario',
       isPrivate: map['isPrivate'] ?? false,
+<<<<<<< HEAD
       isFavorite: map['isFavorite'] ?? false,
       creatorName: map['creatorName'] ?? '',
       creatorEmail: map['creatorEmail'] ?? '',
+=======
+      createdAt: map['createdAt'] as Timestamp?,
+>>>>>>> main
     );
   }
 
   @override
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'title': title,
       'description': description,
       'ingredients': ingredients.map((ingredient) => ingredient.toMap()).toList(),
@@ -159,12 +186,21 @@ class Recipe {
       'imageUrl': imageUrl,
       'cookingTimeMinutes': cookingTime.inMinutes,
       'category': category,
+<<<<<<< HEAD
       'userId': userId, // Este es el ID del creador original
       'isPrivate': isPrivate,
       'isFavorite': isFavorite,
       'createdAt': FieldValue.serverTimestamp(),
       'creatorName': creatorName,
       'creatorEmail': creatorEmail,
+=======
+      'userId': userId,
+      'creatorEmail': creatorEmail,
+      'favoritedBy': favoritedBy,
+      'creatorName': creatorName,
+      'isPrivate': isPrivate,
+      'createdAt': createdAt ?? FieldValue.serverTimestamp(),
+>>>>>>> main
     };
   }
 } 

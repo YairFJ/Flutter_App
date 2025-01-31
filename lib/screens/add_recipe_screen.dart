@@ -4,6 +4,7 @@ import 'package:flutter_app/constants/categories.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/models/ingredient.dart';
 import 'package:flutter_app/widgets/add_ingredient_dialog.dart';
+import 'package:flutter_app/models/recipe.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({super.key});
@@ -27,6 +28,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
       try {
+        // Mostrar indicador de carga
+        if (!mounted) return;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -40,44 +43,71 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           throw Exception('Usuario no autenticado');
         }
 
+        // Obtener el nombre del usuario actual
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+        
+        if (!userDoc.exists) {
+          throw Exception('No se encontraron datos del usuario');
+        }
+        
+        final userName = userDoc.data()?['name'] ?? 'Usuario desconocido';
+
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
             .where((text) => text.isNotEmpty)
             .toList();
 
-        await FirebaseFirestore.instance.collection('recipes').add({
-          'title': _titleController.text.trim(),
-          'description': _descriptionController.text.trim(),
-          'cookingTimeMinutes': int.parse(_cookingTimeController.text.trim()),
-          'ingredients': _ingredients.map((ingredient) => ingredient.toMap()).toList(),
-          'steps': steps,
-          'imageUrl': _imageUrl,
-          'category': _selectedCategory,
-          'userId': currentUser.uid,
-          'isPrivate': _isPrivate,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        final recipe = Recipe(
+          id: '',
+          title: _titleController.text,
+          description: _descriptionController.text,
+          userId: currentUser.uid,
+          creatorEmail: currentUser.email ?? 'No disponible',
+          creatorName: userName,
+          favoritedBy: [],
+          cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
+          ingredients: _ingredients,
+          steps: steps,
+          imageUrl: _imageUrl,
+          category: _selectedCategory,
+          isPrivate: _isPrivate,
+        );
 
-        if (mounted) {
-          Navigator.pop(context);
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('¡Receta guardada con éxito!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
+        final recipeData = {
+          ...recipe.toMap(),
+          'createdAt': FieldValue.serverTimestamp(),
+        };
+
+        await FirebaseFirestore.instance.collection('recipes').add(recipeData);
+
+        if (!mounted) return;
+        
+        // Cerrar el diálogo de carga
+        Navigator.pop(context);
+        // Volver a la pantalla anterior
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Receta guardada con éxito!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } catch (e) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al guardar la receta: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        if (!mounted) return;
+        
+        // Asegurarse de cerrar el diálogo de carga si está abierto
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar la receta: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -109,8 +139,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
             TextFormField(
               controller: _titleController,
