@@ -1,9 +1,6 @@
 import 'ingredient.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-<<<<<<< HEAD
 import 'package:firebase_auth/firebase_auth.dart';
-=======
->>>>>>> main
 
 class Recipe {
   final String id;
@@ -21,7 +18,8 @@ class Recipe {
   String? _userEmail;
   String? _userName;
   final String creatorName;
-  final String creatorEmail;
+  final List<String> favoritedBy;
+  final Timestamp? createdAt;
   
 
   Recipe({
@@ -36,12 +34,10 @@ class Recipe {
     required this.userId,
     required this.creatorEmail,
     required this.creatorName,
-    List<String>? favoritedBy,
+    this.favoritedBy = const [],
     this.isPrivate = false,
-<<<<<<< HEAD
     this.isFavorite = false,
-    required this.creatorName,
-    required this.creatorEmail,
+    this.createdAt,
   }) {
     _initializeUserInfo();
   }
@@ -126,10 +122,6 @@ class Recipe {
           .set(toMap());
     }
   }
-=======
-    this.createdAt,
-  }) : favoritedBy = favoritedBy ?? [];
->>>>>>> main
 
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
     return Recipe(
@@ -158,13 +150,8 @@ class Recipe {
       favoritedBy: List<String>.from(map['favoritedBy'] ?? []),
       creatorName: map['creatorName'] ?? 'Usuario',
       isPrivate: map['isPrivate'] ?? false,
-<<<<<<< HEAD
       isFavorite: map['isFavorite'] ?? false,
-      creatorName: map['creatorName'] ?? '',
-      creatorEmail: map['creatorEmail'] ?? '',
-=======
       createdAt: map['createdAt'] as Timestamp?,
->>>>>>> main
     );
   }
 
@@ -179,21 +166,13 @@ class Recipe {
       'imageUrl': imageUrl,
       'cookingTimeMinutes': cookingTime.inMinutes,
       'category': category,
-<<<<<<< HEAD
       'userId': userId, // Este es el ID del creador original
       'isPrivate': isPrivate,
       'isFavorite': isFavorite,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'creatorName': creatorName,
-      'creatorEmail': creatorEmail,
-=======
-      'userId': userId,
       'creatorEmail': creatorEmail,
       'favoritedBy': favoritedBy,
-      'creatorName': creatorName,
-      'isPrivate': isPrivate,
-      'createdAt': createdAt ?? FieldValue.serverTimestamp(),
->>>>>>> main
     };
   }
 } 
