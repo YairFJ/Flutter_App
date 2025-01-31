@@ -5,63 +5,125 @@ import '../models/recipe.dart';
 import '../constants/categories.dart';
 import '../screens/recipe_detail_screen.dart';
 
-class RecipesPage extends StatelessWidget {
+class RecipesPage extends StatefulWidget {
   const RecipesPage({super.key});
 
   @override
+  State<RecipesPage> createState() => _RecipesPageState();
+}
+
+class _RecipesPageState extends State<RecipesPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('recipes')
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-
-        final currentUser = FirebaseAuth.instance.currentUser;
-        final recipes = snapshot.data!.docs.map((doc) {
-          return Recipe.fromMap(
-            doc.data() as Map<String, dynamic>,
-            doc.id,
-          );
-        }).where((recipe) {
-          return !recipe.isPrivate || recipe.userId == currentUser?.uid;
-        }).toList();
-
-        if (recipes.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.restaurant_menu, 
-                  size: 64, 
-                  color: Colors.grey[400]
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No hay recetas disponibles',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Buscar recetas...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              filled: true,
+              fillColor: Colors.white,
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                          _searchQuery = '';
+                        });
+                      },
+                    )
+                  : null,
             ),
-          );
-        }
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value.toLowerCase();
+              });
+            },
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('recipes')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-        return ListView(
-          children: RecipeCategories.categories.map((category) {
-            return _buildCategoryCarousel(category, recipes, context);
-          }).toList(),
-        );
-      },
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              final currentUser = FirebaseAuth.instance.currentUser;
+              final recipes = snapshot.data!.docs.map((doc) {
+                return Recipe.fromMap(
+                  doc.data() as Map<String, dynamic>,
+                  doc.id,
+                );
+              }).where((recipe) {
+                return !recipe.isPrivate || recipe.userId == currentUser?.uid;
+              }).toList();
+
+              // Filtrar las recetas según la búsqueda
+              var filteredRecipes = recipes;
+              if (_searchQuery.isNotEmpty) {
+                filteredRecipes = recipes.where((recipe) {
+                  return recipe.title.toLowerCase().contains(_searchQuery) ||
+                         recipe.description.toLowerCase().contains(_searchQuery) ||
+                         recipe.category.toLowerCase().contains(_searchQuery);
+                }).toList();
+              }
+
+              if (filteredRecipes.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.restaurant_menu, 
+                        size: 64, 
+                        color: Colors.grey[400]
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No hay recetas disponibles',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView(
+                children: RecipeCategories.categories.map((category) {
+                  return _buildCategoryCarousel(category, filteredRecipes, context);
+                }).toList(),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

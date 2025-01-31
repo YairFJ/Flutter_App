@@ -135,12 +135,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              // Implementar función de búsqueda
-            },
-            icon: const Icon(Icons.search, color: Colors.white, size: 28),
-          ),
+          // Eliminar o comentar esta parte
+          // IconButton(
+          //   icon: const Icon(Icons.search),
+          //   onPressed: () {
+          //     // ...
+          //   },
+          // ),
         ],
       ),
       drawer: Drawer(
