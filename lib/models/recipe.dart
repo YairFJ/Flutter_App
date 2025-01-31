@@ -17,19 +17,12 @@ class Recipe {
   final Duration cookingTime;
   final String category;
   final bool isPrivate;
-<<<<<<< HEAD
   bool isFavorite;
   String? _userEmail;
   String? _userName;
   final String creatorName;
   final String creatorEmail;
   
-=======
-  final String creatorName;
-  final List<String> favoritedBy;
-  final Timestamp? createdAt;
-
->>>>>>> main
 
   Recipe({
     required this.id,
