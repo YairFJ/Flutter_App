@@ -139,8 +139,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
             TextFormField(
               controller: _titleController,

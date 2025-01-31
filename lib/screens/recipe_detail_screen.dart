@@ -187,6 +187,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: widget.recipe.ingredients.length,
                     itemBuilder: (context, index) {
+                      final ingredient = widget.recipe.ingredients[index];
+                      String formattedQuantity = '';
+                      
+                      // Formatear la cantidad según sea entero o decimal
+                      if (ingredient.quantity % 1 == 0) {
+                        formattedQuantity = ingredient.quantity.toInt().toString();
+                      } else {
+                        formattedQuantity = ingredient.quantity.toString();
+                      }
+                      
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
@@ -195,7 +205,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             const Text('• ', style: TextStyle(fontSize: 16)),
                             Expanded(
                               child: Text(
-                                widget.recipe.ingredients[index].toString(),
+                                '${ingredient.name} - $formattedQuantity ${ingredient.unit}',
                                 style: const TextStyle(fontSize: 16),
                               ),
                             ),
