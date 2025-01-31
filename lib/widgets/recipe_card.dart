@@ -176,45 +176,11 @@ class RecipeCard extends StatelessWidget {
                         ],
                       ),
                       IconButton(
-                        icon: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          transitionBuilder: (Widget child, Animation<double> animation) {
-                            return ScaleTransition(scale: animation, child: child);
-                          },
-                          child: Icon(
-                            isFavorite ? Icons.favorite : Icons.favorite_border,
-                            key: ValueKey<bool>(isFavorite),
-                            color: isFavorite ? Colors.red : Colors.grey,
-                            size: 20,
-                          ),
+                        icon: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : null,
                         ),
                         onPressed: () => _toggleFavorite(context),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Creado por: ${recipe.creatorName}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            recipe.category,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              isFavorite ? Icons.favorite : Icons.favorite_border,
-                              color: isFavorite ? Colors.red : null,
-                            ),
-                            onPressed: () => _toggleFavorite(context),
-                          ),
-                        ],
                       ),
                     ],
                   ),
