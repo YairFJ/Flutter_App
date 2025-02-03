@@ -137,136 +137,142 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       appBar: AppBar(
         title: const Text('Nueva Receta'),
       ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Título',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value?.trim().isEmpty ?? true) {
-                  return 'Por favor ingresa un título';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              validator: (value) {
-                if (value?.trim().isEmpty ?? true) {
-                  return 'Por favor ingresa una descripción';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _cookingTimeController,
-              decoration: const InputDecoration(
-                labelText: 'Tiempo de preparación (minutos)',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value?.trim().isEmpty ?? true) {
-                  return 'Por favor ingresa el tiempo de preparación';
-                }
-                final number = int.tryParse(value!);
-                if (number == null || number <= 0) {
-                  return 'Por favor ingresa un número válido mayor a 0';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedCategory,
-                  isExpanded: true,
-                  hint: const Text('Selecciona una categoría'),
-                  items: RecipeCategories.categories.map((String category) {
-                    return DropdownMenuItem<String>(
-                      value: category,
-                      child: Row(
-                        children: [
-                          Icon(
-                            RecipeCategories.getIconForCategory(category),
-                            color: RecipeCategories.getColorForCategory(category),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(category),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _selectedCategory = newValue;
-                      });
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 600),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Título',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value?.trim().isEmpty ?? true) {
+                      return 'Por favor ingresa un título';
                     }
+                    return null;
                   },
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _buildIngredientsList(),
-            const SizedBox(height: 24),
-            _buildStepsList(),
-            const SizedBox(height: 24),
-            SwitchListTile(
-              title: const Text('Receta Privada'),
-              subtitle: Text(
-                _isPrivate 
-                    ? 'Solo tú podrás ver esta receta'
-                    : 'Todos podrán ver esta receta',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                  validator: (value) {
+                    if (value?.trim().isEmpty ?? true) {
+                      return 'Por favor ingresa una descripción';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              value: _isPrivate,
-              onChanged: (bool value) {
-                setState(() {
-                  _isPrivate = value;
-                });
-              },
-              activeColor: Theme.of(context).primaryColor,
-            ),
-            const Divider(),
-            ElevatedButton(
-              onPressed: _saveRecipe,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                backgroundColor: Theme.of(context).primaryColor,
-              ),
-              child: const Text(
-                'Guardar Receta',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _cookingTimeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Tiempo de preparación (minutos)',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value?.trim().isEmpty ?? true) {
+                      return 'Por favor ingresa el tiempo de preparación';
+                    }
+                    final number = int.tryParse(value!);
+                    if (number == null || number <= 0) {
+                      return 'Por favor ingresa un número válido mayor a 0';
+                    }
+                    return null;
+                  },
                 ),
-              ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCategory,
+                      isExpanded: true,
+                      hint: const Text('Selecciona una categoría'),
+                      items: RecipeCategories.categories.map((String category) {
+                        return DropdownMenuItem<String>(
+                          value: category,
+                          child: Row(
+                            children: [
+                              Icon(
+                                RecipeCategories.getIconForCategory(category),
+                                color: RecipeCategories.getColorForCategory(category),
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(category),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedCategory = newValue;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildIngredientsList(),
+                const SizedBox(height: 24),
+                _buildStepsList(),
+                const SizedBox(height: 24),
+                SwitchListTile(
+                  title: const Text('Receta Privada'),
+                  subtitle: Text(
+                    _isPrivate 
+                        ? 'Solo tú podrás ver esta receta'
+                        : 'Todos podrán ver esta receta',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                  value: _isPrivate,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _isPrivate = value;
+                    });
+                  },
+                  activeColor: Theme.of(context).primaryColor,
+                ),
+                const Divider(),
+                ElevatedButton(
+                  onPressed: _saveRecipe,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                    backgroundColor: Theme.of(context).primaryColor,
+                  ),
+                  child: const Text(
+                    'Guardar Receta',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
