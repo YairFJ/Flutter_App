@@ -188,24 +188,59 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
 
   void _actualizarCantidadIngrediente(int index, String nuevoValor) {
     try {
-      double nuevaCantidad = double.parse(nuevoValor);
-      double cantidadOriginal = _ingredientes[index].cantidadOriginal;
-      double porcentajeCambio = (nuevaCantidad - cantidadOriginal) / cantidadOriginal;
+      // Usamos 'g' como unidad base para ingredientes de peso.
+      const String baseUnidad = 'g';
+      final ingredienteMod = _ingredientes[index];
+
+      // Convertimos el valor ingresado (en la unidad actual del ingrediente modificado)
+      double cantidadNuevaDisplay = double.parse(nuevoValor);
+      // Convertir la nueva cantidad del ingrediente modificado a la unidad base
+      double cantidadNuevaBase = _convertirUnidad(
+        cantidadNuevaDisplay,
+        ingredienteMod.unidad,
+        baseUnidad,
+      );
+
+      // Obtener la cantidad original del ingrediente modificado expresada en la unidad base
+      double cantidadOriginalModBase = _convertirUnidad(
+        ingredienteMod.cantidadOriginal,
+        ingredienteMod.unidadOriginal,
+        baseUnidad,
+      );
+
+      // Calculamos el factor de escala (por ejemplo: si pasa de 300 g a 357 g, factor = 357/300)
+      double factorEscala = cantidadNuevaBase / cantidadOriginalModBase;
 
       setState(() {
-        _ingredientes[index].cantidad = nuevaCantidad;
-        
-        // Actualizar proporcionalmente los demás ingredientes
-        for (var i = 0; i < _ingredientes.length; i++) {
+        // Actualizamos el ingrediente modificado (manteniendo su unidad actual)
+        ingredienteMod.cantidad = cantidadNuevaDisplay;
+        ingredienteMod.cantidadController.text = _formatearNumero(cantidadNuevaDisplay);
+
+        // Actualizamos el resto de los ingredientes usando el mismo factor de escala
+        for (int i = 0; i < _ingredientes.length; i++) {
           if (i != index) {
-            double nuevaCantidadOtro = _ingredientes[i].cantidadOriginal * (1 + porcentajeCambio);
-            _ingredientes[i].cantidad = nuevaCantidadOtro;
-            _ingredientes[i].cantidadController.text = _formatearNumero(nuevaCantidadOtro);
+            final ing = _ingredientes[i];
+            // Convertir su cantidad original a la unidad base
+            double ingOriginalBase = _convertirUnidad(
+              ing.cantidadOriginal,
+              ing.unidadOriginal,
+              baseUnidad,
+            );
+
+            // Aplicar el factor de escala para obtener la nueva cantidad en la unidad base
+            double nuevoIngBase = ingOriginalBase * factorEscala;
+
+            // Convertir la nueva cantidad en la unidad base a la unidad actual del ingrediente
+            double nuevoDisplay = _convertirUnidad(nuevoIngBase, baseUnidad, ing.unidad);
+
+            ing.cantidad = nuevoDisplay;
+            ing.cantidadController.text = _formatearNumero(nuevoDisplay);
           }
         }
       });
     } catch (e) {
-      // Manejar error de conversión
+      // Manejar cualquier error de conversión
+      print("Error al actualizar la cantidad: $e");
     }
   }
 
