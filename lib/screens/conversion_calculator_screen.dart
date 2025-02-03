@@ -234,17 +234,8 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
         ingrediente.unidad = nuevaUnidad;
         ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
 
-        // Calcular el factor de cambio para los demás ingredientes
-        double factorCambio = nuevaCantidad / ingrediente.cantidadOriginal;
-
-        // Actualizar proporcionalmente los demás ingredientes del mismo tipo
-        for (var i = 0; i < _ingredientes.length; i++) {
-          if (i != index && _ingredientes[i].tipoMedida == ingrediente.tipoMedida) {
-            double nuevaCantidadOtro = _ingredientes[i].cantidadOriginal * factorCambio;
-            _ingredientes[i].cantidad = nuevaCantidadOtro;
-            _ingredientes[i].cantidadController.text = _formatearNumero(nuevaCantidadOtro);
-          }
-        }
+        // No modificar las unidades ni cantidades de los demás ingredientes
+        // Solo se actualiza el ingrediente que se está modificando
       });
     } catch (e) {
       // Si hay error en la conversión, restaurar valores originales
