@@ -31,7 +31,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+              foregroundColor: const Color.fromARGB(255, 255, 255, 255),
             ),
             child: const Text('Eliminar'),
           ),
@@ -182,37 +182,43 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: widget.recipe.ingredients.length,
-                    itemBuilder: (context, index) {
-                      final ingredient = widget.recipe.ingredients[index];
-                      String formattedQuantity = '';
-                      
-                      // Formatear la cantidad según sea entero o decimal
-                      if (ingredient.quantity % 1 == 0) {
-                        formattedQuantity = ingredient.quantity.toInt().toString();
-                      } else {
-                        formattedQuantity = ingredient.quantity.toString();
-                      }
-                      
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('• ', style: TextStyle(fontSize: 16)),
-                            Expanded(
-                              child: Text(
-                                '${ingredient.name} - $formattedQuantity ${ingredient.unit}',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(
+                          label: Text(
+                            'Ingrediente',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      );
-                    },
+                        DataColumn(
+                          label: Text(
+                            'Cantidad',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        DataColumn(
+                          label: Text(
+                            'Unidad',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                      rows: widget.recipe.ingredients.map((ingredient) {
+                        String formattedQuantity;
+                        if (ingredient.quantity % 1 == 0) {
+                          formattedQuantity = ingredient.quantity.toInt().toString();
+                        } else {
+                          formattedQuantity = ingredient.quantity.toString();
+                        }
+                        return DataRow(cells: [
+                          DataCell(Text(ingredient.name)),
+                          DataCell(Text(formattedQuantity)),
+                          DataCell(Text(ingredient.unit)),
+                        ]);
+                      }).toList(),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   const Text(
