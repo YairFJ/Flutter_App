@@ -53,6 +53,20 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
   }
 
   void _actualizarIngredientes() {
+    // Recorremos la lista de ingredientes y comprobamos que el nombre no esté vacío.
+    bool hayIngredienteVacio = _ingredientes.any((ing) => ing.nombre.trim().isEmpty);
+    if (hayIngredienteVacio) {
+      // Si existe al menos uno con nombre vacío, se muestra un mensaje de error y no se llama al callback.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pueden guardar ingredientes vacíos. Complete o elimine los campos vacíos.',
+          ),
+        ),
+      );
+      return;
+    }
+    // Si todos tienen nombre, se actualiza la lista.
     widget.onIngredientsChanged(_ingredientes);
   }
 
@@ -184,7 +198,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                       ingrediente.cantidad = double.parse(value);
                       _actualizarIngredientes();
                     } catch (e) {
-                      // Manejar error
+                      // Manejar error de conversión si es necesario.
                     }
                   }
                 },
