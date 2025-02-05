@@ -104,6 +104,14 @@ class _HomeScreenState extends State<HomeScreen> {
     const TimerPage(),
     const StopwatchPage(),
   ];
+  
+  // Lista de títulos para el AppBar, en el mismo orden que las páginas.
+  final List<String> _pageTitles = [
+    'Recetas',
+    'Conversión',
+    'Temporizador',
+    'Cronómetro',
+  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -126,9 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: primaryColor,
-        title: const Text(
-          'Recetas',
-          style: TextStyle(
+        title: Text(
+          _pageTitles[_selectedIndex],
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Colors.white,

@@ -48,112 +48,148 @@ class _StopwatchPageState extends State<StopwatchPage> {
   }
 
   String formatTime(int milliseconds) {
-    int hundreds = (milliseconds / 10).floor() % 100;
     int seconds = (milliseconds / 1000).floor() % 60;
     int minutes = (milliseconds / 60000).floor() % 60;
     int hours = (milliseconds / 3600000).floor();
 
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}.${hundreds.toString().padLeft(2, '0')}';
+    return '${hours.toString().padLeft(2, '0')}:'
+           '${minutes.toString().padLeft(2, '0')}:'
+           '${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
+    String strDigits(int n) => n.toString().padLeft(2, '0');
+
+    final hours = strDigits((milliseconds / 3600000).floor());
+    final minutes = strDigits(((milliseconds / 60000).floor()) % 60);
+    final seconds = strDigits(((milliseconds / 1000).floor()) % 60);
+
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          children: [
-            const Spacer(flex: 8),
-            Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.grey.shade300,
-                  width: 8,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  formatTime(milliseconds),
-                  style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildTimeColumn('Horas', hours),
+                        const SizedBox(width: 8),
+                        Text(
+                          ':',
+                          style: TextStyle(fontSize: 40, color: Colors.grey[700]),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildTimeColumn('Minutos', minutes),
+                        const SizedBox(width: 8),
+                        Text(
+                          ':',
+                          style: TextStyle(fontSize: 40, color: Colors.grey[700]),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildTimeColumn('Segundos', seconds),
+                      ],
                     ),
                   ),
-                  onPressed: isRunning ? stopTimer : startTimer,
-                  child: Text(
-                    isRunning ? 'Detener' : 'Iniciar',
-                    style: const TextStyle(fontSize: 16),
+                  const SizedBox(height: 40),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildControlButton(
+                        isRunning ? Icons.pause : Icons.play_arrow,
+                        isRunning ? Colors.orange : Colors.green,
+                        isRunning ? stopTimer : startTimer,
+                      ),
+                      const SizedBox(width: 20),
+                      _buildControlButton(
+                        Icons.refresh,
+                        Colors.blue,
+                        resetTimer,
+                      ),
+                      const SizedBox(width: 20),
+                      _buildControlButton(
+                        Icons.flag,
+                        Colors.purple,
+                        isRunning ? addLap : null,
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                  if (laps.isNotEmpty) ...[
+                    const SizedBox(height: 40),
+                    Container(
+                      height: 150,
+                      child: ListView.builder(
+                        itemCount: laps.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(
+                              'Vuelta ${laps.length - index}',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            trailing: Text(
+                              laps[index],
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  onPressed: resetTimer,
-                  child: const Text(
-                    'Reiniciar',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
-                  onPressed: isRunning ? addLap : null,
-                  child: const Text(
-                    'Vuelta',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 150,
-              child: ListView.builder(
-                itemCount: laps.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      'Vuelta ${laps.length - index}',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    trailing: Text(
-                      laps[index],
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  );
-                },
+                  ],
+                ],
               ),
             ),
-            const Spacer(flex: 2),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTimeColumn(String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildControlButton(IconData icon, Color color, VoidCallback? onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        shape: const CircleBorder(),
+        padding: const EdgeInsets.all(24),
+      ),
+      child: Icon(icon, size: 32, color: Colors.white),
     );
   }
 
