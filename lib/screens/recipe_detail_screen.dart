@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_recipe_screen.dart';
 import 'conversion_calculator_screen.dart';
+import 'package:printing/printing.dart';
+import '../utils/pdf_generator.dart';
 // import '../widgets/conversion_table_dialog.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -118,6 +120,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               onPressed: () => _deleteRecipe(context),
             ),
           ],
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: () async {
+              final pdfBytes = await generateRecipePdf(widget.recipe);
+              await Printing.sharePdf(
+                bytes: pdfBytes,
+                filename: '${widget.recipe.title}.pdf',
+              );
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(
