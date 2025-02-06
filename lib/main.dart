@@ -32,8 +32,21 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +55,22 @@ class MyApp extends StatelessWidget {
       title: 'Restaurante App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        primaryColor: const Color(0xFF96B4D8),
+        scaffoldBackgroundColor: Colors.white,
+        cardColor: Colors.white,
+        brightness: Brightness.light,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const AuthWrapper(),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.blue,
+        primaryColor: const Color(0xFF96B4D8),
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        cardColor: const Color(0xFF1E1E1E),
+        brightness: Brightness.dark,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      themeMode: _themeMode,
+      home: AuthWrapper(toggleTheme: toggleTheme),
       routes: {
         '/profile': (context) => ProfilePage(user: FirebaseAuth.instance.currentUser!),
         '/login': (context) => const LoginPage(),
@@ -55,7 +81,9 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+  final Function toggleTheme;
+  
+  const AuthWrapper({super.key, required this.toggleTheme});
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +103,10 @@ class AuthWrapper extends StatelessWidget {
           return const LoginPage();
         }
 
-        return HomeScreen(userData: PigeonUserDetail.fromUser(user));
+        return HomeScreen(
+          userData: PigeonUserDetail.fromUser(user),
+          toggleTheme: toggleTheme,
+        );
       },
     );
   }
@@ -83,8 +114,9 @@ class AuthWrapper extends StatelessWidget {
 
 class HomeScreen extends StatefulWidget {
   final PigeonUserDetail userData;
+  final Function toggleTheme;
 
-  const HomeScreen({super.key, required this.userData});
+  const HomeScreen({super.key, required this.userData, required this.toggleTheme});
 
   // Definimos los colores como constantes estáticas
   static const Color primaryColor = Color(0xFF96B4D8);
@@ -96,6 +128,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  bool isDarkMode = false;
   
   // Lista de páginas/widgets para cada elemento del menú
   final List<Widget> _pages = [
@@ -105,13 +138,29 @@ class _HomeScreenState extends State<HomeScreen> {
     const StopwatchPage(),
   ];
   
-  // Lista de títulos para el AppBar, en el mismo orden que las páginas.
   final List<String> _pageTitles = [
     'Recetas',
     'Conversión',
     'Temporizador',
     'Cronómetro',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        isDarkMode = Theme.of(context).brightness == Brightness.dark;
+      });
+    });
+  }
+
+  void toggleTheme() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+      widget.toggleTheme();
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -130,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: primaryColor,
@@ -143,13 +192,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
-          // Eliminar o comentar esta parte
-          // IconButton(
-          //   icon: const Icon(Icons.search),
-          //   onPressed: () {
-          //     // ...
-          //   },
-          // ),
+          IconButton(
+            icon: Icon(
+              isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
+              color: Colors.white,
+            ),
+            onPressed: toggleTheme,
+          ),
         ],
       ),
       drawer: Drawer(
@@ -212,10 +261,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: _pages[_selectedIndex], // Mostrar la página seleccionada
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardColor,
         selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
@@ -252,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(
           Icons.add,
           color: Colors.white,
-          size: 30, // Aumenté el tamaño para mejor visibilidad
+          size: 30,
         ),
       ) : null,
     );
