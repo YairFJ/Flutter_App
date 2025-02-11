@@ -13,6 +13,7 @@ import 'pages/timer_page.dart';
 import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
 import 'pages/profile_page.dart';
+import 'screens/groups_screen.dart';
 
 
 Future<void> main() async {
@@ -242,6 +243,18 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/profile');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.group),
+              title: const Text('Comunidades'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const GroupsScreen(),
+                  ),
+                );
               },
             ),
             if (FirebaseAuth.instance.currentUser != null) ...[

@@ -299,6 +299,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   border: OutlineInputBorder(),
                 ),
                 items: RecipeCategories.categories
+                    .toSet()
                     .map((category) => DropdownMenuItem(
                           value: category,
                           child: Text(category),

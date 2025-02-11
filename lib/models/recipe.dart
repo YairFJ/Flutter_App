@@ -84,4 +84,26 @@ class Recipe {
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
     };
   }
+
+  factory Recipe.fromDocument(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Recipe(
+      id: doc.id,
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      ingredients: (data['ingredients'] as List<dynamic>?)?.map((ingredient) {
+        return Ingredient.fromMap(ingredient);
+      }).toList() ?? [],
+      steps: List<String>.from(data['steps'] ?? []),
+      imageUrl: data['imageUrl'],
+      cookingTime: Duration(minutes: data['cookingTimeMinutes'] ?? 0),
+      category: data['category'] ?? '',
+      userId: data['userId'] ?? '',
+      creatorEmail: data['creatorEmail'] ?? 'No disponible',
+      favoritedBy: List<String>.from(data['favoritedBy'] ?? []),
+      creatorName: data['creatorName'] ?? 'Usuario',
+      isPrivate: data['isPrivate'] ?? false,
+      createdAt: data['createdAt'] as Timestamp?,
+    );
+  }
 } 
