@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'package:soundpool/soundpool.dart';
 
 class TimerPage extends StatefulWidget {
   const TimerPage({super.key});
@@ -10,17 +12,82 @@ class TimerPage extends StatefulWidget {
 }
 
 class _TimerPageState extends State<TimerPage> {
-  int hours = 0;
-  int minutes = 0;
-  int seconds = 0;
   Timer? countdownTimer;
   Duration myDuration = const Duration();
-  Duration? pausedDuration;  // Para guardar el tiempo cuando se pausa
+  Duration? pausedDuration;
   bool isRunning = false;
+  late List<FixedExtentScrollController> controllers;
+  
+  // Soundpool
+  Soundpool? soundpool;
+  int? soundId;
+
+  @override
+  void initState() {
+    super.initState();
+    controllers = [
+      FixedExtentScrollController(initialItem: 0),
+      FixedExtentScrollController(initialItem: 0),
+      FixedExtentScrollController(initialItem: 0),
+    ];
+    _initSound();
+  }
+
+  Future<void> _initSound() async {
+    try {
+      soundpool = Soundpool.fromOptions(
+        options: SoundpoolOptions(
+          streamType: StreamType.alarm,
+          maxStreams: 1,
+        ),
+      );
+      
+      final ByteData data = await rootBundle.load('lib/sounds/alarm.mp3');
+      soundId = await soundpool?.load(data);
+      debugPrint('Sonido cargado exitosamente: $soundId');
+    } catch (e) {
+      debugPrint('Error cargando sonido: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    countdownTimer?.cancel();
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+    soundpool?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playAlarm() async {
+    try {
+      if (soundpool != null && soundId != null) {
+        debugPrint('Intentando reproducir sonido: $soundId');
+        
+        // Reproducir el sonido con volumen máximo y múltiples repeticiones
+        final streamId = await soundpool!.play(
+          soundId!,
+          rate: 1.0,      // Velocidad normal
+          repeat: 3,      // Repetir 3 veces
+          
+        );
+        
+        debugPrint('Sonido reproducido con streamId: $streamId');
+        
+        // Esperar 3 segundos y detener
+        await Future.delayed(const Duration(seconds: 3));
+        await soundpool!.stop(streamId);
+      } else {
+        debugPrint('Soundpool o soundId es null');
+      }
+    } catch (e) {
+      debugPrint('Error reproduciendo alarma: $e');
+    }
+  }
 
   void startTimer() {
-    if (myDuration.inSeconds == 0 && pausedDuration == null) {
-      // Si no hay tiempo configurado, no hacer nada
+    if (isRunning || (myDuration.inSeconds == 0 && pausedDuration == null)) {
       return;
     }
     
@@ -32,131 +99,136 @@ class _TimerPageState extends State<TimerPage> {
       }
     });
 
+    countdownTimer?.cancel();
     countdownTimer = Timer.periodic(
       const Duration(seconds: 1),
       (_) => setCountDown(),
     );
   }
 
-  void pauseTimer() {
-    if (countdownTimer != null) {
-      setState(() {
-        pausedDuration = myDuration;  // Guardar el tiempo actual
-        countdownTimer!.cancel();
-        isRunning = false;
-      });
-    }
-  }
-
-  void resetTimer() {
-    if (countdownTimer != null) {
-      countdownTimer!.cancel();
-    }
-    setState(() {
-      isRunning = false;
-      pausedDuration = null;
-      hours = 0;
-      minutes = 0;
-      seconds = 0;
-      myDuration = const Duration(); // Esto pondrá el timer en 00:00:00
-    });
-  }
-
   void setCountDown() {
-    const reduceSecondsBy = 1;
+    if (!mounted) return;
+    
     setState(() {
-      final seconds = myDuration.inSeconds - reduceSecondsBy;
+      final seconds = myDuration.inSeconds - 1;
       if (seconds < 0) {
-        countdownTimer!.cancel();
+        countdownTimer?.cancel();
         isRunning = false;
-        // Aquí podrías agregar algún sonido o notificación
+        _playAlarm(); // Reproducir alarma cuando llegue a cero
       } else {
         myDuration = Duration(seconds: seconds);
+        // Actualizar los controladores
+        controllers[0].jumpToItem(myDuration.inHours);
+        controllers[1].jumpToItem(myDuration.inMinutes.remainder(60));
+        controllers[2].jumpToItem(myDuration.inSeconds.remainder(60));
       }
     });
   }
 
-  void _editTime(String unit) {
-    if (isRunning) return;  // No permitir editar mientras está corriendo
+  void pauseTimer() {
+    if (!isRunning) return;
     
-    TextEditingController controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Editar ${unit.capitalize()}'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            hintText: 'Ingrese ${unit.toLowerCase()}',
-            border: const OutlineInputBorder(),
-          ),
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(2),
-          ],
+    countdownTimer?.cancel();
+    setState(() {
+      pausedDuration = myDuration;
+      isRunning = false;
+    });
+  }
+
+  void resetTimer() {
+    countdownTimer?.cancel();
+    setState(() {
+      isRunning = false;
+      pausedDuration = null;
+      myDuration = const Duration();
+      
+      // Reiniciar los controladores
+      for (var controller in controllers) {
+        controller.jumpToItem(0);
+      }
+    });
+  }
+
+  Widget _buildNumberPicker(int value, int maxValue, int controllerIndex) {
+    return Container(
+      height: 100,
+      width: 80,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListWheelScrollView.useDelegate(
+        itemExtent: 60,
+        perspective: 0.005,
+        diameterRatio: 1.2,
+        physics: isRunning ? const NeverScrollableScrollPhysics() : const FixedExtentScrollPhysics(),
+        onSelectedItemChanged: (index) {
+          if (!isRunning) {
+            setState(() {
+              switch (controllerIndex) {
+                case 0:
+                  myDuration = Duration(
+                    hours: index,
+                    minutes: myDuration.inMinutes.remainder(60),
+                    seconds: myDuration.inSeconds.remainder(60),
+                  );
+                  break;
+                case 1:
+                  myDuration = Duration(
+                    hours: myDuration.inHours,
+                    minutes: index,
+                    seconds: myDuration.inSeconds.remainder(60),
+                  );
+                  break;
+                case 2:
+                  myDuration = Duration(
+                    hours: myDuration.inHours,
+                    minutes: myDuration.inMinutes.remainder(60),
+                    seconds: index,
+                  );
+                  break;
+              }
+            });
+          }
+        },
+        controller: controllers[controllerIndex],
+        childDelegate: ListWheelChildBuilderDelegate(
+          childCount: maxValue,
+          builder: (context, index) {
+            return Center(
+              child: Text(
+                index.toString().padLeft(2, '0'),
+                style: const TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          },
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              final value = int.tryParse(controller.text) ?? 0;
-              setState(() {
-                switch (unit.toLowerCase()) {
-                  case 'horas':
-                    hours = value.clamp(0, 23);
-                    break;
-                  case 'minutos':
-                    minutes = value.clamp(0, 59);
-                    break;
-                  case 'segundos':
-                    seconds = value.clamp(0, 59);
-                    break;
-                }
-                myDuration = Duration(
-                  hours: hours,
-                  minutes: minutes,
-                  seconds: seconds,
-                );
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Aceptar'),
-          ),
-        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    String strDigits(int n) => n.toString().padLeft(2, '0');
-    
-    final hours = strDigits(myDuration.inHours);
-    final minutes = strDigits(myDuration.inMinutes.remainder(60));
-    final seconds = strDigits(myDuration.inSeconds.remainder(60));
-
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildTimeColumn('Horas', hours),
-                const SizedBox(width: 8),
-                Text(':', style: TextStyle(fontSize: 40, color: Colors.grey[700])),
-                const SizedBox(width: 8),
-                _buildTimeColumn('Minutos', minutes),
-                const SizedBox(width: 8),
-                Text(':', style: TextStyle(fontSize: 40, color: Colors.grey[700])),
-                const SizedBox(width: 8),
-                _buildTimeColumn('Segundos', seconds),
+                _buildNumberPicker(myDuration.inHours, 24, 0),
+                const Text(' : ', 
+                  style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold)
+                ),
+                _buildNumberPicker(myDuration.inMinutes.remainder(60), 60, 1),
+                const Text(' : ', 
+                  style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold)
+                ),
+                _buildNumberPicker(myDuration.inSeconds.remainder(60), 60, 2),
               ],
             ),
             const SizedBox(height: 40),
@@ -166,13 +238,9 @@ class _TimerPageState extends State<TimerPage> {
                 _buildControlButton(
                   isRunning ? Icons.pause : Icons.play_arrow,
                   isRunning ? Colors.orange : Colors.green,
-                  () {
-                    if (isRunning) {
-                      pauseTimer();
-                    } else {
-                      startTimer();
-                    }
-                  },
+                  myDuration.inSeconds == 0 && !isRunning
+                      ? null
+                      : () => isRunning ? pauseTimer() : startTimer(),
                 ),
                 const SizedBox(width: 20),
                 _buildControlButton(
@@ -188,40 +256,7 @@ class _TimerPageState extends State<TimerPage> {
     );
   }
 
-  Widget _buildTimeColumn(String label, String value) {
-    return GestureDetector(
-      onTap: () => _editTime(label),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildControlButton(IconData icon, Color color, VoidCallback onPressed) {
+  Widget _buildControlButton(IconData icon, Color color, VoidCallback? onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -231,11 +266,5 @@ class _TimerPageState extends State<TimerPage> {
       ),
       child: Icon(icon, size: 32, color: Colors.white),
     );
-  }
-}
-
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }
