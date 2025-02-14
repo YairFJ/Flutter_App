@@ -23,11 +23,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   late List<String> _steps;
   late String _cookingTime;
   late String _category;
+  late String _servingSize;
   bool _isPrivate = false;
 
   @override
   void initState() {
     super.initState();
+    _servingSize = '4 porciones';
     _title = widget.recipe?.title ?? '';
     _description = widget.recipe?.description ?? '';
     _ingredients = List<Ingredient>.from(widget.recipe?.ingredients ?? []);
@@ -38,11 +40,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   }
 
   void _editIngredients() async {
-    final ingredientesConvertidos = _ingredients.map((ing) => Ingredient(
-      name: ing.name,
-      quantity: ing.quantity,
-      unit: _convertirUnidadAntigua(ing.unit),
-    )).toList();
+    final ingredientesConvertidos = _ingredients
+        .map((ing) => Ingredient(
+              name: ing.name,
+              quantity: ing.quantity,
+              unit: _convertirUnidadAntigua(ing.unit),
+            ))
+        .toList();
 
     final result = await showDialog<List<Ingredient>>(
       context: context,
@@ -63,7 +67,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      widget.recipe == null ? 'Agregar Ingredientes' : 'Editar Ingredientes',
+                      widget.recipe == null
+                          ? 'Agregar Ingredientes'
+                          : 'Editar Ingredientes',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -83,18 +89,22 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: IngredientTableWidget(
-                    ingredientes: ingredientesConvertidos.map((ing) => IngredienteTabla(
-                      nombre: ing.name,
-                      cantidad: ing.quantity,
-                      unidad: ing.unit,
-                    )).toList(),
+                    ingredientes: ingredientesConvertidos
+                        .map((ing) => IngredienteTabla(
+                              nombre: ing.name,
+                              cantidad: ing.quantity,
+                              unidad: ing.unit,
+                            ))
+                        .toList(),
                     onIngredientsChanged: (ingredients) {
                       setState(() {
-                        _ingredients = ingredients.map((ing) => Ingredient(
-                          name: ing.nombre,
-                          quantity: ing.cantidad ?? 0,
-                          unit: ing.unidad,
-                        )).toList();
+                        _ingredients = ingredients
+                            .map((ing) => Ingredient(
+                                  name: ing.nombre,
+                                  quantity: ing.cantidad ?? 0,
+                                  unit: ing.unidad,
+                                ))
+                            .toList();
                       });
                     },
                   ),
@@ -191,7 +201,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               onSaved: (value) => _description = value ?? '',
             ),
             const SizedBox(height: 16),
-            
+
             // Sección de ingredientes
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -206,12 +216,14 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 TextButton.icon(
                   onPressed: _editIngredients,
                   icon: const Icon(Icons.edit),
-                  label: Text(widget.recipe == null ? 'Agregar ingredientes' : 'Editar ingredientes'),
+                  label: Text(widget.recipe == null
+                      ? 'Agregar ingredientes'
+                      : 'Editar ingredientes'),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Lista de ingredientes existentes
             if (_ingredients.isNotEmpty) ...[
               ListView.builder(
@@ -223,7 +235,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   return Card(
                     child: ListTile(
                       title: Text(ingredient.name),
-                      subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                      subtitle:
+                          Text('${ingredient.quantity} ${ingredient.unit}'),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () {
@@ -341,7 +354,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
       // Crear la receta
       final newRecipe = Recipe(
-        id: '', 
+        id: '',
         title: _title,
         description: _description,
         userId: currentUser?.uid ?? '',
@@ -353,11 +366,14 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
         category: _category,
         isPrivate: _isPrivate,
         favoritedBy: [],
+        servingSize: _servingSize,
       );
 
       // Guardar en Firestore
-      await FirebaseFirestore.instance.collection('recipes').add(newRecipe.toMap());
+      await FirebaseFirestore.instance
+          .collection('recipes')
+          .add(newRecipe.toMap());
       Navigator.pop(context); // Regresar a la pantalla anterior
     }
   }
-} 
+}

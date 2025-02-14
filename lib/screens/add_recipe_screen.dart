@@ -18,8 +18,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _cookingTimeController = TextEditingController();
-  final List<TextEditingController> _ingredientControllers = [TextEditingController()];
-  final List<TextEditingController> _stepControllers = [TextEditingController()];
+  final _servingSizeController = TextEditingController();
+  final List<TextEditingController> _ingredientControllers = [
+    TextEditingController()
+  ];
+  final List<TextEditingController> _stepControllers = [
+    TextEditingController()
+  ];
   String _selectedCategory = 'Platos Principales';
   String? _imageUrl;
   bool _isPrivate = false;
@@ -48,11 +53,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             .collection('users')
             .doc(currentUser.uid)
             .get();
-        
+
         if (!userDoc.exists) {
           throw Exception('No se encontraron datos del usuario');
         }
-        
+
         final userName = userDoc.data()?['name'] ?? 'Usuario desconocido';
 
         final steps = _stepControllers
@@ -68,7 +73,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           creatorEmail: currentUser.email ?? 'No disponible',
           creatorName: userName,
           favoritedBy: [],
-          cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
+          cookingTime:
+              Duration(minutes: int.parse(_cookingTimeController.text.trim())),
+          servingSize: _servingSizeController.text.trim(),
           ingredients: _ingredients,
           steps: steps,
           imageUrl: _imageUrl,
@@ -84,12 +91,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         await FirebaseFirestore.instance.collection('recipes').add(recipeData);
 
         if (!mounted) return;
-        
+
         // Cerrar el diálogo de carga
         Navigator.pop(context);
         // Volver a la pantalla anterior
         Navigator.pop(context);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('¡Receta guardada con éxito!'),
@@ -98,10 +105,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         );
       } catch (e) {
         if (!mounted) return;
-        
+
         // Asegurarse de cerrar el diálogo de carga si está abierto
         Navigator.of(context).popUntil((route) => route.isFirst);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al guardar la receta: ${e.toString()}'),
@@ -192,6 +199,21 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _servingSizeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Rendimiento',
+                    hintText: 'Ej: 4 porciones',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value?.trim().isEmpty ?? true) {
+                      return 'Por favor ingresa el rendimiento de la receta';
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -211,7 +233,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             children: [
                               Icon(
                                 RecipeCategories.getIconForCategory(category),
-                                color: RecipeCategories.getColorForCategory(category),
+                                color: RecipeCategories.getColorForCategory(
+                                    category),
                                 size: 24,
                               ),
                               const SizedBox(width: 12),
@@ -238,7 +261,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 SwitchListTile(
                   title: const Text('Receta Privada'),
                   subtitle: Text(
-                    _isPrivate 
+                    _isPrivate
                         ? 'Solo tú podrás ver esta receta'
                         : 'Todos podrán ver esta receta',
                     style: TextStyle(
@@ -258,7 +281,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 ElevatedButton(
                   onPressed: _saveRecipe,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 30),
                     backgroundColor: Theme.of(context).primaryColor,
                   ),
                   child: const Text(
@@ -371,6 +395,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _cookingTimeController.dispose();
+    _servingSizeController.dispose();
     for (var controller in _ingredientControllers) {
       controller.dispose();
     }
@@ -379,4 +404,4 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     }
     super.dispose();
   }
-} 
+}

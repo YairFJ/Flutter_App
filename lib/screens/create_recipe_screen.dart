@@ -17,7 +17,75 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _instructionsController = TextEditingController();
+  final TextEditingController _servingsController = TextEditingController();
+  final TextEditingController _preparationTimeController =
+      TextEditingController();
+  List<Map<String, String>> _ingredients = [];
   bool _isLoading = false;
+  int _servings = 1;
+
+  void _addIngredient() {
+    setState(() {
+      _ingredients.add({'name': '', 'amount': '', 'unit': ''});
+    });
+  }
+
+  void _showServingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Cantidad de Porciones'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Selecciona cuántos platos rinde esta receta:'),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove),
+                    onPressed: () {
+                      if (_servings > 1) {
+                        setState(() {
+                          _servings--;
+                        });
+                        Navigator.pop(context);
+                        _showServingsDialog();
+                      }
+                    },
+                  ),
+                  Text(
+                    '$_servings',
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () {
+                      setState(() {
+                        _servings++;
+                      });
+                      Navigator.pop(context);
+                      _showServingsDialog();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _createRecipe() async {
     if (_formKey.currentState!.validate()) {
@@ -35,6 +103,9 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
           'title': _titleController.text.trim(),
           'description': _descriptionController.text.trim(),
           'instructions': _instructionsController.text.trim(),
+          'preparationTime': _preparationTimeController.text.trim(),
+          'servings': _servings,
+          'ingredients': _ingredients,
           'author': currentUser,
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -61,6 +132,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _instructionsController.dispose();
+    _servingsController.dispose();
+    _preparationTimeController.dispose();
     super.dispose();
   }
 
@@ -76,7 +149,6 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // Campo para el título de la receta
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -90,22 +162,105 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                 },
               ),
               const SizedBox(height: 16.0),
-              // Campo para la descripción de la receta
+
+              // Campo de tiempo de preparación
               TextFormField(
-                controller: _descriptionController,
+                controller: _preparationTimeController,
                 decoration: const InputDecoration(
-                  labelText: 'Descripción',
+                  labelText: 'Tiempo de preparación',
+                  hintText: 'Ej: 30 minutos',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Tiempo requerido';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16.0),
+
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.restaurant),
+                  title: const Text('Porciones'),
+                  subtitle: Text('Esta receta rinde para $_servings platos'),
+                  trailing: ElevatedButton(
+                    onPressed: _showServingsDialog,
+                    child: const Text('Cambiar'),
+                  ),
                 ),
               ),
               const SizedBox(height: 16.0),
-              // Campo para las instrucciones, separadas por saltos de línea
+
+              // Lista de ingredientes
+              ..._ingredients.asMap().entries.map((entry) {
+                int idx = entry.key;
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: 'Ingrediente',
+                            ),
+                            onChanged: (value) {
+                              _ingredients[idx]['name'] = value;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: 'Cantidad',
+                            ),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
+                              _ingredients[idx]['amount'] = value;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            decoration: const InputDecoration(
+                              labelText: 'Unidad',
+                              hintText: 'gr, ml, unidad',
+                            ),
+                            onChanged: (value) {
+                              _ingredients[idx]['unit'] = value;
+                            },
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            setState(() {
+                              _ingredients.removeAt(idx);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: _addIngredient,
+                child: const Text('Agregar Ingrediente'),
+              ),
+
+              const SizedBox(height: 16.0),
               TextFormField(
                 controller: _instructionsController,
                 decoration: const InputDecoration(
-                  labelText: 'Instrucciones (cada paso en una nueva línea)',
+                  labelText: 'Instrucciones de preparación',
                 ),
                 maxLines: null,
-                keyboardType: TextInputType.multiline,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Las instrucciones son obligatorias';
@@ -126,4 +281,4 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
       ),
     );
   }
-} 
+}

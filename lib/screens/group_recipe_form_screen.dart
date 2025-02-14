@@ -9,7 +9,8 @@ import '../widgets/ingredient_table_widget.dart';
 
 class GroupRecipeFormScreen extends StatefulWidget {
   final Group group;
-  final Recipe? recipe; // Si se pasa una receta, el formulario funcionará en modo edición
+  final Recipe?
+      recipe; // Si se pasa una receta, el formulario funcionará en modo edición
 
   const GroupRecipeFormScreen({Key? key, required this.group, this.recipe})
       : super(key: key);
@@ -96,8 +97,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
               const Divider(height: 1),
               Expanded(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: IngredientTableWidget(
                     ingredientes: ingredientesConvertidos
                         .map((ing) => IngredienteTabla(
@@ -108,11 +108,13 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                         .toList(),
                     onIngredientsChanged: (ingredients) {
                       setState(() {
-                        _ingredients = ingredients.map((ing) => Ingredient(
-                              name: ing.nombre,
-                              quantity: ing.cantidad ?? 0,
-                              unit: ing.unidad,
-                            )).toList();
+                        _ingredients = ingredients
+                            .map((ing) => Ingredient(
+                                  name: ing.nombre,
+                                  quantity: ing.cantidad ?? 0,
+                                  unit: ing.unidad,
+                                ))
+                            .toList();
                       });
                     },
                   ),
@@ -206,7 +208,8 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
         category: _category,
         isPrivate: _isPrivate,
         favoritedBy: [],
-        imageUrl: null, // Aquí podrías integrar la carga de una imagen si lo deseas.
+        imageUrl: null,
+        servingSize: '4 porciones',
       );
 
       try {
@@ -254,8 +257,9 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                 labelText: 'Título',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) =>
-                  value == null || value.isEmpty ? 'Por favor ingresa un título' : null,
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Por favor ingresa un título'
+                  : null,
               onSaved: (value) => _title = value ?? '',
             ),
             const SizedBox(height: 16),
@@ -281,7 +285,9 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                 TextButton.icon(
                   onPressed: _editIngredients,
                   icon: const Icon(Icons.edit),
-                  label: Text(widget.recipe == null ? 'Agregar ingredientes' : 'Editar ingredientes'),
+                  label: Text(widget.recipe == null
+                      ? 'Agregar ingredientes'
+                      : 'Editar ingredientes'),
                 ),
               ],
             ),
@@ -295,7 +301,8 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                   return Card(
                     child: ListTile(
                       title: Text(ingredient.name),
-                      subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                      subtitle:
+                          Text('${ingredient.quantity} ${ingredient.unit}'),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () {
@@ -341,8 +348,9 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                         child: Text(category),
                       ))
                   .toList(),
-              validator: (value) =>
-                  value == null || value.isEmpty ? 'Por favor selecciona una categoría' : null,
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Por favor selecciona una categoría'
+                  : null,
               onChanged: (value) => setState(() => _category = value!),
               onSaved: (value) => _category = value!,
             ),
@@ -398,4 +406,4 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
       ),
     );
   }
-} 
+}

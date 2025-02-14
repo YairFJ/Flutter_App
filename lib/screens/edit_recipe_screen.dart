@@ -23,6 +23,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _cookingTimeController;
+  late TextEditingController _servingSizeController;
   late String _selectedCategory;
   String? _imageUrl;
   late bool _isPrivate;
@@ -33,10 +34,12 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.recipe.title);
-    _descriptionController = TextEditingController(text: widget.recipe.description);
+    _descriptionController =
+        TextEditingController(text: widget.recipe.description);
     _cookingTimeController = TextEditingController(
-      text: widget.recipe.cookingTime.inMinutes.toString()
-    );
+        text: widget.recipe.cookingTime.inMinutes.toString());
+    _servingSizeController =
+        TextEditingController(text: widget.recipe.servingSize);
     _steps = List.from(widget.recipe.steps);
     _selectedCategory = widget.recipe.category;
     _isPrivate = widget.recipe.isPrivate;
@@ -62,11 +65,13 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   }
 
   void _editIngredients() async {
-    final ingredientesConvertidos = widget.recipe.ingredients.map((ing) => IngredienteTabla(
-      nombre: ing.name,
-      cantidad: ing.quantity,
-      unidad: _convertirUnidadAntigua(ing.unit),
-    )).toList();
+    final ingredientesConvertidos = widget.recipe.ingredients
+        .map((ing) => IngredienteTabla(
+              nombre: ing.name,
+              cantidad: ing.quantity,
+              unidad: _convertirUnidadAntigua(ing.unit),
+            ))
+        .toList();
 
     final result = await showDialog<List<Ingredient>>(
       context: context,
@@ -110,11 +115,13 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                     ingredientes: ingredientesConvertidos,
                     onIngredientsChanged: (ingredients) {
                       setState(() {
-                        _ingredients = ingredients.map((ing) => Ingredient(
-                          name: ing.nombre,
-                          quantity: ing.cantidad ?? 0,
-                          unit: ing.unidad,
-                        )).toList();
+                        _ingredients = ingredients
+                            .map((ing) => Ingredient(
+                                  name: ing.nombre,
+                                  quantity: ing.cantidad ?? 0,
+                                  unit: ing.unidad,
+                                ))
+                            .toList();
                       });
                     },
                   ),
@@ -197,7 +204,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => RecipeDetailScreen(recipe: widget.recipe),
+                  builder: (context) =>
+                      RecipeDetailScreen(recipe: widget.recipe),
                 ),
               );
             },
@@ -291,6 +299,27 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Rendimiento
+              TextFormField(
+                controller: _servingSizeController,
+                decoration: const InputDecoration(
+                  labelText: 'Rendimiento',
+                  hintText: 'Ej: 4',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Por favor ingresa el rendimiento';
+                  }
+                  if (int.tryParse(value) == null || int.parse(value) <= 0) {
+                    return 'Ingresa un número válido mayor a 0';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
               // Categoría
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
@@ -319,7 +348,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
               SwitchListTile(
                 title: const Text('Receta Privada'),
                 subtitle: Text(
-                  _isPrivate 
+                  _isPrivate
                       ? 'Solo tú podrás ver esta receta'
                       : 'Todos podrán ver esta receta',
                   style: TextStyle(
@@ -415,7 +444,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                     return Card(
                       child: ListTile(
                         title: Text(ingredient.name),
-                        subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                        subtitle:
+                            Text('${ingredient.quantity} ${ingredient.unit}'),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () {
@@ -464,12 +494,13 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           'imageUrl': _imageUrl,
           'category': _selectedCategory,
           'isPrivate': _isPrivate,
+          'servingSize': _servingSizeController.text.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
         if (mounted) {
           Navigator.pop(context); // Cierra el diálogo de carga
-          
+
           // Crear receta actualizada
           final updatedRecipe = Recipe(
             id: widget.recipe.id,
@@ -478,13 +509,15 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             ingredients: _ingredients,
             steps: steps,
             imageUrl: _imageUrl,
-            cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
+            cookingTime: Duration(
+                minutes: int.parse(_cookingTimeController.text.trim())),
             category: _selectedCategory,
             userId: widget.recipe.userId,
             creatorName: widget.recipe.creatorName,
             creatorEmail: widget.recipe.creatorEmail,
             favoritedBy: widget.recipe.favoritedBy,
             isPrivate: _isPrivate,
+            servingSize: _servingSizeController.text.trim(),
           );
 
           Navigator.pop(context, updatedRecipe);
@@ -515,6 +548,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _cookingTimeController.dispose();
+    _servingSizeController.dispose();
     super.dispose();
   }
-} 
+}

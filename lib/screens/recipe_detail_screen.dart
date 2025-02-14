@@ -24,7 +24,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar Receta'),
-        content: const Text('¿Estás seguro de que deseas eliminar esta receta?'),
+        content:
+            const Text('¿Estás seguro de que deseas eliminar esta receta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -47,7 +48,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             .collection('recipes')
             .doc(widget.recipe.id)
             .delete();
-        
+
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -88,9 +89,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ConversionCalculatorScreen(
-                    ingredientes: widget.recipe.ingredients,
-                  ),
+                  builder: (context) =>
+                      ConversionCalculatorScreen(recipe: widget.recipe),
                 ),
               );
             },
@@ -102,14 +102,16 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 final updatedRecipe = await Navigator.push<Recipe>(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => EditRecipeScreen(recipe: widget.recipe),
+                    builder: (context) =>
+                        EditRecipeScreen(recipe: widget.recipe),
                   ),
                 );
                 if (updatedRecipe != null && mounted) {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => RecipeDetailScreen(recipe: updatedRecipe),
+                      builder: (context) =>
+                          RecipeDetailScreen(recipe: updatedRecipe),
                     ),
                   );
                 }
@@ -135,7 +137,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [/*
+          children: [
+            /*
             if (widget.recipe.imageUrl != null)
               Image.network(
                 widget.recipe.imageUrl!,
@@ -181,11 +184,27 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         letterSpacing: 0.2,
                         wordSpacing: 1.2,
                         color: Colors.black87,
-                        fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                        fontFamily:
+                            Theme.of(context).textTheme.bodyLarge?.fontFamily,
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.restaurant, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Rendimiento: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const Text(
                     'Ingredientes:',
                     style: TextStyle(
@@ -220,7 +239,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       rows: widget.recipe.ingredients.map((ingredient) {
                         String formattedQuantity;
                         if (ingredient.quantity % 1 == 0) {
-                          formattedQuantity = ingredient.quantity.toInt().toString();
+                          formattedQuantity =
+                              ingredient.quantity.toInt().toString();
                         } else {
                           formattedQuantity = ingredient.quantity.toString();
                         }
@@ -277,7 +297,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                     letterSpacing: 0.2,
                                     wordSpacing: 1.2,
                                     color: Colors.black87,
-                                    fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                                    fontFamily: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.fontFamily,
                                   ),
                                 ),
                               ),
@@ -295,4 +318,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ),
     );
   }
-} 
+
+  String _getPluralSuffix(String servingSize) {
+    try {
+      final number = int.tryParse(servingSize);
+      if (number == null) return 'platos';
+      return number > 1 ? 'platos' : 'plato';
+    } catch (e) {
+      return 'platos';
+    }
+  }
+}

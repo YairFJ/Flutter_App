@@ -28,6 +28,11 @@ Future<Uint8List> generateRecipePdf(Recipe receta) async {
         ),
         pw.SizedBox(height: 20),
         pw.Text(
+          'Rendimiento: ${receta.servingSize} ${int.parse(receta.servingSize) > 1 ? 'platos' : 'plato'}',
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 20),
+        pw.Text(
           "Ingredientes:",
           style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
         ),
@@ -81,4 +86,4 @@ Future<Uint8List> generateRecipePdf(Recipe receta) async {
   );
 
   return pdf.save();
-} 
+}

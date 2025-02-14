@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
-import '../models/ingredient.dart';
+import '../models/recipe.dart';
 
 class ConversionCalculatorScreen extends StatefulWidget {
-  final List<Ingredient> ingredientes;
+  final Recipe recipe;
 
   const ConversionCalculatorScreen({
     super.key,
-    required this.ingredientes,
+    required this.recipe,
   });
 
   @override
-  State<ConversionCalculatorScreen> createState() => _ConversionCalculatorScreenState();
+  State<ConversionCalculatorScreen> createState() =>
+      _ConversionCalculatorScreenState();
 }
 
-class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen> {
-  final TextEditingController _cantidadController = TextEditingController();
-  String _unidadOrigen = 'gr';
-  String _unidadDestino = 'kg';
-  double _resultado = 0.0;
-
-  late List<IngredienteTabla> _ingredientes;
+class _ConversionCalculatorScreenState
+    extends State<ConversionCalculatorScreen> {
+  late final TextEditingController _cantidadController;
+  late final TextEditingController _destinoController;
+  double _resultado = 1.0;
+  int _platosOrigen = 1;
+  int _platosDestino = 1;
+  late List<IngredienteTabla> _ingredientesTabla;
 
   // Mapa de conversión de unidades antiguas a nuevas
   final Map<String, String> _convertirUnidadAntigua = {
@@ -35,101 +37,173 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
     'lb': 'lb',
   };
 
-  final Map<String, String> _unidadesCompletas = {
-    'g': 'gramos',
-    'kg': 'kilogramos',
-    'ml': 'mililitros',
-    'l': 'litros',
-    'tz': 'taza',
-    'cda': 'cucharada',
-    'cdta': 'cucharadita',
-    'u': 'unidad',
-    'oz': 'onzas',
-    'lb': 'libras',
-  };
-
-  // Añade este mapa para las referencias de unidades
-  final Map<String, String> _referenciasUnidades = {
-    'g': '1 gramo',
-    'kg': '1000 gramos',
-    'ml': '1 mililitro',
-    'l': '1000 mililitros',
-    'tz': '240 mililitros',
-    'cda': '15 mililitros',
-    'cdta': '5 mililitros',
-    'oz': '28.35 gramos',
-    'lb': '453.59 gramos',
-    'u': '1 unidad',
-  };
-
-  // Agregar cerca de las otras variables de clase
+  // Unidades por tipo
   final Map<String, List<String>> _unidadesPorTipo = {
     'peso': ['g', 'kg', 'oz', 'lb'],
     'volumen': ['ml', 'l', 'tz', 'cda', 'cdta'],
     'unidad': ['u'],
   };
 
-  @override
-  void initState() {
-    super.initState();
-    // Convertir las unidades antiguas a nuevas al inicializar
-    _ingredientes = widget.ingredientes.map((ing) => IngredienteTabla(
-      nombre: ing.name,
-      cantidad: ing.quantity,
-      unidad: _convertirUnidadAntigua[ing.unit] ?? 'g', // Unidad por defecto si no se encuentra
-    )).toList();
-  }
-
+  // Factores de conversión
   final Map<String, Map<String, double>> _factoresConversion = {
-    'gr': {
+    'g': {
       'kg': 0.001,
       'oz': 0.035274,
       'lb': 0.00220462,
     },
     'kg': {
-      'gr': 1000,
+      'g': 1000,
       'oz': 35.274,
       'lb': 2.20462,
     },
     'ml': {
       'l': 0.001,
-      'taza': 0.00416667,
-      'cucharada': 0.0666667,
-      'cucharadita': 0.2,
+      'tz': 0.00416667,
+      'cda': 0.0666667,
+      'cdta': 0.2,
     },
     'l': {
       'ml': 1000,
-      'taza': 4.16667,
-      'cucharada': 66.6667,
-      'cucharadita': 200,
+      'tz': 4.16667,
+      'cda': 66.6667,
+      'cdta': 200,
     },
-    'taza': {
+    'tz': {
       'ml': 240,
       'l': 0.24,
-      'cucharada': 16,
-      'cucharadita': 48,
+      'cda': 16,
+      'cdta': 48,
     },
-    'cucharada': {
+    'cda': {
       'ml': 15,
       'l': 0.015,
-      'taza': 0.0625,
-      'cucharadita': 3,
+      'tz': 0.0625,
+      'cdta': 3,
     },
   };
 
-  void _calcularConversion() {
-    if (_cantidadController.text.isEmpty) return;
-
+  @override
+  void initState() {
+    super.initState();
     try {
-      double cantidad = double.parse(_cantidadController.text);
-      double factor = _obtenerFactorConversion(_unidadOrigen, _unidadDestino);
-      
+      print("Serving Size: ${widget.recipe.servingSize}"); // Debug print
+      print("Ingredients: ${widget.recipe.ingredients}"); // Debug print
+
+      // Inicialización segura de controladores
+      _cantidadController =
+          TextEditingController(text: widget.recipe.servingSize);
+      _destinoController =
+          TextEditingController(text: widget.recipe.servingSize);
+
+      // Si tenemos un servingSize válido, lo usamos
+      if (widget.recipe.servingSize != null &&
+          widget.recipe.servingSize.isNotEmpty) {
+        _cantidadController.text = widget.recipe.servingSize;
+        _destinoController.text = widget.recipe.servingSize;
+        _platosOrigen = int.tryParse(widget.recipe.servingSize) ?? 1;
+        _platosDestino = _platosOrigen;
+      }
+
+      // Inicialización segura de ingredientes
+      if (widget.recipe.ingredients != null &&
+          widget.recipe.ingredients.isNotEmpty) {
+        _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
+          try {
+            return IngredienteTabla(
+              nombre: ingrediente.name ?? '',
+              cantidad: ingrediente.quantity,
+              unidad: _convertirUnidadAntigua[ingrediente.unit] ?? 'g',
+            );
+          } catch (e) {
+            print("Error al convertir ingrediente: $e");
+            return IngredienteTabla(
+              nombre: '',
+              cantidad: 0,
+              unidad: 'g',
+            );
+          }
+        }).toList();
+      }
+
+      _calcularConversion();
+    } catch (e) {
+      print("Error en initState: $e"); // Debug print
+    }
+  }
+
+  @override
+  void dispose() {
+    _cantidadController.dispose();
+    _destinoController.dispose();
+    super.dispose();
+  }
+
+  void _calcularConversion() {
+    try {
       setState(() {
-        _resultado = cantidad * factor;
+        final origen = _platosOrigen;
+        final destino = _platosDestino;
+
+        if (origen > 0 && destino > 0) {
+          double factor = destino / origen;
+          _resultado = destino.toDouble();
+
+          if (widget.recipe.ingredients != null) {
+            _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
+              try {
+                return IngredienteTabla(
+                  nombre: ingrediente.name ?? '',
+                  cantidad: ((ingrediente.quantity ?? 0) * factor),
+                  unidad: ingrediente.unit ?? '',
+                );
+              } catch (e) {
+                print("Error al convertir ingrediente: $e");
+                return IngredienteTabla(
+                  nombre: '',
+                  cantidad: 0,
+                  unidad: 'g',
+                );
+              }
+            }).toList();
+          }
+        }
       });
     } catch (e) {
-      // Manejar error de conversión
+      print("Error en _calcularConversion: $e"); // Debug print
     }
+  }
+
+  void _actualizarValor(String value, bool esOrigen) {
+    if (value.isEmpty) {
+      value = '1';
+    }
+
+    try {
+      final numero = int.tryParse(value) ?? 1;
+      if (numero > 0) {
+        if (esOrigen) {
+          _platosOrigen = numero;
+          _cantidadController.text = numero.toString();
+        } else {
+          _platosDestino = numero;
+          _destinoController.text = numero.toString();
+        }
+        _calcularConversion();
+      }
+    } catch (e) {
+      // Si hay error, mantener el valor anterior
+      if (esOrigen) {
+        _cantidadController.text = _platosOrigen.toString();
+      } else {
+        _destinoController.text = _platosDestino.toString();
+      }
+    }
+  }
+
+  String _getTipoUnidad(String unit) {
+    if (['g', 'kg', 'oz', 'lb'].contains(unit)) return 'peso';
+    if (['ml', 'l', 'tz', 'cda', 'cdta'].contains(unit)) return 'volumen';
+    return 'unidad';
   }
 
   double _obtenerFactorConversion(String desde, String hasta) {
@@ -148,112 +222,403 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
     return 1; // Si no hay conversión disponible
   }
 
-  List<String> _obtenerUnidadesCompatibles(String unidad) {
-    Set<String> unidades = {unidad};
-    
-    if (_factoresConversion.containsKey(unidad)) {
-      unidades.addAll(_factoresConversion[unidad]!.keys);
-    }
-
-    _factoresConversion.forEach((key, value) {
-      if (value.containsKey(unidad)) {
-        unidades.add(key);
-      }
-    });
-
-    return unidades.toList()..sort();
+  String _formatResult(double value) {
+    if (value <= 0) return '0 platos';
+    return '${value.toInt()} ${value == 1 ? 'plato' : 'platos'}';
   }
 
-  String _formatResult(double value, String unit) {
-    if (value == 0) return '0 $unit';
-    
-    // Si el número es entero, no mostrar decimales
-    if (value == value.roundToDouble()) {
-      return '${value.toInt()} $unit';
+  String _formatQuantity(double quantity) {
+    // Si el número es entero, mostrar sin decimales
+    if (quantity == quantity.roundToDouble()) {
+      return quantity.toInt().toString();
     }
-    
-    // Si el número es menor que 0.01, mostrar 4 decimales
-    if (value.abs() < 0.01) {
-      return '${value.toStringAsFixed(4)} $unit';
-    }
-    
-    // Si el número es menor que 1, mostrar 3 decimales
-    if (value.abs() < 1) {
-      return '${value.toStringAsFixed(3)} $unit';
-    }
-    
-    // Para otros números, mostrar solo 2 decimales
-    return '${value.toStringAsFixed(2)} $unit';
+    // Si tiene decimales, mostrar con 2 decimales
+    return quantity.toStringAsFixed(2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Calculadora de Conversiones'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          const Text(
+            'CALCULADORA DE CONVERSIÓN',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              children: [
+                Table(
+                  border: TableBorder.all(color: Colors.grey.shade300),
+                  columnWidths: const {
+                    0: FlexColumnWidth(2),
+                    1: FlexColumnWidth(2),
+                    2: FlexColumnWidth(2),
+                  },
+                  children: [
+                    TableRow(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                      ),
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'RENDIMIENTO',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'ORIGINAL',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'NUEVO',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TableRow(
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'Plato',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextField(
+                            controller: _cantidadController,
+                            enabled: false,
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 8),
+                              filled: true,
+                              fillColor: Color(0xFFEEEEEE),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextField(
+                            controller: _destinoController,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                            onChanged: (value) {
+                              if (value.isEmpty) {
+                                value = '1';
+                              }
+                              setState(() {
+                                _platosDestino = int.tryParse(value) ?? 1;
+                                _calcularConversion();
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Resultado: ',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        _formatResult(_resultado),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'TABLA DE INGREDIENTES',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey.shade800 : Colors.grey[200],
+              border: Border.all(
+                  color:
+                      isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'INGREDIENTE',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'CANTIDAD',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'UNIDAD',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ..._ingredientesTabla.map((ingrediente) => Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                        color: isDarkMode
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade300),
+                    left: BorderSide(
+                        color: isDarkMode
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade300),
+                    right: BorderSide(
+                        color: isDarkMode
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade300),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: TextField(
+                          controller: ingrediente.nombreController,
+                          readOnly: true,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 8),
+                            isDense: true,
+                            filled: true,
+                            fillColor: isDarkMode
+                                ? Colors.grey.shade800
+                                : Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: TextField(
+                          controller: ingrediente.cantidadController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 8),
+                            isDense: true,
+                            filled: true,
+                            fillColor: isDarkMode
+                                ? Colors.grey.shade800
+                                : Colors.white,
+                          ),
+                          onChanged: (value) {
+                            _actualizarCantidadIngrediente(
+                              _ingredientesTabla.indexOf(ingrediente),
+                              value,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: DropdownButtonFormField<String>(
+                          value: ingrediente.unidad,
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 8),
+                            isDense: true,
+                            filled: true,
+                            fillColor: isDarkMode
+                                ? Colors.grey.shade800
+                                : Colors.white,
+                          ),
+                          items: _unidadesPorTipo[ingrediente.tipoMedida]!
+                              .map((String unidad) {
+                            return DropdownMenuItem<String>(
+                              value: unidad,
+                              child: Text(
+                                unidad,
+                                style: TextStyle(
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? value) {
+                            if (value != null) {
+                              _actualizarUnidad(
+                                _ingredientesTabla.indexOf(ingrediente),
+                                value,
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
   }
 
   void _actualizarCantidadIngrediente(int index, String nuevoValor) {
-    // Si el input termina en punto, se evita procesarlo para que el usuario pueda seguir escribiendo.
+    // Si el input termina en punto, se evita procesarlo
     if (nuevoValor.trim().endsWith('.')) {
-      _ingredientes[index].cantidadController.text = nuevoValor;
-      // Se puede retornar o incluso invocar setState sin modificar otros valores,
-      // para que el texto se mantenga mientras el usuario continúa escribiendo.
+      _ingredientesTabla[index].cantidadController.text = nuevoValor;
       return;
     }
-    
+
     try {
-      // Reemplazamos comas por puntos para permitir números flotantes.
-      double cantidadNuevaDisplay = double.parse(nuevoValor.replaceAll(',', '.'));
-      
-      // Usamos "g" como unidad base para ingredientes de peso.
+      // Reemplazamos comas por puntos para permitir números flotantes
+      double cantidadNuevaDisplay =
+          double.parse(nuevoValor.replaceAll(',', '.'));
+
+      // Usamos "g" como unidad base para ingredientes de peso
       const String baseUnidad = 'g';
-      final ingredienteMod = _ingredientes[index];
-      
-      // Convertir la cantidad original y la nueva cantidad del ingrediente modificado a la unidad base.
+      final ingredienteMod = _ingredientesTabla[index];
+
+      // Convertir la cantidad original y la nueva cantidad del ingrediente modificado a la unidad base
       double cantidadOriginalModBase = _convertirUnidad(
         ingredienteMod.cantidadOriginal,
         ingredienteMod.unidadOriginal,
         baseUnidad,
       );
-      
+
       double cantidadNuevaModBase = _convertirUnidad(
         cantidadNuevaDisplay,
         ingredienteMod.unidad,
         baseUnidad,
       );
-      
-      // Calculamos el factor de escala basado en el ingrediente modificado.
+
+      // Calculamos el factor de escala basado en el ingrediente modificado
       double factorEscala = cantidadNuevaModBase / cantidadOriginalModBase;
-      
-      print("Ingrediente modificado:");
-      print(" - Cantidad original en base ($baseUnidad): $cantidadOriginalModBase");
-      print(" - Cantidad nueva en base ($baseUnidad): $cantidadNuevaModBase");
-      print(" - Factor escala: $factorEscala");
-      
+
       setState(() {
-        // Actualizamos el ingrediente modificado (se mantiene su unidad actual).
+        // Actualizamos el ingrediente modificado (se mantiene su unidad actual)
         ingredienteMod.cantidad = cantidadNuevaDisplay;
-        ingredienteMod.cantidadController.text = _formatearNumero(cantidadNuevaDisplay);
-        
-        // Actualizamos los demás ingredientes usando el mismo factor de escala.
-        for (int i = 0; i < _ingredientes.length; i++) {
+        ingredienteMod.cantidadController.text =
+            _formatearNumero(cantidadNuevaDisplay);
+
+        // Actualizamos los demás ingredientes usando el mismo factor de escala
+        for (int i = 0; i < _ingredientesTabla.length; i++) {
           if (i != index) {
-            final ing = _ingredientes[i];
-            // Convertir la cantidad original de cada ingrediente a la unidad base.
+            final ing = _ingredientesTabla[i];
+            // Convertir la cantidad original de cada ingrediente a la unidad base
             double ingOriginalEnBase = _convertirUnidad(
               ing.cantidadOriginal,
               ing.unidadOriginal,
               baseUnidad,
             );
-            
-            // Calcular la nueva cantidad en la unidad base.
+
+            // Calcular la nueva cantidad en la unidad base
             double nuevoIngEnBase = ingOriginalEnBase * factorEscala;
-            
-            // Reconvertir la cantidad calculada en la unidad base a la unidad actual del ingrediente.
-            double nuevoDisplay = _convertirUnidad(nuevoIngEnBase, baseUnidad, ing.unidad);
-            
-            // Actualizar el ingrediente.
+
+            // Reconvertir la cantidad calculada en la unidad base a la unidad actual del ingrediente
+            double nuevoDisplay =
+                _convertirUnidad(nuevoIngEnBase, baseUnidad, ing.unidad);
+
+            // Actualizar el ingrediente
             ing.cantidad = nuevoDisplay;
             ing.cantidadController.text = _formatearNumero(nuevoDisplay);
-            
-            print("Ingrediente $i:");
-            print(" - Original en base: $ingOriginalEnBase");
-            print(" - Nuevo en base: $nuevoIngEnBase");
-            print(" - Nuevo display (${ing.unidad}): $nuevoDisplay");
           }
         }
       });
@@ -262,15 +627,8 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
     }
   }
 
-  String _formatearNumero(double numero) {
-    if (numero == numero.roundToDouble()) {
-      return numero.toInt().toString();
-    }
-    return numero.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
-  }
-
   void _actualizarUnidad(int index, String nuevaUnidad) {
-    final ingrediente = _ingredientes[index];
+    final ingrediente = _ingredientesTabla[index];
     if (ingrediente.unidad == nuevaUnidad) return;
 
     try {
@@ -281,21 +639,19 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
           ingrediente.unidad,
           nuevaUnidad,
         );
-        
+
         // Actualizar el ingrediente con los nuevos valores
         ingrediente.cantidad = nuevaCantidad;
         ingrediente.unidad = nuevaUnidad;
         ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
-
-        // No modificar las unidades ni cantidades de los demás ingredientes
-        // Solo se actualiza el ingrediente que se está modificando
       });
     } catch (e) {
       // Si hay error en la conversión, restaurar valores originales
       setState(() {
         ingrediente.cantidad = ingrediente.cantidadOriginal;
         ingrediente.unidad = ingrediente.unidadOriginal;
-        ingrediente.cantidadController.text = _formatearNumero(ingrediente.cantidadOriginal);
+        ingrediente.cantidadController.text =
+            _formatearNumero(ingrediente.cantidadOriginal);
       });
     }
   }
@@ -311,7 +667,7 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
 
     // Obtener tipo de medida y unidad base
     String tipoMedida = _determinarTipoMedida(desde);
-    String unidadBase = unidadesBase[tipoMedida] ?? desde;  // Usar la variable
+    String unidadBase = unidadesBase[tipoMedida] ?? desde;
 
     // Factores de conversión a unidad base
     final factoresABase = {
@@ -338,313 +694,17 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
   String _determinarTipoMedida(String unidad) {
     final unidadesVolumen = {'ml', 'l', 'tz', 'cda', 'cdta'};
     final unidadesPeso = {'g', 'kg', 'oz', 'lb'};
-    
+
     if (unidadesVolumen.contains(unidad)) return 'volumen';
     if (unidadesPeso.contains(unidad)) return 'peso';
     return 'unidad';
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Calculadora de Conversiones'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          const Text(
-            'CALCULADORA DE CONVERSIÓN',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Calculadora existente con padding horizontal
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              children: [
-                // Tabla de conversión
-                Table(
-                  border: TableBorder.all(color: Colors.grey.shade300),
-                  columnWidths: const {
-                    0: FlexColumnWidth(2),
-                    1: FlexColumnWidth(2),
-                    2: FlexColumnWidth(2),
-                  },
-                  children: [
-                    // Encabezados
-                    TableRow(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                      ),
-                      children: const [
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'CANTIDAD',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'DE',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'A',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Fila de entrada
-                    TableRow(
-                      children: [
-                        // Cantidad
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: TextField(
-                            controller: _cantidadController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                            ),
-                            onChanged: (value) => _calcularConversion(),
-                          ),
-                        ),
-                        // Unidad origen
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: DropdownButtonFormField<String>(
-                            value: _unidadOrigen,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                            ),
-                            items: _obtenerUnidadesCompatibles(_unidadDestino)
-                                .map((String unidad) {
-                              return DropdownMenuItem<String>(
-                                value: unidad,
-                                child: Text(unidad),
-                              );
-                            }).toList(),
-                            onChanged: (String? value) {
-                              if (value != null) {
-                                setState(() {
-                                  _unidadOrigen = value;
-                                  _calcularConversion();
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                        // Unidad destino
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: DropdownButtonFormField<String>(
-                            value: _unidadDestino,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                            ),
-                            items: _obtenerUnidadesCompatibles(_unidadOrigen)
-                                .map((String unidad) {
-                              return DropdownMenuItem<String>(
-                                value: unidad,
-                                child: Text(unidad),
-                              );
-                            }).toList(),
-                            onChanged: (String? value) {
-                              if (value != null) {
-                                setState(() {
-                                  _unidadDestino = value;
-                                  _calcularConversion();
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // Resultado
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Resultado: ',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        _formatResult(_resultado, _unidadDestino),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'TABLA DE INGREDIENTES',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-          
-          // Encabezados
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Row(
-              children: const [
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'INGREDIENTE',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'CANTIDAD',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'UNIDAD',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Filas de ingredientes
-          ..._ingredientes.map((ingrediente) => Container(
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300),
-                left: BorderSide(color: Colors.grey.shade300),
-                right: BorderSide(color: Colors.grey.shade300),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: TextField(
-                      controller: ingrediente.nombreController,
-                      readOnly: true,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                        isDense: true,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: TextField(
-                      controller: ingrediente.cantidadController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                        isDense: true,
-                      ),
-                      onChanged: (value) {
-                        _actualizarCantidadIngrediente(
-                          _ingredientes.indexOf(ingrediente),
-                          value,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: DropdownButtonFormField<String>(
-                      value: ingrediente.unidad,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                        isDense: true,
-                      ),
-                      items: _unidadesPorTipo[ingrediente.tipoMedida]!.map((String unidad) {
-                        return DropdownMenuItem<String>(
-                          value: unidad,
-                          child: Text(unidad),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        if (value != null) {
-                          _actualizarUnidad(
-                            _ingredientes.indexOf(ingrediente),
-                            value,
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )),
-        ],
-      ),
-    );
+  String _formatearNumero(double numero) {
+    if (numero == numero.roundToDouble()) {
+      return numero.toInt().toString();
+    }
+    return numero.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
   }
 }
 
@@ -662,12 +722,12 @@ class IngredienteTabla {
     required this.nombre,
     required this.cantidad,
     required this.unidad,
-  }) : 
-    cantidadOriginal = cantidad,
-    unidadOriginal = unidad,
-    nombreController = TextEditingController(text: nombre),
-    cantidadController = TextEditingController(text: _formatearNumero(cantidad)),
-    tipoMedida = _determinarTipoMedida(unidad);
+  })  : cantidadOriginal = cantidad,
+        unidadOriginal = unidad,
+        nombreController = TextEditingController(text: nombre),
+        cantidadController =
+            TextEditingController(text: _formatearNumero(cantidad)),
+        tipoMedida = _determinarTipoMedida(unidad);
 
   static String _formatearNumero(double numero) {
     if (numero == numero.roundToDouble()) {

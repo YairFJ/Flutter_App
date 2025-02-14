@@ -14,7 +14,8 @@ class MyRecipesScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar Receta'),
-        content: const Text('¿Estás seguro de que quieres eliminar esta receta?'),
+        content:
+            const Text('¿Estás seguro de que quieres eliminar esta receta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -79,8 +80,10 @@ class MyRecipesScreen extends StatelessWidget {
           }
 
           final recipes = snapshot.data?.docs.map((doc) {
-            return Recipe.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-          }).toList() ?? [];
+                return Recipe.fromMap(
+                    doc.data() as Map<String, dynamic>, doc.id);
+              }).toList() ??
+              [];
 
           recipes.sort((a, b) {
             final aTime = a.createdAt?.toDate() ?? DateTime.now();
@@ -93,10 +96,8 @@ class MyRecipesScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.restaurant_menu, 
-                    size: 64, 
-                    color: Colors.grey[400]
-                  ),
+                  Icon(Icons.restaurant_menu,
+                      size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No has creado ninguna receta',
@@ -141,7 +142,8 @@ class MyRecipesScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => RecipeDetailScreen(recipe: recipe),
+                            builder: (context) =>
+                                RecipeDetailScreen(recipe: recipe),
                           ),
                         );
                       },
@@ -161,7 +163,7 @@ class MyRecipesScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              recipe.description,
+                              recipe.description ?? '',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -209,7 +211,8 @@ class MyRecipesScreen extends StatelessWidget {
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           recipe.creatorName,
@@ -262,7 +265,8 @@ class MyRecipesScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => EditRecipeScreen(recipe: recipe),
+                                    builder: (context) =>
+                                        EditRecipeScreen(recipe: recipe),
                                   ),
                                 );
                               },
@@ -306,4 +310,4 @@ class MyRecipesScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

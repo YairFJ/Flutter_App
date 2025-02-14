@@ -15,21 +15,20 @@ import 'models/recipe.dart';
 import 'pages/profile_page.dart';
 import 'screens/groups_screen.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    
+
     // Remover el signOut automático
     // await FirebaseAuth.instance.signOut();  // Eliminar esta línea
   } catch (e) {
     debugPrint('Error inicializando Firebase: $e');
   }
-  
+
   runApp(const MyApp());
 }
 
@@ -45,7 +44,8 @@ class _MyAppState extends State<MyApp> {
 
   void toggleTheme() {
     setState(() {
-      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+      _themeMode =
+          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     });
   }
 
@@ -73,7 +73,8 @@ class _MyAppState extends State<MyApp> {
       themeMode: _themeMode,
       home: AuthWrapper(toggleTheme: toggleTheme),
       routes: {
-        '/profile': (context) => ProfilePage(user: FirebaseAuth.instance.currentUser!),
+        '/profile': (context) =>
+            ProfilePage(user: FirebaseAuth.instance.currentUser!),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const SignUpScreen(),
       },
@@ -83,7 +84,7 @@ class _MyAppState extends State<MyApp> {
 
 class AuthWrapper extends StatelessWidget {
   final Function toggleTheme;
-  
+
   const AuthWrapper({super.key, required this.toggleTheme});
 
   @override
@@ -117,7 +118,8 @@ class HomeScreen extends StatefulWidget {
   final PigeonUserDetail userData;
   final Function toggleTheme;
 
-  const HomeScreen({super.key, required this.userData, required this.toggleTheme});
+  const HomeScreen(
+      {super.key, required this.userData, required this.toggleTheme});
 
   // Definimos los colores como constantes estáticas
   static const Color primaryColor = Color(0xFF96B4D8);
@@ -130,7 +132,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool isDarkMode = false;
-  
+
   // Lista de páginas/widgets para cada elemento del menú
   final List<Widget> _pages = [
     const RecipesPage(),
@@ -138,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const TimerPage(),
     const StopwatchPage(),
   ];
-  
+
   final List<String> _pageTitles = [
     'Recetas',
     'Conversión',
@@ -301,22 +303,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddRecipeScreen(),
-            ),
-          );
-        },
-        backgroundColor: primaryColor,
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 30,
-        ),
-      ) : null,
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddRecipeScreen(),
+                  ),
+                );
+              },
+              backgroundColor: primaryColor,
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 30,
+              ),
+            )
+          : null,
     );
   }
 }
@@ -354,31 +358,32 @@ class RecipeCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             //ClipRRect(
-              //borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              //child: Image.network(
-                //recipe.imageUrl ?? 'https://via.placeholder.com/150',
-                //height: 160,
-                //width: double.infinity,
-                //fit: BoxFit.cover,
-                //errorBuilder: (context, error, stackTrace) {
-                  //return Container(
-                    //height: 160,
-                    //color: HomeScreen.secondaryColor.withOpacity(0.3),
-                    //child: const Icon(
-                      //Icons.restaurant,
-                      //size: 40,
-                      //color: HomeScreen.primaryColor
-                    //),
-                  //);
-                //},
-              //),
+            //borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            //child: Image.network(
+            //recipe.imageUrl ?? 'https://via.placeholder.com/150',
+            //height: 160,
+            //width: double.infinity,
+            //fit: BoxFit.cover,
+            //errorBuilder: (context, error, stackTrace) {
+            //return Container(
+            //height: 160,
+            //color: HomeScreen.secondaryColor.withOpacity(0.3),
+            //child: const Icon(
+            //Icons.restaurant,
+            //size: 40,
+            //color: HomeScreen.primaryColor
+            //),
+            //);
+            //},
+            //),
             //),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(16)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,7 +400,7 @@ class RecipeCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      recipe.description,
+                      recipe.description ?? '',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],

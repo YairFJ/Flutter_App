@@ -3,7 +3,7 @@ class Ingredient {
   final double quantity;
   final String unit;
 
-  const Ingredient({
+  Ingredient({
     required this.name,
     required this.quantity,
     required this.unit,
@@ -33,4 +33,4 @@ class Ingredient {
   String toString() {
     return '$quantity $unit $name';
   }
-} 
+}
