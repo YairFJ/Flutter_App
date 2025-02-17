@@ -77,20 +77,29 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
         // Encabezados
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey[200],
-            border: Border.all(color: Colors.grey.shade300),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[800] // Fondo oscuro para modo oscuro
+                : Colors.grey[200], // Fondo claro para modo claro
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey.shade600 // Borde más oscuro para modo oscuro
+                  : Colors.grey.shade300, // Borde claro para modo claro
+            ),
           ),
           child: Row(
-            children: const [
+            children: [
               Expanded(
                 flex: 2,
                 child: Padding(
-                  padding: EdgeInsets.all(4.0),
+                  padding: const EdgeInsets.all(4.0),
                   child: Text(
                     'INGREDIENTE',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white // Texto claro para modo oscuro
+                          : Colors.black, // Texto oscuro para modo claro
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -98,12 +107,15 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
               ),
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.all(4.0),
+                  padding: const EdgeInsets.all(4.0),
                   child: Text(
                     'CANTIDAD',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white // Texto claro para modo oscuro
+                          : Colors.black, // Texto oscuro para modo claro
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -111,12 +123,15 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
               ),
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.all(4.0),
+                  padding: const EdgeInsets.all(4.0),
                   child: Text(
                     'UNIDAD',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white // Texto claro para modo oscuro
+                          : Colors.black, // Texto oscuro para modo claro
                     ),
                     textAlign: TextAlign.center,
                   ),

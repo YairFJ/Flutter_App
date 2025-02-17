@@ -37,6 +37,7 @@ dependencies:
   pdf: ^3.8.1
   printing: ^5.9.0
   soundpool: ^2.4.1
+  provider: ^6.1.1
   
 
   # The following adds the Cupertino Icons font to your application.

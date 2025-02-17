@@ -24,7 +24,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _cookingTimeController;
   late String _selectedCategory;
-  String? _imageUrl;
+
   late bool _isPrivate;
   List<Ingredient> _ingredients = [];
   late List<String> _steps;
@@ -40,7 +40,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _steps = List.from(widget.recipe.steps);
     _selectedCategory = widget.recipe.category;
     _isPrivate = widget.recipe.isPrivate;
-    _imageUrl = widget.recipe.imageUrl;
+    
     _ingredients = List.from(widget.recipe.ingredients);
 
     // Asegurar que haya al menos un ingrediente y un paso
@@ -214,30 +214,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Imagen
-              GestureDetector(
-                onTap: () {
-                  // Implementar selección de imagen
-                },
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    image: _imageUrl != null
-                        ? DecorationImage(
-                            image: NetworkImage(_imageUrl!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: _imageUrl == null
-                      ? const Icon(Icons.add_photo_alternate, size: 50)
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 16),
-
               // Título
               TextFormField(
                 controller: _titleController,
@@ -461,7 +437,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           'cookingTimeMinutes': int.parse(_cookingTimeController.text.trim()),
           'ingredients': _ingredients.map((i) => i.toMap()).toList(),
           'steps': steps,
-          'imageUrl': _imageUrl,
           'category': _selectedCategory,
           'isPrivate': _isPrivate,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -477,7 +452,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             description: _descriptionController.text.trim(),
             ingredients: _ingredients,
             steps: steps,
-            imageUrl: _imageUrl,
             cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
             category: _selectedCategory,
             userId: widget.recipe.userId,
