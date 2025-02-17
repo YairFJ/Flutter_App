@@ -223,8 +223,30 @@ class _ConversionCalculatorScreenState
   }
 
   String _formatResult(double value) {
-    if (value <= 0) return '0 platos';
-    return '${value.toInt()} ${value == 1 ? 'plato' : 'platos'}';
+    String numero = _formatearPlatoDestino(value);
+    return '$numero ${_getPluralSuffix(numero)}';
+  }
+
+  String _getPluralSuffix(String value) {
+    try {
+      // Convertimos la coma a punto para poder parsearlo
+      double numero = double.parse(value.replaceAll(',', '.'));
+      return numero <= 1.0 ? 'plato' : 'platos';
+    } catch (e) {
+      return 'platos';
+    }
+  }
+
+  String _formatearPlatoDestino(double valor) {
+    if (valor < 0.1) return "0";
+
+    // Si el valor es muy cercano a un entero (diferencia menor a 0.1)
+    if ((valor - valor.round()).abs() < 0.1) {
+      return valor.round().toString();
+    }
+
+    // Para valores decimales, mostrar con un decimal
+    return valor.toStringAsFixed(1).replaceAll('.', ',');
   }
 
   String _formatQuantity(double quantity) {
@@ -568,15 +590,11 @@ class _ConversionCalculatorScreenState
     }
 
     try {
-      // Reemplazamos comas por puntos para permitir números flotantes
       double cantidadNuevaDisplay =
           double.parse(nuevoValor.replaceAll(',', '.'));
-
-      // Usamos "g" como unidad base para ingredientes de peso
       const String baseUnidad = 'g';
       final ingredienteMod = _ingredientesTabla[index];
 
-      // Convertir la cantidad original y la nueva cantidad del ingrediente modificado a la unidad base
       double cantidadOriginalModBase = _convertirUnidad(
         ingredienteMod.cantidadOriginal,
         ingredienteMod.unidadOriginal,
@@ -589,38 +607,40 @@ class _ConversionCalculatorScreenState
         baseUnidad,
       );
 
-      // Calculamos el factor de escala basado en el ingrediente modificado
       double factorEscala = cantidadNuevaModBase / cantidadOriginalModBase;
 
       setState(() {
-        // Actualizamos el ingrediente modificado (se mantiene su unidad actual)
+        // Actualizamos el ingrediente modificado
         ingredienteMod.cantidad = cantidadNuevaDisplay;
         ingredienteMod.cantidadController.text =
             _formatearNumero(cantidadNuevaDisplay);
 
-        // Actualizamos los demás ingredientes usando el mismo factor de escala
+        // Actualizamos los demás ingredientes
         for (int i = 0; i < _ingredientesTabla.length; i++) {
           if (i != index) {
             final ing = _ingredientesTabla[i];
-            // Convertir la cantidad original de cada ingrediente a la unidad base
             double ingOriginalEnBase = _convertirUnidad(
               ing.cantidadOriginal,
               ing.unidadOriginal,
               baseUnidad,
             );
 
-            // Calcular la nueva cantidad en la unidad base
             double nuevoIngEnBase = ingOriginalEnBase * factorEscala;
-
-            // Reconvertir la cantidad calculada en la unidad base a la unidad actual del ingrediente
             double nuevoDisplay =
                 _convertirUnidad(nuevoIngEnBase, baseUnidad, ing.unidad);
 
-            // Actualizar el ingrediente
             ing.cantidad = nuevoDisplay;
             ing.cantidadController.text = _formatearNumero(nuevoDisplay);
           }
         }
+
+        // Actualizamos el rendimiento con valor decimal
+        double nuevoPlatoDestino = _platosOrigen * factorEscala;
+        _platosDestino = nuevoPlatoDestino
+            .round(); // Mantenemos el entero para la lógica interna
+        _destinoController.text = _formatearPlatoDestino(nuevoPlatoDestino);
+        _resultado =
+            nuevoPlatoDestino; // Guardamos el valor decimal en lugar del factor
       });
     } catch (e) {
       print("Error al actualizar la cantidad: $e");
