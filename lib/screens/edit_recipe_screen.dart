@@ -182,17 +182,92 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     return conversion[unidadAntigua.toLowerCase()] ?? 'g';
   }
 
+  // Agregar esta función para verificar si hubo cambios
+  bool _hasChanges() {
+    return _titleController.text != widget.recipe.title ||
+        _descriptionController.text != widget.recipe.description ||
+        _cookingTimeController.text !=
+            widget.recipe.cookingTime.inMinutes.toString() ||
+        _servingSizeController.text != widget.recipe.servingSize ||
+        _selectedCategory != widget.recipe.category ||
+        _isPrivate != widget.recipe.isPrivate ||
+        _ingredients.length != widget.recipe.ingredients.length ||
+        _steps.length != widget.recipe.steps.length ||
+        !_compareIngredients() ||
+        !_compareSteps();
+  }
+
+  // Función auxiliar para comparar ingredientes
+  bool _compareIngredients() {
+    if (_ingredients.length != widget.recipe.ingredients.length) return false;
+    for (int i = 0; i < _ingredients.length; i++) {
+      if (_ingredients[i].name != widget.recipe.ingredients[i].name ||
+          _ingredients[i].quantity != widget.recipe.ingredients[i].quantity ||
+          _ingredients[i].unit != widget.recipe.ingredients[i].unit) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Función auxiliar para comparar pasos
+  bool _compareSteps() {
+    if (_steps.length != widget.recipe.steps.length) return false;
+    for (int i = 0; i < _steps.length; i++) {
+      if (_steps[i] != widget.recipe.steps[i]) return false;
+    }
+    return true;
+  }
+
+  // Función para manejar la navegación hacia atrás
+  void _handleBack() {
+    if (!_hasChanges()) {
+      // Si no hay cambios, volver directamente a la pantalla de detalle
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => RecipeDetailScreen(recipe: widget.recipe),
+        ),
+      );
+    } else {
+      // Si hay cambios, mostrar diálogo de confirmación
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('¿Guardar cambios?'),
+          content: const Text('¿Deseas guardar los cambios realizados?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Cerrar diálogo
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RecipeDetailScreen(recipe: widget.recipe),
+                  ),
+                );
+              },
+              child: const Text('Descartar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // Cerrar diálogo
+                _updateRecipe();
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Volver a la pantalla de detalle con la receta original
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RecipeDetailScreen(recipe: widget.recipe),
-          ),
-        );
+        _handleBack();
         return false;
       },
       child: Scaffold(
@@ -200,15 +275,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           title: const Text('Editar Receta'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      RecipeDetailScreen(recipe: widget.recipe),
-                ),
-              );
-            },
+            onPressed: _handleBack,
           ),
           actions: [
             IconButton(

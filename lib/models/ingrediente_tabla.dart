@@ -9,14 +9,17 @@ class IngredienteTabla {
 
   IngredienteTabla({
     required this.nombre,
-    this.cantidad,
+    this.cantidad = 0.0, // Valor por defecto
     required this.unidad,
-  }) : nombreController = TextEditingController(text: nombre),
-       cantidadController = TextEditingController(text: cantidad?.toString() ?? '');
+  })  : nombreController = TextEditingController(text: nombre),
+        cantidadController = TextEditingController(
+            text: cantidad == 0.0
+                ? '0,0'
+                : cantidad.toString().replaceAll('.', ','));
 
   bool isValid() {
-    return nombre.trim().isNotEmpty && 
-           cantidadController.text.trim().isNotEmpty &&
-           double.tryParse(cantidadController.text) != null;
+    return nombre.trim().isNotEmpty &&
+        cantidadController.text.trim().isNotEmpty &&
+        double.tryParse(cantidadController.text.replaceAll(',', '.')) != null;
   }
-} 
+}

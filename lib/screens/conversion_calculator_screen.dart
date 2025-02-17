@@ -231,9 +231,9 @@ class _ConversionCalculatorScreenState
     try {
       // Convertimos la coma a punto para poder parsearlo
       double numero = double.parse(value.replaceAll(',', '.'));
-      return numero <= 1.0 ? 'plato' : 'platos';
+      return numero <= 1.0 ? 'persona' : 'personas';
     } catch (e) {
-      return 'platos';
+      return 'personas';
     }
   }
 

@@ -33,13 +33,14 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   void _showServingsDialog() {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Cantidad de Porciones'),
+          title: const Text('Cantidad de Personas'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Selecciona cuántos platos rinde esta receta:'),
+              const Text('Selecciona para cuántas personas rinde esta receta:'),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -88,7 +89,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   }
 
   Future<void> _createRecipe() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState!.validate() && _servings > 0) {
       setState(() {
         _isLoading = true;
       });
@@ -124,6 +125,14 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
           });
         }
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Por favor, indica para cuántas personas rinde la receta'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -182,8 +191,9 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.restaurant),
-                  title: const Text('Porciones'),
-                  subtitle: Text('Esta receta rinde para $_servings platos'),
+                  title: const Text('Personas'),
+                  subtitle: Text(
+                      'Esta receta rinde para $_servings ${_servings <= 1 ? 'persona' : 'personas'}'),
                   trailing: ElevatedButton(
                     onPressed: _showServingsDialog,
                     child: const Text('Cambiar'),
@@ -213,12 +223,28 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextFormField(
+                            controller: TextEditingController(text: '0,0'),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             decoration: const InputDecoration(
                               labelText: 'Cantidad',
+                              border: OutlineInputBorder(),
                             ),
-                            keyboardType: TextInputType.number,
-                            onChanged: (value) {
-                              _ingredients[idx]['amount'] = value;
+                            onTap: () {
+                              final controller = TextEditingController(
+                                  text: _ingredients[idx]['amount'] ?? '0,0');
+                              if (controller.text == '0,0') {
+                                controller.clear();
+                              }
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                controller.clear();
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Por favor ingrese una cantidad';
+                              }
+                              return null;
                             },
                           ),
                         ),
