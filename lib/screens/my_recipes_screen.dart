@@ -63,6 +63,7 @@ class MyRecipesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mis Recetas'),
+        backgroundColor: const Color(0xFF96B4D8),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -196,7 +197,9 @@ class MyRecipesScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.grey[100],
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color.fromRGBO(28, 28, 34, 1) // Modo oscuro
+                                    : Colors.grey[100], // Modo claro
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
@@ -204,7 +207,7 @@ class MyRecipesScreen extends StatelessWidget {
                                   const Icon(
                                     Icons.person_outline,
                                     size: 16,
-                                    color: Colors.grey,
+                                    color: Color(0xFF96B4D8),
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
@@ -213,20 +216,24 @@ class MyRecipesScreen extends StatelessWidget {
                                       children: [
                                         Text(
                                           recipe.creatorName,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.black87,
+                                            color: Theme.of(context).brightness == Brightness.dark
+                                                ? Colors.white // Modo oscuro
+                                                : Colors.black87, // Modo claro
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
                                           recipe.creatorEmail,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.black87,
+                                            color: Theme.of(context).brightness == Brightness.dark
+                                                ? Colors.white // Modo oscuro
+                                                : Colors.black87, // Modo claro
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -249,7 +256,9 @@ class MyRecipesScreen extends StatelessWidget {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color.fromRGBO(28, 28, 34, 1) // Modo oscuro
+                                  : Colors.white, // Modo claro
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -271,7 +280,9 @@ class MyRecipesScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color.fromRGBO(28, 28, 34, 1) // Modo oscuro
+                                  : Colors.white.withOpacity(0.9), // Modo claro
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -303,6 +314,7 @@ class MyRecipesScreen extends StatelessWidget {
           );
         },
         child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF96B4D8),
       ),
     );
   }

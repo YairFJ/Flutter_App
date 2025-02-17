@@ -140,12 +140,13 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
           const Spacer(flex: 3),
-          // Botones de categoría
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -155,9 +156,10 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
             ],
           ),
           const SizedBox(height: 24),
-          // Calculadora
           Table(
-            border: TableBorder.all(color: Colors.grey.shade300),
+            border: TableBorder.all(
+              color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+            ),
             columnWidths: const {
               0: FlexColumnWidth(2),
               1: FlexColumnWidth(2),
@@ -166,30 +168,39 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
             children: [
               TableRow(
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
                 ),
-                children: const [
+                children: [
                   Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
                       'CANTIDAD',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
                       'DE',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
                       'A',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -203,9 +214,14 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                       controller: _cantidadController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.center,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                        filled: true,
                       ),
                       onChanged: (value) => _calcularConversion(),
                     ),
@@ -214,9 +230,15 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                     padding: const EdgeInsets.all(8.0),
                     child: DropdownButtonFormField<String>(
                       value: _unidadOrigen,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                        filled: true,
+                      ),
+                      dropdownColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
                       ),
                       items: _unidadesPorCategoria[_categoriaSeleccionada]!
                           .map((String unidad) {
@@ -239,9 +261,15 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                     padding: const EdgeInsets.all(8.0),
                     child: DropdownButtonFormField<String>(
                       value: _unidadDestino,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                        filled: true,
+                      ),
+                      dropdownColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
                       ),
                       items: _unidadesPorCategoria[_categoriaSeleccionada]!
                           .map((String unidad) {
@@ -265,30 +293,32 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
             ],
           ),
           const SizedBox(height: 24),
-          // Resultado
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: isDarkMode ? Colors.blue.shade900 : Colors.blue.shade50,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
+              border: Border.all(
+                color: isDarkMode ? Colors.blue.shade700 : Colors.blue.shade200,
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'Resultado: ',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
                 ),
                 Text(
                   '${_formatearResultado(_resultado)} $_unidadDestino',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
                   ),
                 ),
               ],
@@ -302,22 +332,34 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
 
   Widget _buildCategoryButton(String categoria, IconData icono) {
     bool isSelected = _categoriaSeleccionada == categoria;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return ElevatedButton.icon(
-      icon: Icon(icono, 
-        color: isSelected ? Colors.white : Colors.grey,
+      icon: Icon(
+        icono,
+        color: isSelected 
+            ? Colors.white 
+            : (isDarkMode ? Colors.grey.shade300 : Colors.grey),
       ),
-      label: Text(categoria,
+      label: Text(
+        categoria,
         style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey,
+          color: isSelected 
+              ? Colors.white 
+              : (isDarkMode ? Colors.grey.shade300 : Colors.grey),
         ),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.blue : Colors.white,
+        backgroundColor: isSelected 
+            ? Colors.blue 
+            : (isDarkMode ? Colors.grey.shade800 : Colors.white),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(25),
           side: BorderSide(
-            color: isSelected ? Colors.blue : Colors.grey,
+            color: isSelected 
+                ? Colors.blue 
+                : (isDarkMode ? Colors.grey.shade600 : Colors.grey),
           ),
         ),
       ),
@@ -325,3 +367,4 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
     );
   }
 } 
+

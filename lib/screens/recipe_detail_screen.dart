@@ -74,6 +74,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
     final isOwner = currentUser?.uid == widget.recipe.userId;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -98,6 +99,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           if (isOwner) ...[
             IconButton(
               icon: const Icon(Icons.edit),
+              
               onPressed: () async {
                 final updatedRecipe = await Navigator.push<Recipe>(
                   context,
@@ -118,6 +120,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () => _deleteRecipe(context),
+              
             ),
           ],
           IconButton(
@@ -157,7 +160,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         children: [
                           const Icon(Icons.timer, size: 20),
                           const SizedBox(width: 4),
-                          Text('${widget.recipe.cookingTime.inMinutes} min'),
+                          Text(
+                            '${widget.recipe.cookingTime.inMinutes} min',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
                         ],
                       ),
                       Row(
@@ -165,7 +173,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         children: [
                           const Icon(Icons.category, size: 20),
                           const SizedBox(width: 4),
-                          Text(widget.recipe.category),
+                          Text(
+                            widget.recipe.category,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -180,40 +193,50 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         height: 1.5,
                         letterSpacing: 0.2,
                         wordSpacing: 1.2,
-                        color: Colors.black87,
+                        color: isDarkMode ? Colors.white : Colors.black87,
                         fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Ingredientes:',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 8),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      columns: const [
+                      columns: [
                         DataColumn(
                           label: Text(
                             'Ingrediente',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                           ),
                         ),
                         DataColumn(
                           label: Text(
                             'Cantidad',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                           ),
                         ),
                         DataColumn(
                           label: Text(
                             'Unidad',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                           ),
                         ),
                       ],
@@ -225,19 +248,35 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           formattedQuantity = ingredient.quantity.toString();
                         }
                         return DataRow(cells: [
-                          DataCell(Text(ingredient.name)),
-                          DataCell(Text(formattedQuantity)),
-                          DataCell(Text(ingredient.unit)),
+                          DataCell(Text(
+                            ingredient.name,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          )),
+                          DataCell(Text(
+                            formattedQuantity,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          )),
+                          DataCell(Text(
+                            ingredient.unit,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          )),
                         ]);
                       }).toList(),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Pasos:',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -276,7 +315,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                     height: 1.5,
                                     letterSpacing: 0.2,
                                     wordSpacing: 1.2,
-                                    color: Colors.black87,
+                                    color: isDarkMode ? Colors.white : Colors.black87,
                                     fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
                                   ),
                                 ),

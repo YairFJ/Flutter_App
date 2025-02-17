@@ -346,6 +346,8 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calculadora de Conversiones'),
@@ -353,91 +355,107 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          const Text(
+          Text(
             'CALCULADORA DE CONVERSIÓN',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           const SizedBox(height: 16),
-          // Calculadora existente con padding horizontal
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               children: [
-                // Tabla de conversión
                 Table(
-                  border: TableBorder.all(color: Colors.grey.shade300),
+                  border: TableBorder.all(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
                   columnWidths: const {
                     0: FlexColumnWidth(2),
                     1: FlexColumnWidth(2),
                     2: FlexColumnWidth(2),
                   },
                   children: [
-                    // Encabezados
                     TableRow(
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
+                        color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
                       ),
-                      children: const [
+                      children: [
                         Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Text(
                             'CANTIDAD',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Text(
                             'DE',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Text(
                             'A',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                       ],
                     ),
-                    // Fila de entrada
                     TableRow(
                       children: [
-                        // Cantidad
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: TextField(
                             controller: _cantidadController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                              filled: true,
+                              fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                             ),
                             onChanged: (value) => _calcularConversion(),
                           ),
                         ),
-                        // Unidad origen
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DropdownButtonFormField<String>(
                             value: _unidadOrigen,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                              filled: true,
+                              fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                             ),
                             items: _obtenerUnidadesCompatibles(_unidadDestino)
                                 .map((String unidad) {
                               return DropdownMenuItem<String>(
                                 value: unidad,
-                                child: Text(unidad),
+                                child: Text(
+                                  unidad,
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
+                                ),
                               );
                             }).toList(),
                             onChanged: (String? value) {
@@ -450,20 +468,26 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                             },
                           ),
                         ),
-                        // Unidad destino
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DropdownButtonFormField<String>(
                             value: _unidadDestino,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                            decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                              filled: true,
+                              fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                             ),
                             items: _obtenerUnidadesCompatibles(_unidadOrigen)
                                 .map((String unidad) {
                               return DropdownMenuItem<String>(
                                 value: unidad,
-                                child: Text(unidad),
+                                child: Text(
+                                  unidad,
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
+                                ),
                               );
                             }).toList(),
                             onChanged: (String? value) {
@@ -481,83 +505,91 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                   ],
                 ),
                 const SizedBox(height: 24),
-                // Resultado
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: isDarkMode ? Colors.blueGrey.shade800 : Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade200),
+                    border: Border.all(color: isDarkMode ? Colors.blueGrey.shade700 : Colors.blue.shade200),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Resultado: ',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.black,
                         ),
                       ),
                       Text(
                         _formatResult(_resultado, _unidadDestino),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue,
+                          color: isDarkMode ? Colors.lightBlueAccent : Colors.blue,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 32),
-                const Text(
+                Text(
                   'TABLA DE INGREDIENTES',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
                 ),
                 const SizedBox(height: 16),
               ],
             ),
           ),
-          
-          // Encabezados
           Container(
             decoration: BoxDecoration(
-              color: Colors.grey[200],
-              border: Border.all(color: Colors.grey.shade300),
+              color: isDarkMode ? Colors.grey.shade800 : Colors.grey[200],
+              border: Border.all(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
             ),
             child: Row(
-              children: const [
+              children: [
                 Expanded(
                   flex: 2,
                   child: Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
                       'INGREDIENTE',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
                 ),
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
                       'CANTIDAD',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
                 ),
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
                       'UNIDAD',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -565,14 +597,12 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
               ],
             ),
           ),
-          
-          // Filas de ingredientes
           ..._ingredientes.map((ingrediente) => Container(
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300),
-                left: BorderSide(color: Colors.grey.shade300),
-                right: BorderSide(color: Colors.grey.shade300),
+                bottom: BorderSide(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
+                left: BorderSide(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
+                right: BorderSide(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300),
               ),
             ),
             child: Row(
@@ -584,10 +614,15 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                     child: TextField(
                       controller: ingrediente.nombreController,
                       readOnly: true,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                         isDense: true,
+                        filled: true,
+                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                       ),
                     ),
                   ),
@@ -598,10 +633,15 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                     child: TextField(
                       controller: ingrediente.cantidadController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                         isDense: true,
+                        filled: true,
+                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                       ),
                       onChanged: (value) {
                         _actualizarCantidadIngrediente(
@@ -617,15 +657,22 @@ class _ConversionCalculatorScreenState extends State<ConversionCalculatorScreen>
                     padding: const EdgeInsets.all(4.0),
                     child: DropdownButtonFormField<String>(
                       value: ingrediente.unidad,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                         isDense: true,
+                        filled: true,
+                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                       ),
                       items: _unidadesPorTipo[ingrediente.tipoMedida]!.map((String unidad) {
                         return DropdownMenuItem<String>(
                           value: unidad,
-                          child: Text(unidad),
+                          child: Text(
+                            unidad,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
                         );
                       }).toList(),
                       onChanged: (String? value) {

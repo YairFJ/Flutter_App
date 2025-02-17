@@ -70,7 +70,6 @@ class _TimerPageState extends State<TimerPage> {
           soundId!,
           rate: 1.0,      // Velocidad normal
           repeat: 3,      // Repetir 3 veces
-          
         );
         
         debugPrint('Sonido reproducido con streamId: $streamId');
@@ -154,7 +153,9 @@ class _TimerPageState extends State<TimerPage> {
       height: 100,
       width: 80,
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? Colors.grey[800] // Color más claro para modo oscuro
+            : Colors.grey[200], // Color original para modo claro
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListWheelScrollView.useDelegate(
@@ -198,9 +199,12 @@ class _TimerPageState extends State<TimerPage> {
             return Center(
               child: Text(
                 index.toString().padLeft(2, '0'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).brightness == Brightness.dark 
+                      ? Colors.white // Color del texto para modo oscuro
+                      : Colors.black, // Color del texto para modo claro
                 ),
               ),
             );
@@ -212,6 +216,8 @@ class _TimerPageState extends State<TimerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       body: Center(
         child: Column(
@@ -221,12 +227,20 @@ class _TimerPageState extends State<TimerPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildNumberPicker(myDuration.inHours, 24, 0),
-                const Text(' : ', 
-                  style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold)
+                Text(' : ', 
+                  style: TextStyle(
+                    fontSize: 48, 
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  )
                 ),
                 _buildNumberPicker(myDuration.inMinutes.remainder(60), 60, 1),
-                const Text(' : ', 
-                  style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold)
+                Text(' : ', 
+                  style: TextStyle(
+                    fontSize: 48, 
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  )
                 ),
                 _buildNumberPicker(myDuration.inSeconds.remainder(60), 60, 2),
               ],

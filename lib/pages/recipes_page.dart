@@ -38,7 +38,9 @@ class _RecipesPageState extends State<RecipesPage> {
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color.fromRGBO(28, 28, 34, 1)
+                  : Colors.white,
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear),
@@ -249,7 +251,7 @@ class _RecipesPageState extends State<RecipesPage> {
                                 icon: Icon(
                                   isFavorite ? Icons.favorite : Icons.favorite_border,
                                   size: 18,
-                                  color: isFavorite ? Colors.red : Colors.grey,
+                                  color: isFavorite ? Colors.red : const Color.fromARGB(255, 158, 158, 158),
                                 ),
                                 onPressed: () => _toggleFavorite(context, recipe),
                               ),
@@ -272,20 +274,24 @@ class _RecipesPageState extends State<RecipesPage> {
                                     children: [
                                       Text(
                                         recipe.creatorName,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.white
+                                              : Colors.black87,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
                                         recipe.creatorEmail,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.white
+                                              : Colors.black87,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,

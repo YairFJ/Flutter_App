@@ -42,6 +42,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.light;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   void toggleTheme() {
     setState(() {
@@ -52,6 +53,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Restaurante App',
       theme: ThemeData(
@@ -328,9 +330,15 @@ class RecipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.brightness == Brightness.dark ? Colors.white : Colors.black;
+    final secondaryTextColor = theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87;
+    final backgroundColor = theme.brightness == Brightness.dark ? Colors.black : Colors.white;
+    final userInfoBackgroundColor = theme.brightness == Brightness.dark ? Colors.black : Colors.grey[200];
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -353,42 +361,22 @@ class RecipeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //ClipRRect(
-              //borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              //child: Image.network(
-                //recipe.imageUrl ?? 'https://via.placeholder.com/150',
-                //height: 160,
-                //width: double.infinity,
-                //fit: BoxFit.cover,
-                //errorBuilder: (context, error, stackTrace) {
-                  //return Container(
-                    //height: 160,
-                    //color: HomeScreen.secondaryColor.withOpacity(0.3),
-                    //child: const Icon(
-                      //Icons.restaurant,
-                      //size: 40,
-                      //color: HomeScreen.primaryColor
-                    //),
-                  //);
-                //},
-              //),
-            //),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(14),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       recipe.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF333333),
+                        color: textColor,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -398,10 +386,41 @@ class RecipeCard extends StatelessWidget {
                       recipe.description,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[600],
+                        color: secondaryTextColor,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: userInfoBackgroundColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Creado por: ${recipe.creatorName}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            recipe.creatorEmail,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                     const Spacer(),
                     Row(

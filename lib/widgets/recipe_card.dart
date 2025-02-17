@@ -120,12 +120,14 @@ class RecipeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
     final isFavorite = currentUser != null && recipe.favoritedBy.contains(currentUser.uid);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+      color: isDarkMode ? Colors.grey[800] : Colors.white,
       child: Stack(
         children: [
           InkWell(
@@ -137,9 +139,10 @@ class RecipeCard extends StatelessWidget {
                 children: [
                   Text(
                     recipe.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -149,7 +152,7 @@ class RecipeCard extends StatelessWidget {
                     recipe.description,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -199,9 +202,9 @@ class RecipeCard extends StatelessWidget {
                           children: [
                             Text(
                               'Creado por: ${recipe.creatorName}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey,
+                                color: isDarkMode ? Colors.white : Colors.black,
                                 fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
@@ -209,9 +212,9 @@ class RecipeCard extends StatelessWidget {
                             ),
                             Text(
                               recipe.creatorEmail,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
-                                color: Colors.grey,
+                                color: isDarkMode ? Colors.white70 : Colors.black87,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

@@ -133,6 +133,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nueva Receta'),
@@ -140,16 +142,24 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Container(
-          constraints: BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(maxWidth: 600),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
                 TextFormField(
                   controller: _titleController,
-                  decoration: const InputDecoration(
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                  decoration: InputDecoration(
                     labelText: 'Título',
-                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                    ),
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
                   ),
                   validator: (value) {
                     if (value?.trim().isEmpty ?? true) {
@@ -161,9 +171,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                  decoration: InputDecoration(
                     labelText: 'Descripción',
-                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                    ),
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
                   ),
                   maxLines: 3,
                   validator: (value) {
@@ -176,9 +194,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _cookingTimeController,
-                  decoration: const InputDecoration(
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                  decoration: InputDecoration(
                     labelText: 'Tiempo de preparación (minutos)',
-                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                    ),
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
@@ -196,14 +222,26 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(
+                      color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
+                    ),
                     borderRadius: BorderRadius.circular(8),
+                    color: isDarkMode ? Colors.grey[800] : Colors.white,
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedCategory,
                       isExpanded: true,
-                      hint: const Text('Selecciona una categoría'),
+                      dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      hint: Text(
+                        'Selecciona una categoría',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                        ),
+                      ),
                       items: RecipeCategories.categories.map((String category) {
                         return DropdownMenuItem<String>(
                           value: category,
@@ -215,7 +253,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                                 size: 24,
                               ),
                               const SizedBox(width: 12),
-                              Text(category),
+                              Text(
+                                category,
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -236,13 +279,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 _buildStepsList(),
                 const SizedBox(height: 24),
                 SwitchListTile(
-                  title: const Text('Receta Privada'),
+                  title: Text(
+                    'Receta Privada',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+                  ),
                   subtitle: Text(
                     _isPrivate 
                         ? 'Solo tú podrás ver esta receta'
                         : 'Todos podrán ver esta receta',
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 12,
                     ),
                   ),
@@ -282,9 +330,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Ingredientes',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+          ),
         ),
         const SizedBox(height: 8),
         ListView.builder(
@@ -320,9 +372,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Pasos',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+          ),
         ),
         const SizedBox(height: 8),
         ListView.builder(

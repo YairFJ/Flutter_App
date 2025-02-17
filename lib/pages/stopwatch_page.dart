@@ -152,6 +152,8 @@ class _StopwatchPageState extends State<StopwatchPage> {
   }
 
   Widget _buildTimeColumn(String label, String value) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -166,14 +168,15 @@ class _StopwatchPageState extends State<StopwatchPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.grey[200],
+            color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 48,
               fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
         ),

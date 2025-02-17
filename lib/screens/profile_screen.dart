@@ -7,7 +7,7 @@ import '../screens/user_recipes_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  Future<void> _updateUserName(BuildContext context, String currentName) async {
+  Future<void> _updateUserName(BuildContext context, String currentName) async{
     final TextEditingController nameController = TextEditingController(text: currentName);
     
     return showDialog(
