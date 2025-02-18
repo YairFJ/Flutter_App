@@ -222,13 +222,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   // Función para manejar la navegación hacia atrás
   void _handleBack() {
     if (!_hasChanges()) {
-      // Si no hay cambios, volver directamente a la pantalla de detalle
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => RecipeDetailScreen(recipe: widget.recipe),
-        ),
-      );
+      // Si no hay cambios, simplemente volver con pop
+      Navigator.pop(context);
     } else {
       // Si hay cambios, mostrar diálogo de confirmación
       showDialog(
@@ -240,13 +235,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context); // Cerrar diálogo
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        RecipeDetailScreen(recipe: widget.recipe),
-                  ),
-                );
+                Navigator.pop(context); // Volver a la pantalla anterior
               },
               child: const Text('Descartar'),
             ),
@@ -289,7 +278,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Imagen
+              // Eliminar o comentar esta sección para quitar la opción de agregar imagen
+              /*
               GestureDetector(
                 onTap: () {
                   // Implementar selección de imagen
@@ -312,6 +302,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              */
 
               // Título
               TextFormField(
