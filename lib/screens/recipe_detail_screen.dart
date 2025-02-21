@@ -321,11 +321,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   String _getPluralSuffix(String servingSize) {
     try {
-      final number = int.tryParse(servingSize);
-      if (number == null) return 'platos';
-      return number > 1 ? 'platos' : 'plato';
+      final number = double.parse(servingSize.replaceAll(',', '.'));
+      return number <= 1.0 ? 'persona' : 'personas';
     } catch (e) {
-      return 'platos';
+      return 'personas';
     }
   }
 }

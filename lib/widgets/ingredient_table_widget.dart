@@ -21,16 +21,16 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
   late final List<IngredienteTabla> _ingredientes;
 
   final List<String> _unidadesDisponibles = [
-    'g',    // gramos
-    'kg',   // kilogramos
-    'ml',   // mililitros
-    'l',    // litros
-    'tz',   // taza
-    'cda',  // cucharada
+    'g', // gramos
+    'kg', // kilogramos
+    'ml', // mililitros
+    'l', // litros
+    'tz', // taza
+    'cda', // cucharada
     'cdta', // cucharadita
-    'u',    // unidad
-    'oz',   // onzas
-    'lb',   // libras
+    'u', // unidad
+    'oz', // onzas
+    'lb', // libras
   ];
 
   final Map<String, String> _unidadesCompletas = {
@@ -54,7 +54,8 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
 
   void _actualizarIngredientes() {
     // Recorremos la lista de ingredientes y comprobamos que el nombre no esté vacío.
-    bool hayIngredienteVacio = _ingredientes.any((ing) => ing.nombre.trim().isEmpty);
+    bool hayIngredienteVacio =
+        _ingredientes.any((ing) => ing.nombre.trim().isEmpty);
     if (hayIngredienteVacio) {
       // Si existe al menos uno con nombre vacío, se muestra un mensaje de error y no se llama al callback.
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,7 +126,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
             ],
           ),
         ),
-        
+
         // Filas de ingredientes
         ..._ingredientes.map((ingrediente) => _buildIngredientRow(ingrediente)),
 
@@ -138,7 +139,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 setState(() {
                   _ingredientes.add(IngredienteTabla(
                     nombre: '',
-                    cantidad: 0,
+                    cantidad: 0.0,
                     unidad: 'g',
                   ));
                   _actualizarIngredientes();
@@ -186,19 +187,28 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
               padding: const EdgeInsets.all(4.0),
               child: TextField(
                 controller: ingrediente.cantidadController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 8),
                   isDense: true,
                 ),
+                onTap: () {
+                  if (ingrediente.cantidadController.text == '0,0') {
+                    setState(() {
+                      ingrediente.cantidadController.clear();
+                    });
+                  }
+                },
                 onChanged: (value) {
                   if (value.isNotEmpty) {
                     try {
-                      ingrediente.cantidad = double.parse(value);
+                      ingrediente.cantidad =
+                          double.parse(value.replaceAll(',', '.'));
                       _actualizarIngredientes();
                     } catch (e) {
-                      // Manejar error de conversión si es necesario.
+                      // Manejar error de conversión si es necesario
                     }
                   }
                 },
@@ -239,4 +249,4 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
       ),
     );
   }
-} 
+}
