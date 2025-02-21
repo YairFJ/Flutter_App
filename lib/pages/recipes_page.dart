@@ -80,7 +80,8 @@ class _RecipesPageState extends State<RecipesPage> {
                   doc.id,
                 );
               }).where((recipe) {
-                return !recipe.isPrivate || recipe.userId == currentUser?.uid;
+                final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
+                return !recipe.isPrivate || recipe.creatorEmail == currentUserEmail;
               }).toList();
 
               // Filtrar las recetas según la búsqueda

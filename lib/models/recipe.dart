@@ -17,6 +17,7 @@ class Recipe {
   final String category;
   final bool isPrivate;
   final Timestamp? createdAt;
+  final String? groupId;
 
   Recipe({
     required this.id,
@@ -34,6 +35,7 @@ class Recipe {
     required this.category,
     required this.isPrivate,
     this.createdAt,
+    this.groupId,
   });
 
   factory Recipe.fromMap(Map<String, dynamic> map, String id) {
@@ -62,6 +64,7 @@ class Recipe {
       isPrivate: map['isPrivate'] ?? false,
       servingSize: map['servingSize'] ?? '',
       createdAt: map['createdAt'] as Timestamp?,
+      groupId: map['groupId'],
     );
   }
 
@@ -83,6 +86,7 @@ class Recipe {
       'creatorName': creatorName,
       'isPrivate': isPrivate,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
+      'groupId': groupId,
     };
   }
 
@@ -107,6 +111,7 @@ class Recipe {
       isPrivate: data['isPrivate'] ?? false,
       servingSize: data['servingSize'] ?? '',
       createdAt: data['createdAt'] as Timestamp?,
+      groupId: data['groupId'],
     );
   }
 }
