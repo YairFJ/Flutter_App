@@ -7,6 +7,7 @@ import './recipe_detail_screen.dart';
 import '../main.dart';
 import '../models/ingredient.dart';
 import '../widgets/ingredient_table_widget.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class EditRecipeScreen extends StatefulWidget {
   final Recipe recipe;
