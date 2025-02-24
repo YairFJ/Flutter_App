@@ -8,7 +8,7 @@ import 'group_recipe_form_screen.dart';
 
 class GroupDetailScreen extends StatelessWidget {
   final Group group;
-  const GroupDetailScreen({Key? key, required this.group}) : super(key: key);
+  const GroupDetailScreen({super.key, required this.group});
 
   @override
   Widget build(BuildContext context) {

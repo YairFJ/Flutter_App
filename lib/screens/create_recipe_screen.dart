@@ -6,7 +6,7 @@ import '../models/group.dart';
 class CreateRecipeScreen extends StatefulWidget {
   final Group group;
 
-  const CreateRecipeScreen({Key? key, required this.group}) : super(key: key);
+  const CreateRecipeScreen({super.key, required this.group});
 
   @override
   State<CreateRecipeScreen> createState() => _CreateRecipeScreenState();
@@ -20,7 +20,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   final TextEditingController _servingsController = TextEditingController();
   final TextEditingController _preparationTimeController =
       TextEditingController();
-  List<Map<String, String>> _ingredients = [];
+  final List<Map<String, String>> _ingredients = [];
   bool _isLoading = false;
   int _servings = 1;
 
@@ -272,7 +272,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
 
               const SizedBox(height: 16.0),
               ElevatedButton(

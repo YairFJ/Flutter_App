@@ -59,30 +59,20 @@ class _RecipesPageState extends State<RecipesPage> {
           ),
         ),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('recipes')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          child:   StreamBuilder<QuerySnapshot>(
+     stream: FirebaseFirestore.instance.collection('recipes').orderBy('createdAt', descending: true).snapshots(),
+     builder: (context, snapshot) {
+       if (snapshot.connectionState == ConnectionState.waiting) {
+         return const Center(child: CircularProgressIndicator());
+       }
 
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
+       if (snapshot.hasError) {
+         return Center(child: Text('Error: ${snapshot.error}'));
+       }
 
-              final currentUser = FirebaseAuth.instance.currentUser;
-              final recipes = snapshot.data!.docs.map((doc) {
-                return Recipe.fromMap(
-                  doc.data() as Map<String, dynamic>,
-                  doc.id,
-                );
-              }).where((recipe) {
-                final currentUserEmail = FirebaseAuth.instance.currentUser?.email;
-                return !recipe.isPrivate || recipe.creatorEmail == currentUserEmail;
-              }).toList();
+       final recipes = snapshot.data!.docs.map((doc) {
+         return Recipe.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+       }).toList();
 
               // Filtrar las recetas según la búsqueda
               var filteredRecipes = recipes;

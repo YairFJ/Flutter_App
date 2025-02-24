@@ -123,7 +123,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
                   ),
                   if (laps.isNotEmpty) ...[
                     const SizedBox(height: 40),
-                    Container(
+                    SizedBox(
                       height: 150,
                       child: ListView.builder(
                         itemCount: laps.length,

@@ -66,7 +66,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             .toList();
 
         final recipe = Recipe(
-          id: '',
+          id: "",
           title: _titleController.text,
           description: _descriptionController.text,
           userId: currentUser.uid,
@@ -204,7 +204,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   controller: _servingSizeController,
                   decoration: const InputDecoration(
                     labelText: 'Rendimiento',
-                    hintText: 'Ej: 4 porciones',
+                    hintText: 'Ej: 4',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {

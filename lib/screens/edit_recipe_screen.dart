@@ -3,11 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
 import '../models/ingrediente_tabla.dart';
 import '../constants/categories.dart';
-import './recipe_detail_screen.dart';
 import '../main.dart';
 import '../models/ingredient.dart';
 import '../widgets/ingredient_table_widget.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class EditRecipeScreen extends StatefulWidget {
   final Recipe recipe;
@@ -30,6 +28,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late bool _isPrivate;
   List<Ingredient> _ingredients = [];
   late List<String> _steps;
+  String _category = '';
 
   @override
   void initState() {
@@ -46,6 +45,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _isPrivate = widget.recipe.isPrivate;
     _imageUrl = widget.recipe.imageUrl;
     _ingredients = List.from(widget.recipe.ingredients);
+    _category = _selectedCategory;
 
     // Asegurar que haya al menos un ingrediente y un paso
     if (_steps.isEmpty) {
@@ -279,33 +279,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Eliminar o comentar esta sección para quitar la opción de agregar imagen
-              /*
-              GestureDetector(
-                onTap: () {
-                  // Implementar selección de imagen
-                },
-                child: Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    image: _imageUrl != null
-                        ? DecorationImage(
-                            image: NetworkImage(_imageUrl!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: _imageUrl == null
-                      ? const Icon(Icons.add_photo_alternate, size: 50)
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 16),
-              */
-
-              // Título
+             
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -381,7 +355,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
               // Categoría
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                value: _category.isNotEmpty ? _category : null,
                 decoration: const InputDecoration(
                   labelText: 'Categoría',
                   border: OutlineInputBorder(),
@@ -396,9 +370,15 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {
-                      _selectedCategory = value;
+                      _category = value;
                     });
                   }
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor selecciona una categoría';
+                  }
+                  return null;
                 },
               ),
               const SizedBox(height: 24),
@@ -551,7 +531,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           'ingredients': _ingredients.map((i) => i.toMap()).toList(),
           'steps': steps,
           'imageUrl': _imageUrl,
-          'category': _selectedCategory,
+          'category': _category,
           'isPrivate': _isPrivate,
           'servingSize': _servingSizeController.text.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
@@ -570,7 +550,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             imageUrl: _imageUrl,
             cookingTime: Duration(
                 minutes: int.parse(_cookingTimeController.text.trim())),
-            category: _selectedCategory,
+            category: _category,
             userId: widget.recipe.userId,
             creatorName: widget.recipe.creatorName,
             creatorEmail: widget.recipe.creatorEmail,

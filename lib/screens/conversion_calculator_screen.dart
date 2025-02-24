@@ -96,8 +96,7 @@ class _ConversionCalculatorScreenState
           TextEditingController(text: widget.recipe.servingSize);
 
       // Si tenemos un servingSize válido, lo usamos
-      if (widget.recipe.servingSize != null &&
-          widget.recipe.servingSize.isNotEmpty) {
+      if (widget.recipe.servingSize.isNotEmpty) {
         _cantidadController.text = widget.recipe.servingSize;
         _destinoController.text = widget.recipe.servingSize;
         _platosOrigen = int.tryParse(widget.recipe.servingSize) ?? 1;
@@ -105,8 +104,7 @@ class _ConversionCalculatorScreenState
       }
 
       // Inicialización segura de ingredientes
-      if (widget.recipe.ingredients != null &&
-          widget.recipe.ingredients.isNotEmpty) {
+      if (widget.recipe.ingredients.isNotEmpty) {
         _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
           try {
             return IngredienteTabla(
@@ -148,25 +146,23 @@ class _ConversionCalculatorScreenState
           double factor = destino / origen;
           _resultado = destino.toDouble();
 
-          if (widget.recipe.ingredients != null) {
-            _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
-              try {
-                return IngredienteTabla(
-                  nombre: ingrediente.name ?? '',
-                  cantidad: ((ingrediente.quantity ?? 0) * factor),
-                  unidad: ingrediente.unit ?? '',
-                );
-              } catch (e) {
-                print("Error al convertir ingrediente: $e");
-                return IngredienteTabla(
-                  nombre: '',
-                  cantidad: 0,
-                  unidad: 'g',
-                );
-              }
-            }).toList();
-          }
-        }
+          _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
+            try {
+              return IngredienteTabla(
+                nombre: ingrediente.name ?? '',
+                cantidad: ((ingrediente.quantity ?? 0) * factor),
+                unidad: ingrediente.unit ?? '',
+              );
+            } catch (e) {
+              print("Error al convertir ingrediente: $e");
+              return IngredienteTabla(
+                nombre: '',
+                cantidad: 0,
+                unidad: 'g',
+              );
+            }
+          }).toList();
+                }
       });
     } catch (e) {
       print("Error en _calcularConversion: $e"); // Debug print

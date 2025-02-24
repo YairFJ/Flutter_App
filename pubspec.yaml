@@ -37,6 +37,7 @@ dependencies:
   pdf: ^3.8.1
   printing: ^5.9.0
   soundpool: ^2.4.1
+  google_sign_in: ^6.0.0
   
 
   # The following adds the Cupertino Icons font to your application.

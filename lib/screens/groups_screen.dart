@@ -6,10 +6,10 @@ import 'group_detail_screen.dart';
 import 'create_group_screen.dart';
 
 class GroupsScreen extends StatelessWidget {
-  const GroupsScreen({Key? key}) : super(key: key);
+  const GroupsScreen({super.key});
 
   void _showJoinCommunityDialog(BuildContext context) {
-    final TextEditingController _groupIdController = TextEditingController();
+    final TextEditingController groupIdController = TextEditingController();
 
     showDialog(
       context: context,
@@ -17,7 +17,7 @@ class GroupsScreen extends StatelessWidget {
         return AlertDialog(
           title: const Text('Unirme a Comunidad'),
           content: TextField(
-            controller: _groupIdController,
+            controller: groupIdController,
             decoration: const InputDecoration(
               labelText: 'Código de la comunidad',
             ),
@@ -29,7 +29,7 @@ class GroupsScreen extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                final groupId = _groupIdController.text.trim();
+                final groupId = groupIdController.text.trim();
                 if (groupId.isNotEmpty) {
                   try {
                     final groupDoc = await FirebaseFirestore.instance

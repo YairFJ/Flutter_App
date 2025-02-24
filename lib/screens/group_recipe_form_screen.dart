@@ -6,14 +6,14 @@ import '../models/ingredient.dart';
 import '../models/ingrediente_tabla.dart';
 import '../models/group.dart';
 import '../widgets/ingredient_table_widget.dart';
+import '../constants/categories.dart';
 
 class GroupRecipeFormScreen extends StatefulWidget {
   final Group group;
   final Recipe?
       recipe; // Si se pasa una receta, el formulario funcionará en modo edición
 
-  const GroupRecipeFormScreen({Key? key, required this.group, this.recipe})
-      : super(key: key);
+  const GroupRecipeFormScreen({super.key, required this.group, this.recipe});
 
   @override
   State<GroupRecipeFormScreen> createState() => _GroupRecipeFormScreenState();
@@ -30,6 +30,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
   late String _cookingTime;
   late String _category;
   bool _isPrivate = false;
+  late String _servingSize;
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     _cookingTime = widget.recipe?.cookingTime.inMinutes.toString() ?? '0';
     _category = widget.recipe?.category ?? '';
     _isPrivate = widget.recipe?.isPrivate ?? false;
+    _servingSize = widget.recipe?.servingSize ?? '4';
 
     // Si no hay pasos ingresados, se agrega uno en blanco para que siempre haya al menos un campo.
     if (_steps.isEmpty) {
@@ -195,8 +197,8 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) return;
 
-      final newRecipe = Recipe(
-        id: '',
+      final recipeData = Recipe(
+        id: widget.recipe?.id ?? '',
         title: _title,
         description: _description,
         userId: currentUser.uid,
@@ -209,19 +211,30 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
         isPrivate: _isPrivate,
         favoritedBy: [],
         imageUrl: null,
-        servingSize: '4 porciones',
+        servingSize: _servingSize,
       );
 
       try {
-        await FirebaseFirestore.instance
-            .collection('groups')
-            .doc(widget.group.id)
-            .collection('recipes')
-            .add(newRecipe.toMap());
+        if (widget.recipe == null) {
+          // Crear nueva receta
+          await FirebaseFirestore.instance
+              .collection('groups')
+              .doc(widget.group.id)
+              .collection('recipes')
+              .add(recipeData.toMap());
+        } else {
+          // Actualizar receta existente
+          await FirebaseFirestore.instance
+              .collection('groups')
+              .doc(widget.group.id)
+              .collection('recipes')
+              .doc(widget.recipe!.id)
+              .update(recipeData.toMap());
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Receta creada en la comunidad exitosamente'),
+            content: Text('Receta guardada exitosamente'),
             backgroundColor: Colors.green,
           ),
         );
@@ -229,7 +242,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al crear la receta: $e'),
+            content: Text('Error al guardar la receta: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -272,6 +285,23 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
               ),
               maxLines: 3,
               onSaved: (value) => _description = value ?? '',
+            ),
+            const SizedBox(height: 16),
+            // Rendimiento
+            TextFormField(
+              initialValue: _servingSize,
+              decoration: const InputDecoration(
+                labelText: 'Rendimiento',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Por favor ingresa el rendimiento';
+                }
+                return null;
+              },
+              onSaved: (value) => _servingSize = value ?? '4',
             ),
             const SizedBox(height: 16),
             // Sección de ingredientes
@@ -342,17 +372,26 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                 labelText: 'Categoría',
                 border: OutlineInputBorder(),
               ),
-              items: ['Desayuno', 'Almuerzo', 'Cena', 'Postre', 'Snack']
+              items: RecipeCategories.categories
+                  .toSet()
                   .map((category) => DropdownMenuItem(
                         value: category,
                         child: Text(category),
                       ))
                   .toList(),
-              validator: (value) => value == null || value.isEmpty
-                  ? 'Por favor selecciona una categoría'
-                  : null,
-              onChanged: (value) => setState(() => _category = value!),
-              onSaved: (value) => _category = value!,
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _category = value;
+                  });
+                }
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Por favor selecciona una categoría';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             // Privacidad
