@@ -152,11 +152,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        isDarkMode = Theme.of(context).brightness == Brightness.dark;
-      });
-    });
+    print('HomeScreen initState llamado');
+    // Inicializar el tema inmediatamente
+    isDarkMode = WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
   }
 
   void toggleTheme() {
@@ -182,6 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('HomeScreen build llamado');
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
