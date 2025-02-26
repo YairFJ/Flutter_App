@@ -16,11 +16,24 @@ class GroupsScreen extends StatelessWidget {
       builder: (context) {
         return AlertDialog(
           title: const Text('Unirme a Comunidad'),
-          content: TextField(
-            controller: groupIdController,
-            decoration: const InputDecoration(
-              labelText: 'Código de la comunidad',
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ingresa el código de la comunidad privada a la que deseas unirte.\n\nPara comunidades públicas, puedes unirte directamente desde la lista de comunidades.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: groupIdController,
+                decoration: const InputDecoration(
+                  labelText: 'Código de la comunidad privada',
+                  border: OutlineInputBorder(),
+                  helperText: 'Solicita el código al administrador de la comunidad',
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -30,39 +43,109 @@ class GroupsScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () async {
                 final groupId = groupIdController.text.trim();
-                if (groupId.isNotEmpty) {
-                  try {
-                    final groupDoc = await FirebaseFirestore.instance
-                        .collection('groups')
-                        .doc(groupId)
-                        .get();
-                    if (groupDoc.exists) {
-                      final currentUser =
-                          FirebaseAuth.instance.currentUser!.uid;
-                      await FirebaseFirestore.instance
-                          .collection('groups')
-                          .doc(groupId)
-                          .update({
-                        'members': FieldValue.arrayUnion([currentUser])
-                      });
+                if (groupId.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor ingresa un código'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                try {
+                  final groupDoc = await FirebaseFirestore.instance
+                      .collection('groups')
+                      .doc(groupId)
+                      .get();
+
+                  if (!groupDoc.exists) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('¡Te has unido a la comunidad!'),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Código de comunidad inválido'),
+                          content: Text('No se encontró la comunidad con ese código'),
+                          backgroundColor: Colors.red,
                         ),
                       );
                     }
-                  } catch (e) {
+                    return;
+                  }
+
+                  final group = Group.fromDocument(groupDoc);
+                  final currentUser = FirebaseAuth.instance.currentUser!.uid;
+
+                  if (group.members.contains(currentUser)) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Ya eres miembro de esta comunidad'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    }
+                    return;
+                  }
+
+                  if (group.pendingMembers.contains(currentUser)) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Ya tienes una solicitud pendiente en esta comunidad'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    }
+                    return;
+                  }
+
+                  if (group.isPrivate) {
+                    // Solicitar unirse
+                    await FirebaseFirestore.instance
+                        .collection('groups')
+                        .doc(groupId)
+                        .update({
+                      'pendingMembers': FieldValue.arrayUnion([currentUser])
+                    });
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Solicitud enviada. Espera la aprobación del administrador.'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } else {
+                    // Unirse directamente
+                    await FirebaseFirestore.instance
+                        .collection('groups')
+                        .doc(groupId)
+                        .update({
+                      'members': FieldValue.arrayUnion([currentUser])
+                    });
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Te has unido a la comunidad exitosamente'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
+                      SnackBar(
+                        content: Text('Error: $e'),
+                        backgroundColor: Colors.red,
+                      ),
                     );
                   }
-                  Navigator.pop(context);
                 }
               },
               child: const Text('Unirme'),

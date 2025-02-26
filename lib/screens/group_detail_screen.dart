@@ -3,8 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/group.dart';
 import '../models/recipe.dart';
-import 'recipe_detail_screen.dart';
+import 'group_recipe_detail_screen.dart';
 import 'group_recipe_form_screen.dart';
+import 'group_admin_screen.dart';
 
 class GroupDetailScreen extends StatelessWidget {
   final Group group;
@@ -14,30 +15,109 @@ class GroupDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final String currentUser = FirebaseAuth.instance.currentUser!.uid;
     bool isMember = group.members.contains(currentUser);
+    bool isCreator = group.creatorId == currentUser;
+
+    Future<void> _requestJoin() async {
+      try {
+        await FirebaseFirestore.instance
+            .collection('groups')
+            .doc(group.id)
+            .update({
+          'pendingMembers': FieldValue.arrayUnion([currentUser])
+        });
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Solicitud enviada. Espera la aprobación del administrador.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al enviar la solicitud: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+
+    Future<void> _joinGroup() async {
+      try {
+        await FirebaseFirestore.instance
+            .collection('groups')
+            .doc(group.id)
+            .update({
+          'members': FieldValue.arrayUnion([currentUser])
+        });
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Te has unido a la comunidad'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al unirse a la comunidad: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
 
     return Scaffold(
-      appBar: AppBar(title: Text(group.name)),
+      appBar: AppBar(
+        title: Text(group.name),
+        actions: [
+          if (isCreator)
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupAdminScreen(group: group),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(group.description),
           ),
-          if (!isMember)
+          if (!isMember && !group.isPendingMember(currentUser))
             ElevatedButton(
-              onPressed: () async {
-                await FirebaseFirestore.instance
-                    .collection('groups')
-                    .doc(group.id)
-                    .update({
-                  'members': FieldValue.arrayUnion([currentUser])
-                });
-                // También se puede mostrar un SnackBar informativo si se desea
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Te has unido a la comunidad')),
-                );
-              },
-              child: const Text('Unirme al Grupo'),
+              onPressed: group.isPrivate ? _requestJoin : _joinGroup,
+              child: Text(
+                group.isPrivate
+                    ? 'Solicitar Unirme al Grupo'
+                    : 'Unirme al Grupo',
+              ),
+            )
+          else if (group.isPendingMember(currentUser))
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Solicitud pendiente de aprobación',
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           Expanded(
             child: isMember
@@ -73,8 +153,10 @@ class GroupDetailScreen extends StatelessWidget {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    RecipeDetailScreen(recipe: recipe),
+                                builder: (context) => GroupRecipeDetailScreen(
+                                  recipe: recipe,
+                                  group: group,
+                                ),
                               ),
                             ),
                           );
@@ -88,7 +170,6 @@ class GroupDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      // Si el usuario es miembro, se muestra el botón para crear receta
       floatingActionButton: isMember
           ? FloatingActionButton(
               child: const Icon(Icons.add),

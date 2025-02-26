@@ -97,14 +97,74 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                             ))
                         .toList(),
                     onIngredientsChanged: (ingredients) {
+                      // Primero actualizamos los ingredientes
+                      final updatedIngredients = ingredients
+                          .map((ing) => Ingredient(
+                                name: ing.nombre,
+                                quantity: ing.cantidad ?? 0,
+                                unit: ing.unidad,
+                              ))
+                          .where((ing) => ing.quantity > 0)
+                          .toList();
+
+                      // Comparamos si la lista ha cambiado y si hay algún ingrediente inválido
+                      if (ingredients.length != updatedIngredients.length) {
+                        // Solo mostramos la alerta si se filtró algún ingrediente
+                        ScaffoldMessenger.of(context).clearSnackBars(); // Limpiamos SnackBars previos
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
+                            backgroundColor: Colors.red,
+                            duration: Duration(seconds: 2), // Reducimos la duración
+                          ),
+                        );
+                      }
+
                       setState(() {
-                        _ingredients = ingredients
-                            .map((ing) => Ingredient(
-                                  name: ing.nombre,
-                                  quantity: ing.cantidad ?? 0,
-                                  unit: ing.unidad,
-                                ))
-                            .toList();
+                        _ingredients = updatedIngredients;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: IngredientTableWidget(
+                    ingredientes: ingredientesConvertidos
+                        .map((ing) => IngredienteTabla(
+                              nombre: ing.name,
+                              cantidad: ing.quantity,
+                              unidad: ing.unit,
+                            ))
+                        .toList(),
+                    onIngredientsChanged: (ingredients) {
+                      // Primero actualizamos los ingredientes
+                      final updatedIngredients = ingredients
+                          .map((ing) => Ingredient(
+                                name: ing.nombre,
+                                quantity: ing.cantidad ?? 0,
+                                unit: ing.unidad,
+                              ))
+                          .where((ing) => ing.quantity > 0)
+                          .toList();
+
+                      // Comparamos si la lista ha cambiado y si hay algún ingrediente inválido
+                      if (ingredients.length != updatedIngredients.length) {
+                        // Solo mostramos la alerta si se filtró algún ingrediente
+                        ScaffoldMessenger.of(context).clearSnackBars(); // Limpiamos SnackBars previos
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
+                            backgroundColor: Colors.red,
+                            duration: Duration(seconds: 2), // Reducimos la duración
+                          ),
+                        );
+                      }
+
+                      setState(() {
+                        _ingredients = updatedIngredients;
                       });
                     },
                   ),
@@ -123,7 +183,20 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).pop(_ingredients);
+                        // Validar que todos los ingredientes tengan cantidad mayor a 0
+                        bool hasInvalidIngredient = _ingredients.any((ing) => ing.quantity <= 0);
+                        
+                        if (hasInvalidIngredient) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        } else {
+                          // Solo si todos los ingredientes son válidos, cerramos el diálogo
+                          Navigator.of(context).pop(_ingredients);
+                        }
                       },
                       child: const Text('Guardar'),
                     ),
@@ -142,6 +215,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       });
     }
   }
+
 
   String _convertirUnidadAntigua(String unidadAntigua) {
     final Map<String, String> conversion = {

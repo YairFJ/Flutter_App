@@ -26,7 +26,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
 
   void _addIngredient() {
     setState(() {
-      _ingredients.add({'name': '', 'amount': '', 'unit': ''});
+      _ingredients.add({'name': '', 'amount': '0', 'unit': ''});
     });
   }
 
@@ -89,7 +89,14 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   }
 
   Future<void> _createRecipe() async {
-    if (_formKey.currentState!.validate() && _servings > 0) {
+    // Validar que todos los ingredientes tengan una cantidad mayor que 0
+    bool hasValidIngredients = _ingredients.every((ingredient) {
+      String quantityText = ingredient['amount'] ?? '0';
+      double quantity = double.tryParse(quantityText.replaceAll(',', '.')) ?? 0;
+      return quantity > 0; // Asegúrate de que la cantidad sea mayor que 0
+    });
+
+    if (_formKey.currentState!.validate() && _servings > 0 && hasValidIngredients) {
       setState(() {
         _isLoading = true;
       });
@@ -126,13 +133,22 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
         }
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-              Text('Por favor, indica para cuántas personas rinde la receta'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // Mensaje de error si los ingredientes no son válidos
+      if (!hasValidIngredients) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Todos los ingredientes deben tener una cantidad mayor que 0'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor, indica para cuántas personas rinde la receta'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

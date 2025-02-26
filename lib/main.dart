@@ -77,6 +77,7 @@ class _MyAppState extends State<MyApp> {
             ProfilePage(user: FirebaseAuth.instance.currentUser!),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const SignUpScreen(),
+        '/groups': (context) => const GroupsScreen(),
       },
     );
   }
@@ -251,12 +252,8 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.group),
               title: const Text('Comunidades'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const GroupsScreen(),
-                  ),
-                );
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/groups');
               },
             ),
             if (FirebaseAuth.instance.currentUser != null) ...[
@@ -357,26 +354,6 @@ class RecipeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //ClipRRect(
-            //borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            //child: Image.network(
-            //recipe.imageUrl ?? 'https://via.placeholder.com/150',
-            //height: 160,
-            //width: double.infinity,
-            //fit: BoxFit.cover,
-            //errorBuilder: (context, error, stackTrace) {
-            //return Container(
-            //height: 160,
-            //color: HomeScreen.secondaryColor.withOpacity(0.3),
-            //child: const Icon(
-            //Icons.restaurant,
-            //size: 40,
-            //color: HomeScreen.primaryColor
-            //),
-            //);
-            //},
-            //),
-            //),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(14),

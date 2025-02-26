@@ -12,6 +12,7 @@ class AddIngredientDialog extends StatefulWidget {
 
 class _AddIngredientDialogState extends State<AddIngredientDialog> {
   final List<IngredienteTabla> _tempIngredients = <IngredienteTabla>[];
+  bool _isAdding = false; // Variable para controlar el estado del botón
 
   @override
   Widget build(BuildContext context) {
@@ -74,23 +75,54 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () {
-                      if (_tempIngredients.every((ing) => ing.isValid())) {
-                        final updatedIngredients = _tempIngredients.map((ing) => Ingredient(
-                          name: ing.nombre,
-                          quantity: double.parse(ing.cantidadController.text),
-                          unit: ing.unidad,
-                        )).toList();
-                        Navigator.of(context).pop(updatedIngredients);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Por favor, complete todos los campos correctamente'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: _isAdding // Controlar el estado del botón
+                        ? null // Deshabilitar el botón si está en proceso
+                        : () {
+                            if (_tempIngredients.every((ing) => ing.isValid())) {
+                              bool hasValidQuantity = _tempIngredients.every((ing) {
+                                String quantityText = ing.cantidadController.text.replaceAll(',', '.');
+                                double quantity = double.tryParse(quantityText) ?? 0;
+                                return quantity > 0; // Asegúrate de que la cantidad sea mayor que 0
+                              });
+
+                              if (hasValidQuantity) {
+                                final updatedIngredients = _tempIngredients.map((ing) {
+                                  String quantityText = ing.cantidadController.text.replaceAll(',', '.');
+                                  return Ingredient(
+                                    name: ing.nombre,
+                                    quantity: double.parse(quantityText),
+                                    unit: ing.unidad,
+                                  );
+                                }).toList();
+                                Navigator.of(context).pop(updatedIngredients);
+                              } else {
+                                // Mostrar el mensaje de error solo una vez
+                                if (!_isAdding) {
+                                  setState(() {
+                                    _isAdding = true; // Cambiar el estado a "agregando"
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('La cantidad debe ser mayor que 0'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  Future.delayed(const Duration(seconds: 1), () {
+                                    setState(() {
+                                      _isAdding = false; // Volver a habilitar el botón después de un segundo
+                                    });
+                                  });
+                                }
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Por favor, complete todos los campos correctamente'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
                     child: const Text('Agregar'),
                   ),
                 ],

@@ -1,31 +1,34 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
-//import '../models/ingredient.dart';
+import '../models/group.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'edit_recipe_screen.dart';
+import 'edit_group_recipe_screen.dart';
 import 'conversion_calculator_screen.dart';
 import 'package:printing/printing.dart';
 import '../utils/pdf_generator.dart';
-// import '../widgets/conversion_table_dialog.dart';
 
-class RecipeDetailScreen extends StatefulWidget {
+class GroupRecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
+  final Group group;
 
-  const RecipeDetailScreen({super.key, required this.recipe});
+  const GroupRecipeDetailScreen({
+    super.key, 
+    required this.recipe,
+    required this.group,
+  });
 
   @override
-  State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
+  State<GroupRecipeDetailScreen> createState() => _GroupRecipeDetailScreenState();
 }
 
-class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar Receta'),
-        content:
-            const Text('¿Estás seguro de que deseas eliminar esta receta?'),
+        content: const Text('¿Estás seguro de que deseas eliminar esta receta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -45,6 +48,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     if (confirm == true) {
       try {
         await FirebaseFirestore.instance
+            .collection('groups')
+            .doc(widget.group.id)
             .collection('recipes')
             .doc(widget.recipe.id)
             .delete();
@@ -68,6 +73,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           );
         }
       }
+    }
+  }
+
+  String _getPluralSuffix(String servingSize) {
+    try {
+      int size = int.parse(servingSize);
+      return size == 1 ? 'porción' : 'porciones';
+    } catch (e) {
+      return 'porciones';
     }
   }
 
@@ -102,16 +116,20 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 final updatedRecipe = await Navigator.push<Recipe>(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        EditRecipeScreen(recipe: widget.recipe),
+                    builder: (context) => EditGroupRecipeScreen(
+                      recipe: widget.recipe,
+                      group: widget.group,
+                    ),
                   ),
                 );
                 if (updatedRecipe != null && mounted) {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          RecipeDetailScreen(recipe: updatedRecipe),
+                      builder: (context) => GroupRecipeDetailScreen(
+                        recipe: updatedRecipe,
+                        group: widget.group,
+                      ),
                     ),
                   );
                 }
@@ -138,7 +156,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -260,41 +277,24 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     itemCount: widget.recipe.steps.length,
                     itemBuilder: (context, index) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              margin: const EdgeInsets.only(right: 12),
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor,
-                                shape: BoxShape.circle,
-                              ),
+                            CircleAvatar(
+                              radius: 12,
                               child: Text(
                                 '${index + 1}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: RichText(
-                                textAlign: TextAlign.justify,
-                                text: TextSpan(
-                                  text: widget.recipe.steps[index],
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    height: 1.5,
-                                    letterSpacing: 0.2,
-                                    wordSpacing: 1.2,
-                                    color: Colors.black87,
-                                    fontFamily: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge
-                                        ?.fontFamily,
-                                  ),
+                              child: Text(
+                                widget.recipe.steps[index],
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -311,13 +311,4 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ),
     );
   }
-
-  String _getPluralSuffix(String servingSize) {
-    try {
-      final number = double.parse(servingSize.replaceAll(',', '.'));
-      return number <= 1.0 ? 'persona' : 'personas';
-    } catch (e) {
-      return 'personas';
-    }
-  }
-}
+} 
