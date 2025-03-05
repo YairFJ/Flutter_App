@@ -5,8 +5,16 @@ import '../models/group.dart';
 import 'group_detail_screen.dart';
 import 'create_group_screen.dart';
 
-class GroupsScreen extends StatelessWidget {
+class GroupsScreen extends StatefulWidget {
   const GroupsScreen({super.key});
+
+  @override
+  _GroupsScreenState createState() => _GroupsScreenState();
+}
+
+class _GroupsScreenState extends State<GroupsScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   void _showJoinCommunityDialog(BuildContext context) {
     final TextEditingController groupIdController = TextEditingController();
@@ -157,49 +165,191 @@ class GroupsScreen extends StatelessWidget {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Título: Comunidades
       appBar: AppBar(
         title: const Text('Comunidades'),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('groups').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final groups = snapshot.data!.docs
-              .map((doc) => Group.fromDocument(doc))
-              .toList();
-
-          return ListView.builder(
-            itemCount: groups.length,
-            itemBuilder: (context, index) {
-              final group = groups[index];
-              return ListTile(
-                title: Text(group.name),
-                subtitle: Text(group.description),
-                trailing: ElevatedButton(
-                  child: const Text('Ver'),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            GroupDetailScreen(group: group),
-                      ),
-                    );
-                  },
+      body: Column(
+        children: [
+          // Campo de búsqueda
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Buscar comunidades...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              );
-            },
-          );
-        },
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('groups')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final currentUser = FirebaseAuth.instance.currentUser?.uid;
+                if (currentUser == null) {
+                  return const Center(child: Text('No hay usuario autenticado'));
+                }
+
+                final allGroups = snapshot.data!.docs
+                    .map((doc) => Group.fromDocument(doc))
+                    .where((group) => 
+                      !group.isPrivate || // Mostrar todas las comunidades públicas
+                      group.members.contains(currentUser) || // Mostrar comunidades privadas donde soy miembro
+                      group.creatorId == currentUser // Mostrar comunidades privadas donde soy creador
+                    )
+                    .toList();
+
+                // Filtrar grupos según la búsqueda
+                final groups = _searchQuery.isEmpty
+                    ? allGroups
+                    : allGroups.where((group) =>
+                        group.name.toLowerCase().contains(_searchQuery) ||
+                        (group.description?.toLowerCase() ?? '').contains(_searchQuery)).toList();
+
+                if (groups.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.group_off,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchQuery.isEmpty
+                              ? 'No hay comunidades disponibles'
+                              : 'No se encontraron comunidades',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _searchQuery.isEmpty
+                              ? 'Crea una nueva comunidad o únete a una privada usando un código'
+                              : 'Intenta con otros términos de búsqueda',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: [
+                    // Banner informativo sobre comunidades privadas
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: Colors.blue.withOpacity(0.1),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: Colors.blue,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: TextStyle(
+                                  color: Colors.grey[800],
+                                  fontSize: 14,
+                                ),
+                                children: const [
+                                  TextSpan(
+                                    text: 'Solo se muestran comunidades públicas. ',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  TextSpan(
+                                    text: 'Para unirte a una comunidad privada, necesitas el código de invitación.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Lista de comunidades
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: groups.length,
+                        itemBuilder: (context, index) {
+                          final group = groups[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: ListTile(
+                              title: Text(group.name),
+                              subtitle: Text(group.description ?? ''),
+                              trailing: group.members.contains(FirebaseAuth.instance.currentUser?.uid)
+                                  ? const Icon(Icons.check_circle, color: Colors.green)
+                                  : const Icon(Icons.arrow_forward_ios),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        GroupDetailScreen(group: group),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
