@@ -2,14 +2,26 @@ import 'package:flutter/material.dart';
 
 class RecipeCategories {
   static const String sinCategoria = 'Sin Categoría';
-  
+
   static const List<String> categories = [
     // Comidas principales
-    'Desayunos',
+    /*'Desayunos',
     'Almuerzos',
-    'Cenas',
-    
-    // Tipos de platos
+    'Cenas',*/
+    'Aderezos',
+    'Arroz y cereales',
+    'Carne',
+    'Mariscos',
+    'Panadería',
+    'Pastas',
+    'Pastelería',
+    'Salsas',
+    'Sopas',
+    'Vegano',
+    'Vegetariano',
+    'Verduras',
+
+    /* Tipos de platos
     'Entradas',
     'Sopas',
     'Ensaladas',
@@ -56,8 +68,8 @@ class RecipeCategories {
     'Para Niños',
     'Festivas',
     'Para Eventos',
-    'Económicas',
-    
+    'Económicas',*/
+
     // Categoría para recetas sin clasificar
     sinCategoria,
   ];
@@ -97,22 +109,35 @@ class RecipeCategories {
   // Colores para las categorías
   static Color getColorForCategory(String category) {
     switch (category.toLowerCase()) {
-      case 'desayunos':
+      case 'Aderezos':
         return Colors.orange[200]!;
-      case 'sopas':
+      case 'Arroz y cereales':
         return Colors.red[200]!;
-      case 'ensaladas':
+      case 'Carne':
         return Colors.green[200]!;
-      case 'postres':
+      case 'Mariscos':
         return Colors.pink[200]!;
-      case 'bebidas':
+      case 'Panadería':
         return Colors.blue[200]!;
-      case 'saludable':
+      case 'Pastas':
         return Colors.teal[200]!;
+      case 'Pastelería':
+        return Colors.yellow[200]!;
+      case 'Salsas':
+        return Colors.purple[200]!;
+      case 'Sopas':
+        return Colors.lightBlue[200]!;
+      case 'Vegano':
+        return Colors.blueGrey[200]!;
+      case 'Vegetariano':
+        return Colors.lightGreenAccent[200]!;
+      case 'Verduras':
+        return const Color.fromARGB(255, 234, 74, 197)!;
+
       case 'sin categoría':
         return Colors.grey[300]!;
       default:
         return Colors.grey[200]!;
     }
   }
-} 
+}

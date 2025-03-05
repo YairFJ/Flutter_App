@@ -25,7 +25,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final List<TextEditingController> _stepControllers = [
     TextEditingController()
   ];
-  String _selectedCategory = 'Platos Principales';
+  String _selectedCategory = 'Aderezos';
   String? _imageUrl;
   bool _isPrivate = false;
   final List<Ingredient> _ingredients = [];
@@ -318,7 +318,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
-                        if (newValue != null) {
+                        if (newValue != null &&
+                            RecipeCategories.categories.contains(newValue)) {
                           setState(() {
                             _selectedCategory = newValue;
                           });
