@@ -30,6 +30,77 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late List<String> _steps;
   String _category = '';
 
+  // Expresión regular para validar números enteros positivos
+  final RegExp _numberRegExp = RegExp(r'^[1-9]\d*$');
+
+  String? _validateTitle(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa un título';
+    }
+    if (value.trim().length < 3) {
+      return 'El título debe tener al menos 3 caracteres';
+    }
+    if (value.trim().length > 100) {
+      return 'El título no puede exceder los 100 caracteres';
+    }
+    return null;
+  }
+
+  String? _validateDescription(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa una descripción';
+    }
+    if (value.trim().length > 500) {
+      return 'La descripción no puede exceder los 500 caracteres';
+    }
+    return null;
+  }
+
+  String? _validateCookingTime(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa el tiempo de cocción';
+    }
+    if (!_numberRegExp.hasMatch(value)) {
+      return 'Ingresa solo números enteros positivos';
+    }
+    final minutes = int.parse(value);
+    if (minutes <= 0) {
+      return 'El tiempo debe ser mayor a 0';
+    }
+    if (minutes > 1440) {
+      return 'El tiempo no puede exceder las 24 horas (1440 minutos)';
+    }
+    return null;
+  }
+
+  String? _validateServingSize(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa el rendimiento';
+    }
+    if (!_numberRegExp.hasMatch(value)) {
+      return 'Ingresa solo números enteros positivos';
+    }
+    final servings = int.parse(value);
+    if (servings <= 0) {
+      return 'El rendimiento debe ser mayor a 0';
+    }
+    if (servings > 100) {
+      return 'El rendimiento no puede exceder las 100 porciones';
+    }
+    return null;
+  }
+
+  bool _validateSteps() {
+    bool isValid = true;
+    for (var step in _steps) {
+      if (step.trim().isEmpty) {
+        isValid = false;
+        break;
+      }
+    }
+    return isValid;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -279,19 +350,15 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-             
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
                   labelText: 'Título',
                   border: OutlineInputBorder(),
+                  helperText: 'Entre 3 y 100 caracteres',
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa un título';
-                  }
-                  return null;
-                },
+                validator: _validateTitle,
+                textCapitalization: TextCapitalization.sentences,
               ),
               const SizedBox(height: 16),
 
@@ -301,14 +368,11 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Descripción',
                   border: OutlineInputBorder(),
+                  helperText: 'Máximo 500 caracteres',
                 ),
                 maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa una descripción';
-                  }
-                  return null;
-                },
+                validator: _validateDescription,
+                textCapitalization: TextCapitalization.sentences,
               ),
               const SizedBox(height: 16),
 
@@ -318,17 +382,10 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Tiempo de cocción (minutos)',
                   border: OutlineInputBorder(),
+                  helperText: 'Número entero positivo (máximo 1440)',
                 ),
                 keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa el tiempo de cocción';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Por favor ingresa un número válido';
-                  }
-                  return null;
-                },
+                validator: _validateCookingTime,
               ),
               const SizedBox(height: 16),
 
@@ -339,17 +396,10 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   labelText: 'Rendimiento',
                   hintText: 'Ej: 4',
                   border: OutlineInputBorder(),
+                  helperText: 'Número entero positivo (máximo 100)',
                 ),
                 keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Por favor ingresa el rendimiento';
-                  }
-                  if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                    return 'Ingresa un número válido mayor a 0';
-                  }
-                  return null;
-                },
+                validator: _validateServingSize,
               ),
               const SizedBox(height: 16),
 
@@ -507,6 +557,26 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
   Future<void> _updateRecipe() async {
     if (_formKey.currentState!.validate()) {
+      if (_ingredients.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Debes agregar al menos un ingrediente'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (!_validateSteps()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Todos los pasos deben estar completos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       try {
         showDialog(
           context: context,

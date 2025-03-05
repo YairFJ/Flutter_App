@@ -17,7 +17,7 @@ class GroupDetailScreen extends StatelessWidget {
     bool isMember = group.members.contains(currentUser);
     bool isCreator = group.creatorId == currentUser;
 
-    Future<void> _requestJoin() async {
+    Future<void> requestJoin() async {
       try {
         await FirebaseFirestore.instance
             .collection('groups')
@@ -46,7 +46,7 @@ class GroupDetailScreen extends StatelessWidget {
       }
     }
 
-    Future<void> _joinGroup() async {
+    Future<void> joinGroup() async {
       try {
         await FirebaseFirestore.instance
             .collection('groups')
@@ -101,7 +101,7 @@ class GroupDetailScreen extends StatelessWidget {
           ),
           if (!isMember && !group.isPendingMember(currentUser))
             ElevatedButton(
-              onPressed: group.isPrivate ? _requestJoin : _joinGroup,
+              onPressed: group.isPrivate ? requestJoin : joinGroup,
               child: Text(
                 group.isPrivate
                     ? 'Solicitar Unirme al Grupo'
