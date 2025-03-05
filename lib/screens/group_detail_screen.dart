@@ -29,7 +29,8 @@ class GroupDetailScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Solicitud enviada. Espera la aprobación del administrador.'),
+              content: Text(
+                  'Solicitud enviada. Espera la aprobación del administrador.'),
               backgroundColor: Colors.green,
             ),
           );
@@ -62,12 +63,45 @@ class GroupDetailScreen extends StatelessWidget {
               backgroundColor: Colors.green,
             ),
           );
+
+          Navigator.pop(context);
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error al unirse a la comunidad: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+
+    Future<void> leaveGroup() async {
+      try {
+        await FirebaseFirestore.instance
+            .collection('groups')
+            .doc(group.id)
+            .update({
+          'members': FieldValue.arrayRemove([currentUser])
+        });
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Has salido del grupo.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al salir del grupo: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -90,6 +124,12 @@ class GroupDetailScreen extends StatelessWidget {
                   ),
                 );
               },
+            ),
+          if (isMember)
+            IconButton(
+              icon: const Icon(Icons.exit_to_app, color: Colors.red),
+              onPressed: leaveGroup,
+              tooltip: 'Salir del Grupo',
             ),
         ],
       ),
@@ -130,8 +170,7 @@ class GroupDetailScreen extends StatelessWidget {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
-                        return const Center(
-                            child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       final recipes = snapshot.data!.docs
@@ -177,8 +216,7 @@ class GroupDetailScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        GroupRecipeFormScreen(group: group),
+                    builder: (context) => GroupRecipeFormScreen(group: group),
                   ),
                 );
               },
@@ -186,4 +224,4 @@ class GroupDetailScreen extends StatelessWidget {
           : null,
     );
   }
-} 
+}
