@@ -4,15 +4,23 @@ import 'ingredient_table_widget.dart';
 import '../models/ingrediente_tabla.dart';
 
 class AddIngredientDialog extends StatefulWidget {
-  const AddIngredientDialog({super.key});
+  final List<IngredienteTabla> ingredientes;
+
+  const AddIngredientDialog({super.key, required this.ingredientes});
 
   @override
   State<AddIngredientDialog> createState() => _AddIngredientDialogState();
 }
 
 class _AddIngredientDialogState extends State<AddIngredientDialog> {
-  final List<IngredienteTabla> _tempIngredients = <IngredienteTabla>[];
+  List<IngredienteTabla> _tempIngredients = [];
   bool _isAdding = false; // Variable para controlar el estado del botón
+
+  @override
+  void initState() {
+    super.initState();
+    _tempIngredients.addAll(widget.ingredientes); // Initialize with passed ingredients
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -79,6 +79,19 @@ class GroupDetailScreen extends StatelessWidget {
     }
 
     Future<void> leaveGroup() async {
+      final currentUser = FirebaseAuth.instance.currentUser!.uid;
+
+      // Verificar si el usuario es el creador del grupo
+      if (group.creatorId == currentUser) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No puedes salir de un grupo que has creado.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return; // Salir de la función si es el creador
+      }
+
       try {
         await FirebaseFirestore.instance
             .collection('groups')
@@ -125,7 +138,7 @@ class GroupDetailScreen extends StatelessWidget {
                 );
               },
             ),
-          if (isMember)
+          if (isMember && !isCreator)
             IconButton(
               icon: const Icon(Icons.exit_to_app, color: Colors.red),
               onPressed: leaveGroup,

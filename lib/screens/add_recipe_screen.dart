@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/models/ingredient.dart';
 import 'package:flutter_app/widgets/add_ingredient_dialog.dart';
 import 'package:flutter_app/models/recipe.dart';
+import '../models/ingrediente_tabla.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({super.key});
@@ -213,7 +214,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Future<void> _addIngredient() async {
     final ingredients = await showDialog<List<Ingredient>>(
       context: context,
-      builder: (context) => const AddIngredientDialog(),
+      builder: (context) => AddIngredientDialog(
+        ingredientes: _ingredients.map((ing) => IngredienteTabla(
+          nombre: ing.name,
+          cantidad: ing.quantity,
+          unidad: ing.unit,
+        )).toList(),
+      ),
     );
 
     if (ingredients != null) {
