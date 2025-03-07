@@ -21,55 +21,6 @@ class RecipeCategories {
     'Vegetariano',
     'Verduras',
 
-    /* Tipos de platos
-    'Entradas',
-    'Sopas',
-    'Ensaladas',
-    'Platos Principales',
-    'Guarniciones',
-    'Salsas',
-    
-    // Por tipo de proteína
-    'Carnes Rojas',
-    'Pollo y Aves',
-    'Pescados y Mariscos',
-    'Vegetariano',
-    'Vegano',
-    
-    // Cocinas del mundo
-    'Italiana',
-    'Mexicana',
-    'China',
-    'Japonesa',
-    'Mediterránea',
-    'Peruana',
-    'India',
-    
-    // Horneados y postres
-    'Panadería',
-    'Postres',
-    'Pasteles',
-    'Galletas',
-    
-    // Bebidas
-    'Bebidas',
-    'Smoothies',
-    'Cócteles',
-    'Café y Té',
-    
-    // Categorías especiales
-    'Saludable',
-    'Bajo en Calorías',
-    'Sin Gluten',
-    'Snacks',
-    'Comida Rápida',
-    
-    // Ocasiones
-    'Para Niños',
-    'Festivas',
-    'Para Eventos',
-    'Económicas',*/
-
     // Categoría para recetas sin clasificar
     sinCategoria,
   ];

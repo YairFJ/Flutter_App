@@ -25,7 +25,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final List<TextEditingController> _stepControllers = [
     TextEditingController()
   ];
-  String _selectedCategory = 'Aderezos';
+  String _selectedCategory = '';
   String? _imageUrl;
   bool _isPrivate = false;
   final List<Ingredient> _ingredients = [];
@@ -297,7 +297,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: _selectedCategory,
+                      value: _selectedCategory.isNotEmpty ? _selectedCategory : null,
                       isExpanded: true,
                       hint: const Text('Selecciona una categoría'),
                       items: RecipeCategories.categories.map((String category) {
@@ -318,8 +318,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
-                        if (newValue != null &&
-                            RecipeCategories.categories.contains(newValue)) {
+                        if (newValue != null) {
                           setState(() {
                             _selectedCategory = newValue;
                           });
