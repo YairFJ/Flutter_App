@@ -211,9 +211,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('groups')
-                  .snapshots(),
+              stream: FirebaseFirestore.instance.collection('groups').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
@@ -229,19 +227,18 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                 final allGroups = snapshot.data!.docs
                     .map((doc) => Group.fromDocument(doc))
-                    .where((group) => 
-                      !group.isPrivate || // Mostrar todas las comunidades públicas
-                      group.members.contains(currentUser) || // Mostrar comunidades privadas donde soy miembro
-                      group.creatorId == currentUser // Mostrar comunidades privadas donde soy creador
+                    .where((group) =>
+                        !group.isPrivate || // Mostrar todas las comunidades públicas
+                        group.members.contains(currentUser) || // Mostrar comunidades privadas donde soy miembro
+                        group.creatorId == currentUser // Mostrar comunidades privadas donde soy creador
                     )
                     .toList();
 
-                // Filtrar grupos según la búsqueda
+                // Filtrar grupos solo por nombre
                 final groups = _searchQuery.isEmpty
                     ? allGroups
                     : allGroups.where((group) =>
-                        group.name.toLowerCase().contains(_searchQuery) ||
-                        (group.description?.toLowerCase() ?? '').contains(_searchQuery)).toList();
+                        group.name.toLowerCase().contains(_searchQuery)).toList();
 
                 if (groups.isEmpty) {
                   return Center(
@@ -278,73 +275,32 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   );
                 }
 
-                return Column(
-                  children: [
-                    // Banner informativo sobre comunidades privadas
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      color: Colors.blue.withOpacity(0.1),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.info_outline,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: RichText(
-                              text: TextSpan(
-                                style: TextStyle(
-                                  color: Colors.grey[800],
-                                  fontSize: 14,
-                                ),
-                                children: const [
-                                  TextSpan(
-                                    text: 'Solo se muestran comunidades públicas. ',
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  TextSpan(
-                                    text: 'Para unirte a una comunidad privada, necesitas el código de invitación.',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                return ListView.builder(
+                  itemCount: groups.length,
+                  itemBuilder: (context, index) {
+                    final group = groups[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                    ),
-                    // Lista de comunidades
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: groups.length,
-                        itemBuilder: (context, index) {
-                          final group = groups[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: ListTile(
-                              title: Text(group.name),
-                              subtitle: Text(group.description ?? ''),
-                              trailing: group.members.contains(FirebaseAuth.instance.currentUser?.uid)
-                                  ? const Icon(Icons.check_circle, color: Colors.green)
-                                  : const Icon(Icons.arrow_forward_ios),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        GroupDetailScreen(group: group),
-                                  ),
-                                );
-                              },
+                      child: ListTile(
+                        title: Text(group.name),
+                        subtitle: Text(group.description ?? ''),
+                        trailing: group.members.contains(FirebaseAuth.instance.currentUser?.uid)
+                            ? const Icon(Icons.check_circle, color: Colors.green)
+                            : const Icon(Icons.arrow_forward_ios),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GroupDetailScreen(group: group),
                             ),
                           );
                         },
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 );
               },
             ),
@@ -369,8 +325,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const CreateGroupScreen(),
+                            builder: (context) => const CreateGroupScreen(),
                           ),
                         );
                       },
