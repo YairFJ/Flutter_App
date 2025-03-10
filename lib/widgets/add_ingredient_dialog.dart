@@ -14,12 +14,14 @@ class AddIngredientDialog extends StatefulWidget {
 
 class _AddIngredientDialogState extends State<AddIngredientDialog> {
   List<IngredienteTabla> _tempIngredients = [];
+  List<IngredienteTabla> _ingredients = [];
   bool _isAdding = false; // Variable para controlar el estado del botón
 
   @override
   void initState() {
     super.initState();
     _tempIngredients.addAll(widget.ingredientes); // Initialize with passed ingredients
+    _ingredients.addAll(widget.ingredientes); // Initialize the main ingredients list
   }
 
   @override
@@ -83,54 +85,34 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: _isAdding // Controlar el estado del botón
-                        ? null // Deshabilitar el botón si está en proceso
-                        : () {
-                            if (_tempIngredients.every((ing) => ing.isValid())) {
-                              bool hasValidQuantity = _tempIngredients.every((ing) {
-                                String quantityText = ing.cantidadController.text.replaceAll(',', '.');
-                                double quantity = double.tryParse(quantityText) ?? 0;
-                                return quantity > 0; // Asegúrate de que la cantidad sea mayor que 0
-                              });
+                    onPressed: () {
+                      // Check for duplicates before adding
+                      final newIngredients = _tempIngredients.where((newIng) {
+                        return !_ingredients.any((existingIng) =>
+                            existingIng.nombre == newIng.nombre &&
+                            existingIng.unidad == newIng.unidad);
+                      }).toList();
 
-                              if (hasValidQuantity) {
-                                final updatedIngredients = _tempIngredients.map((ing) {
-                                  String quantityText = ing.cantidadController.text.replaceAll(',', '.');
-                                  return Ingredient(
-                                    name: ing.nombre,
-                                    quantity: double.parse(quantityText),
-                                    unit: ing.unidad,
-                                  );
-                                }).toList();
-                                Navigator.of(context).pop(updatedIngredients);
-                              } else {
-                                // Mostrar el mensaje de error solo una vez
-                                if (!_isAdding) {
-                                  setState(() {
-                                    _isAdding = true; // Cambiar el estado a "agregando"
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('La cantidad debe ser mayor que 0'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  Future.delayed(const Duration(seconds: 1), () {
-                                    setState(() {
-                                      _isAdding = false; // Volver a habilitar el botón después de un segundo
-                                    });
-                                  });
-                                }
-                              }
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Por favor, complete todos los campos correctamente'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
+                      if (newIngredients.isNotEmpty) {
+                        // Convert IngredienteTabla to Ingredient
+                        final ingredientsToReturn = newIngredients.map((ing) {
+                          return Ingredient(
+                            name: ing.nombre,
+                            quantity: double.parse(ing.cantidadController.text.replaceAll(',', '.')),
+                            unit: ing.unidad,
+                          );
+                        }).toList();
+
+                        Navigator.of(context).pop(ingredientsToReturn); // Return the correct type
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Este ingrediente ya existe.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
                     child: const Text('Agregar'),
                   ),
                 ],

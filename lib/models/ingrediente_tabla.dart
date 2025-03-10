@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 class IngredienteTabla {
   String nombre;
-  double? cantidad;
+  double cantidad;
   String unidad;
   final TextEditingController nombreController;
   final TextEditingController cantidadController;
 
   IngredienteTabla({
     required this.nombre,
-    this.cantidad = 0.0, // Valor por defecto
+    required this.cantidad,
     required this.unidad,
   })  : nombreController = TextEditingController(text: nombre),
         cantidadController = TextEditingController(

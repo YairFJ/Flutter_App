@@ -3,8 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
 import '../models/ingredient.dart';
 import '../models/ingrediente_tabla.dart';
-import '../widgets/ingredient_table_widget.dart';
+//import '../widgets/ingredient_table_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/add_ingredient_dialog.dart';
 
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? recipe; // null si es nueva receta
@@ -40,182 +41,23 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   }
 
   void _editIngredients() async {
-    final ingredientesConvertidos = _ingredients
-        .map((ing) => Ingredient(
-              name: ing.name,
-              quantity: ing.quantity,
-              unit: _convertirUnidadAntigua(ing.unit),
-            ))
-        .toList();
-
     final result = await showDialog<List<Ingredient>>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        insetPadding: EdgeInsets.zero,
-        child: Container(
-          width: double.infinity,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.recipe == null
-                          ? 'Agregar Ingredientes'
-                          : 'Editar Ingredientes',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(_ingredients),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: IngredientTableWidget(
-                    ingredientes: ingredientesConvertidos
-                        .map((ing) => IngredienteTabla(
-                              nombre: ing.name,
-                              cantidad: ing.quantity,
-                              unidad: ing.unit,
-                            ))
-                        .toList(),
-                    onIngredientsChanged: (ingredients) {
-                      // Primero actualizamos los ingredientes
-                      final updatedIngredients = ingredients
-                          .map((ing) => Ingredient(
-                                name: ing.nombre,
-                                quantity: ing.cantidad ?? 0,
-                                unit: ing.unidad,
-                              ))
-                          .where((ing) => ing.quantity > 0)
-                          .toList();
-
-                      // Comparamos si la lista ha cambiado y si hay algún ingrediente inválido
-                      if (ingredients.length != updatedIngredients.length) {
-                        // Solo mostramos la alerta si se filtró algún ingrediente
-                        ScaffoldMessenger.of(context).clearSnackBars(); // Limpiamos SnackBars previos
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
-                            backgroundColor: Colors.red,
-                            duration: Duration(seconds: 2), // Reducimos la duración
-                          ),
-                        );
-                      }
-
-                      setState(() {
-                        _ingredients = updatedIngredients;
-                      });
-                    },
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: IngredientTableWidget(
-                    ingredientes: ingredientesConvertidos
-                        .map((ing) => IngredienteTabla(
-                              nombre: ing.name,
-                              cantidad: ing.quantity,
-                              unidad: ing.unit,
-                            ))
-                        .toList(),
-                    onIngredientsChanged: (ingredients) {
-                      // Primero actualizamos los ingredientes
-                      final updatedIngredients = ingredients
-                          .map((ing) => Ingredient(
-                                name: ing.nombre,
-                                quantity: ing.cantidad ?? 0,
-                                unit: ing.unidad,
-                              ))
-                          .where((ing) => ing.quantity > 0)
-                          .toList();
-
-                      // Comparamos si la lista ha cambiado y si hay algún ingrediente inválido
-                      if (ingredients.length != updatedIngredients.length) {
-                        // Solo mostramos la alerta si se filtró algún ingrediente
-                        ScaffoldMessenger.of(context).clearSnackBars(); // Limpiamos SnackBars previos
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
-                            backgroundColor: Colors.red,
-                            duration: Duration(seconds: 2), // Reducimos la duración
-                          ),
-                        );
-                      }
-
-                      setState(() {
-                        _ingredients = updatedIngredients;
-                      });
-                    },
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(_ingredients),
-                      child: const Text('Cancelar'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Validar que todos los ingredientes tengan cantidad mayor a 0
-                        bool hasInvalidIngredient = _ingredients.any((ing) => ing.quantity <= 0);
-                        
-                        if (hasInvalidIngredient) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        } else {
-                          // Solo si todos los ingredientes son válidos, cerramos el diálogo
-                          Navigator.of(context).pop(_ingredients);
-                        }
-                      },
-                      child: const Text('Guardar'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => AddIngredientDialog(
+        ingredientes: _ingredients.map((ing) => IngredienteTabla(
+          nombre: ing.name,
+          cantidad: ing.quantity,
+          unidad: ing.unit,
+        )).toList(),
       ),
     );
 
     if (result != null) {
       setState(() {
-        _ingredients = result;
+        _ingredients = result; // Update the ingredients list with the result
       });
     }
   }
-
 
   String _convertirUnidadAntigua(String unidadAntigua) {
     final Map<String, String> conversion = {
