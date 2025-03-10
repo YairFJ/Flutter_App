@@ -30,9 +30,44 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   String? _imageUrl;
   bool _isPrivate = false;
   final List<Ingredient> _ingredients = [];
-  
-  // Expresión regular para validar números enteros positivos
-  final RegExp _numberRegExp = RegExp(r'^[1-9]\d*$');
+  String _servingUnit = 'g';
+
+  // Unidades por categoría como en conversion_table_page.dart
+  final Map<String, List<String>> _unidadesPorCategoria = {
+    'Peso': ['g', 'kg', 'oz', 'lb'],
+    'Volumen': ['ml', 'l', 'tz', 'cda', 'cdta'],
+  };
+
+  // Lista de todas las unidades disponibles
+  late final List<String> _todasLasUnidades;
+
+  // Expresión regular para validar números positivos (enteros o decimales)
+  final RegExp _numberRegExp = RegExp(r'^\d*\.?\d+$');
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar la lista de todas las unidades
+    _todasLasUnidades = [
+      ..._unidadesPorCategoria['Peso']!,
+      ..._unidadesPorCategoria['Volumen']!,
+    ];
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _cookingTimeController.dispose();
+    _servingSizeController.dispose();
+    for (var controller in _ingredientControllers) {
+      controller.dispose();
+    }
+    for (var controller in _stepControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   String? _validateTitle(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -79,14 +114,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       return 'Por favor ingresa el rendimiento';
     }
     if (!_numberRegExp.hasMatch(value)) {
-      return 'Ingresa solo números enteros positivos';
+      return 'Ingresa un número válido';
     }
-    final servings = int.parse(value);
-    if (servings <= 0) {
+    double? servings = double.tryParse(value);
+    if (servings == null || servings <= 0) {
       return 'El rendimiento debe ser mayor a 0';
     }
-    if (servings > 100) {
-      return 'El rendimiento no puede exceder las 100 porciones';
+    if (servings > 10000) {
+      return 'El rendimiento es demasiado grande';
     }
     return null;
   }
@@ -167,7 +202,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           favoritedBy: [],
           cookingTime:
               Duration(minutes: int.parse(_cookingTimeController.text.trim())),
-          servingSize: _servingSizeController.text.trim(),
+          servingSize: '${_servingSizeController.text.trim()} $_servingUnit',
           ingredients: _ingredients,
           steps: steps,
           imageUrl: _imageUrl,
@@ -215,11 +250,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     final ingredients = await showDialog<List<Ingredient>>(
       context: context,
       builder: (context) => AddIngredientDialog(
-        ingredientes: _ingredients.map((ing) => IngredienteTabla(
-          nombre: ing.name,
-          cantidad: ing.quantity,
-          unidad: ing.unit,
-        )).toList(),
+        ingredientes: _ingredients
+            .map((ing) => IngredienteTabla(
+                  nombre: ing.name,
+                  cantidad: ing.quantity,
+                  unidad: ing.unit,
+                ))
+            .toList(),
       ),
     );
 
@@ -284,18 +321,51 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   validator: _validateCookingTime,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _servingSizeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Rendimiento',
-                    hintText: 'Ej: 4',
-                    border: OutlineInputBorder(),
-                    helperText: 'Número entero positivo (máximo 100)',
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: _validateServingSize,
+                // Rendimiento
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _servingSizeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Rendimiento',
+                          border: OutlineInputBorder(),
+                          helperText: 'Cantidad',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        validator: _validateServingSize,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButtonFormField<String>(
+                        value: _servingUnit,
+                        decoration: const InputDecoration(
+                          labelText: 'Unidad',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _todasLasUnidades.map((String unidad) {
+                          return DropdownMenuItem<String>(
+                            value: unidad,
+                            child: Text(unidad),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            setState(() {
+                              _servingUnit = value;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
@@ -304,7 +374,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: _selectedCategory.isNotEmpty ? _selectedCategory : null,
+                      value: _selectedCategory.isNotEmpty
+                          ? _selectedCategory
+                          : null,
                       isExpanded: true,
                       hint: const Text('Selecciona una categoría'),
                       items: RecipeCategories.categories.map((String category) {
@@ -469,20 +541,5 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _cookingTimeController.dispose();
-    _servingSizeController.dispose();
-    for (var controller in _ingredientControllers) {
-      controller.dispose();
-    }
-    for (var controller in _stepControllers) {
-      controller.dispose();
-    }
-    super.dispose();
   }
 }

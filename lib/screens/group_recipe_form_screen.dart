@@ -31,22 +31,48 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
   late String _cookingTime;
   late String _category;
   late String _servingSize;
+  late String _servingUnit;
 
-  // Expresión regular para validar números enteros positivos
-  final RegExp _numberRegExp = RegExp(r'^[1-9]\d*$');
+  // Unidades por categoría como en conversion_table_page.dart
+  final Map<String, List<String>> _unidadesPorCategoria = {
+    'Peso': ['g', 'kg', 'oz', 'lb'],
+    'Volumen': ['ml', 'l', 'tz', 'cda', 'cdta'],
+  };
+
+  // Lista de todas las unidades disponibles
+  late final List<String> _todasLasUnidades;
+
+  // Expresión regular para validar números positivos (enteros o decimales)
+  final RegExp _numberRegExp = RegExp(r'^\d*\.?\d+$');
 
   @override
   void initState() {
     super.initState();
+    // Inicializar la lista de todas las unidades
+    _todasLasUnidades = [
+      ..._unidadesPorCategoria['Peso']!,
+      ..._unidadesPorCategoria['Volumen']!,
+    ];
+
     _title = widget.recipe?.title ?? '';
     _description = widget.recipe?.description ?? '';
     _ingredients = List<Ingredient>.from(widget.recipe?.ingredients ?? []);
     _steps = List<String>.from(widget.recipe?.steps ?? []);
     _cookingTime = widget.recipe?.cookingTime.inMinutes.toString() ?? '0';
     _category = widget.recipe?.category ?? '';
-    _servingSize = widget.recipe?.servingSize ?? '4';
 
-    // Si no hay pasos ingresados, se agrega uno en blanco para que siempre haya al menos un campo.
+    // Separar el número y la unidad del servingSize
+    if (widget.recipe?.servingSize != null &&
+        widget.recipe!.servingSize.isNotEmpty) {
+      final parts = widget.recipe!.servingSize.split(' ');
+      _servingSize = parts[0];
+      _servingUnit = parts.length > 1 ? parts[1] : 'g';
+    } else {
+      _servingSize = '0';
+      _servingUnit = 'g';
+    }
+
+    // Si no hay pasos ingresados, se agrega uno en blanco
     if (_steps.isEmpty) {
       _steps.add('');
     }
@@ -57,11 +83,13 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     final result = await showDialog<List<Ingredient>>(
       context: context,
       builder: (context) => AddIngredientDialog(
-        ingredientes: _ingredients.map((ing) => IngredienteTabla(
-          nombre: ing.name,
-          cantidad: ing.quantity,
-          unidad: ing.unit,
-        )).toList(),
+        ingredientes: _ingredients
+            .map((ing) => IngredienteTabla(
+                  nombre: ing.name,
+                  cantidad: ing.quantity,
+                  unidad: ing.unit,
+                ))
+            .toList(),
       ),
     );
 
@@ -134,14 +162,14 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
       return 'Por favor ingresa el rendimiento';
     }
     if (!_numberRegExp.hasMatch(value)) {
-      return 'El rendimiento debe ser un número entero positivo';
+      return 'Ingresa un número válido';
     }
-    int? servings = int.tryParse(value);
+    double? servings = double.tryParse(value);
     if (servings == null || servings <= 0) {
       return 'El rendimiento debe ser mayor a 0';
     }
-    if (servings > 100) {
-      return 'El rendimiento no puede ser mayor a 100';
+    if (servings > 10000) {
+      return 'El rendimiento es demasiado grande';
     }
     return null;
   }
@@ -158,7 +186,8 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     if (time == null || time <= 0) {
       return 'El tiempo debe ser mayor a 0';
     }
-    if (time > 1440) { // 24 horas en minutos
+    if (time > 1440) {
+      // 24 horas en minutos
       return 'El tiempo no puede ser mayor a 24 horas';
     }
     return null;
@@ -210,7 +239,8 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     if (!hasValidIngredients) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
+          content:
+              Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
           backgroundColor: Colors.red,
         ),
       );
@@ -245,7 +275,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
           isPrivate: false,
           favoritedBy: [],
           imageUrl: null,
-          servingSize: _servingSize,
+          servingSize: '$_servingSize $_servingUnit',
         );
 
         if (widget.recipe == null) {
@@ -328,16 +358,49 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
             ),
             const SizedBox(height: 16),
             // Rendimiento
-            TextFormField(
-              initialValue: _servingSize,
-              decoration: const InputDecoration(
-                labelText: 'Rendimiento (porciones)',
-                border: OutlineInputBorder(),
-                helperText: 'Número entero positivo (máximo 100)',
-              ),
-              keyboardType: TextInputType.number,
-              validator: _validateServingSize,
-              onSaved: (value) => _servingSize = value ?? '4',
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    initialValue: _servingSize,
+                    decoration: const InputDecoration(
+                      labelText: 'Rendimiento',
+                      border: OutlineInputBorder(),
+                      helperText: 'Cantidad',
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    validator: _validateServingSize,
+                    onSaved: (value) => _servingSize = value ?? '0',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: DropdownButtonFormField<String>(
+                    value: _servingUnit,
+                    decoration: const InputDecoration(
+                      labelText: 'Unidad',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _todasLasUnidades.map((String unidad) {
+                      return DropdownMenuItem<String>(
+                        value: unidad,
+                        child: Text(unidad),
+                      );
+                    }).toList(),
+                    onChanged: (String? value) {
+                      if (value != null) {
+                        setState(() {
+                          _servingUnit = value;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             // Sección de ingredientes
