@@ -29,6 +29,22 @@ class _ConversionCalculatorScreenState
   int _platosOrigen = 1;
   int _platosDestino = 1;
   late List<IngredienteTabla> _ingredientesTabla;
+  String _unidadOriginal = 'personas';
+  String _unidadDestino = 'personas';
+
+  // Unidades disponibles para el rendimiento
+  final List<String> _unidadesRendimiento = [
+    'g',
+    'kg',
+    'ml',
+    'l',
+    'tz',
+    'cda',
+    'cdta',
+    'u',
+    'oz',
+    'lb'
+  ];
 
   // Mapa de conversión de unidades antiguas a nuevas
   final Map<String, String> _convertirUnidadAntigua = {
@@ -96,19 +112,20 @@ class _ConversionCalculatorScreenState
       print("Serving Size: ${widget.recipe.servingSize}"); // Debug print
       print("Ingredients: ${widget.recipe.ingredients}"); // Debug print
 
+      // Extraer cantidad y unidad del servingSize
+      final parts = widget.recipe.servingSize.trim().split(' ');
+      if (parts.length >= 2) {
+        _platosOrigen = int.tryParse(parts[0]) ?? 1;
+        _unidadOriginal = parts[1];
+        _unidadDestino = parts[1];
+      }
+
       // Inicialización segura de controladores
       _cantidadController =
-          TextEditingController(text: widget.recipe.servingSize);
+          TextEditingController(text: _platosOrigen.toString());
       _destinoController =
-          TextEditingController(text: widget.recipe.servingSize);
-
-      // Si tenemos un servingSize válido, lo usamos
-      if (widget.recipe.servingSize.isNotEmpty) {
-        _cantidadController.text = widget.recipe.servingSize;
-        _destinoController.text = widget.recipe.servingSize;
-        _platosOrigen = int.tryParse(widget.recipe.servingSize) ?? 1;
-        _platosDestino = _platosOrigen;
-      }
+          TextEditingController(text: _platosOrigen.toString());
+      _platosDestino = _platosOrigen;
 
       // Inicialización segura de ingredientes
       if (widget.recipe.ingredients.isNotEmpty) {
@@ -279,11 +296,11 @@ class _ConversionCalculatorScreenState
               ),
               pw.SizedBox(height: 20),
               pw.Text(
-                'Rendimiento Original: $_platosOrigen personas',
+                'Rendimiento Original: $_platosOrigen $_unidadOriginal',
                 style: const pw.TextStyle(fontSize: 14),
               ),
               pw.Text(
-                'Rendimiento Nuevo: ${_formatResult(_resultado)}',
+                'Rendimiento Nuevo: $_platosDestino $_unidadDestino',
                 style: const pw.TextStyle(fontSize: 14),
               ),
               pw.SizedBox(height: 20),
@@ -411,11 +428,19 @@ class _ConversionCalculatorScreenState
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               children: [
+                const Text(
+                  'RENDIMIENTO',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Table(
                   border: TableBorder.all(color: Colors.grey.shade300),
                   columnWidths: const {
-                    0: FlexColumnWidth(2),
-                    1: FlexColumnWidth(2),
+                    0: FlexColumnWidth(1),
+                    1: FlexColumnWidth(1),
                     2: FlexColumnWidth(2),
                   },
                   children: [
@@ -425,15 +450,8 @@ class _ConversionCalculatorScreenState
                       ),
                       children: const [
                         Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'RENDIMIENTO',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 16.0, horizontal: 8.0),
                           child: Text(
                             'ORIGINAL',
                             style: TextStyle(fontWeight: FontWeight.bold),
@@ -441,7 +459,17 @@ class _ConversionCalculatorScreenState
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.all(8.0),
+                          padding: EdgeInsets.symmetric(
+                              vertical: 16.0, horizontal: 8.0),
+                          child: Text(
+                            'UNIDAD',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 16.0, horizontal: 8.0),
                           child: Text(
                             'NUEVO',
                             style: TextStyle(fontWeight: FontWeight.bold),
@@ -452,48 +480,103 @@ class _ConversionCalculatorScreenState
                     ),
                     TableRow(
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Plato',
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: TextField(
-                            controller: _cantidadController,
-                            enabled: false,
-                            textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding:
-                                  EdgeInsets.symmetric(horizontal: 8),
-                              filled: true,
-                              fillColor: Color(0xFFEEEEEE),
+                          child: SizedBox(
+                            height: 48,
+                            child: TextField(
+                              controller: _cantidadController,
+                              enabled: false,
+                              textAlign: TextAlign.center,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 8),
+                                filled: true,
+                                fillColor: Color(0xFFEEEEEE),
+                              ),
                             ),
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: TextField(
-                            controller: _destinoController,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding:
-                                  EdgeInsets.symmetric(horizontal: 8),
+                          child: SizedBox(
+                            height: 48,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEEEEE),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: Colors.grey.shade400),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                _unidadOriginal,
+                                textAlign: TextAlign.center,
+                              ),
                             ),
-                            onChanged: (value) {
-                              if (value.isEmpty) {
-                                value = '1';
-                              }
-                              setState(() {
-                                _platosDestino = int.tryParse(value) ?? 1;
-                                _calcularConversion();
-                              });
-                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            height: 48,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _destinoController,
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 8),
+                                    ),
+                                    onChanged: (value) {
+                                      if (value.isEmpty) {
+                                        value = '1';
+                                      }
+                                      setState(() {
+                                        _platosDestino =
+                                            int.tryParse(value) ?? 1;
+                                        _calcularConversion();
+                                      });
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: _unidadDestino,
+                                    decoration: const InputDecoration(
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 4, vertical: 8),
+                                      isDense: true,
+                                    ),
+                                    items: _unidadesRendimiento
+                                        .map((String unidad) {
+                                      return DropdownMenuItem<String>(
+                                        value: unidad,
+                                        child: Text(
+                                          unidad,
+                                          style: const TextStyle(fontSize: 12),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? value) {
+                                      if (value != null) {
+                                        setState(() {
+                                          _unidadDestino = value;
+                                          _calcularConversion();
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
