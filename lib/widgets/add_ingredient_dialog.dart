@@ -20,8 +20,10 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
   @override
   void initState() {
     super.initState();
-    _tempIngredients.addAll(widget.ingredientes); // Initialize with passed ingredients
-    _ingredients.addAll(widget.ingredientes); // Initialize the main ingredients list
+    _tempIngredients
+        .addAll(widget.ingredientes); // Initialize with passed ingredients
+    _ingredients
+        .addAll(widget.ingredientes); // Initialize the main ingredients list
   }
 
   @override
@@ -98,12 +100,14 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                         final ingredientsToReturn = newIngredients.map((ing) {
                           return Ingredient(
                             name: ing.nombre,
-                            quantity: double.parse(ing.cantidadController.text.replaceAll(',', '.')),
+                            quantity: double.parse(ing.cantidadController.text
+                                .replaceAll(',', '.')),
                             unit: ing.unidad,
                           );
                         }).toList();
 
-                        Navigator.of(context).pop(ingredientsToReturn); // Return the correct type
+                        Navigator.of(context).pop(
+                            ingredientsToReturn); // Return the correct type
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -123,4 +127,4 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
       ),
     );
   }
-} 
+}

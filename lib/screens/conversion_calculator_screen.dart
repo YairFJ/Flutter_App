@@ -32,76 +32,79 @@ class _ConversionCalculatorScreenState
   String _unidadOriginal = 'personas';
   String _unidadDestino = 'personas';
 
+  // Mapa de unidades completas a abreviadas
+  final Map<String, String> _unidadesAbreviadas = {
+    'Gramos': 'gr',
+    'Kilos': 'kg',
+    'Onzas': 'oz',
+    'Libras': 'lb',
+    'Litros': 'l',
+    'Mililitros': 'ml',
+    'Porciones': 'porciones'
+  };
+
   // Unidades disponibles para el rendimiento
   final List<String> _unidadesRendimiento = [
-    'g',
-    'kg',
-    'ml',
-    'l',
-    'tz',
-    'cda',
-    'cdta',
-    'u',
-    'oz',
-    'lb'
+    'Gramos',
+    'Kilos',
+    'Onzas',
+    'Libras',
+    'Litros',
+    'Mililitros',
+    'Porciones'
   ];
 
   // Mapa de conversión de unidades antiguas a nuevas
   final Map<String, String> _convertirUnidadAntigua = {
-    'gr': 'g',
-    'kg': 'kg',
-    'ml': 'ml',
-    'l': 'l',
-    'taza': 'tz',
-    'cucharada': 'cda',
-    'cucharadita': 'cdta',
-    'unidad': 'u',
-    'oz': 'oz',
-    'lb': 'lb',
+    'gr': 'Gramos',
+    'kg': 'Kilos',
+    'oz': 'Onzas',
+    'lb': 'Libras',
+    'l': 'Litros',
+    'ml': 'Mililitros',
+    'porciones': 'Porciones'
   };
 
   // Unidades por tipo
   final Map<String, List<String>> _unidadesPorTipo = {
-    'peso': ['g', 'kg', 'oz', 'lb'],
-    'volumen': ['ml', 'l', 'tz', 'cda', 'cdta'],
-    'unidad': ['u'],
+    'peso': ['Gramos', 'Kilos', 'Onzas', 'Libras'],
+    'volumen': ['Litros', 'Mililitros'],
+    'otros': ['Porciones']
   };
 
   // Factores de conversión
   final Map<String, Map<String, double>> _factoresConversion = {
-    'g': {
-      'kg': 0.001,
-      'oz': 0.035274,
-      'lb': 0.00220462,
+    'Gramos': {
+      'Kilos': 0.001,
+      'Onzas': 0.035274,
+      'Libras': 0.00220462,
     },
-    'kg': {
-      'g': 1000,
-      'oz': 35.274,
-      'lb': 2.20462,
+    'Kilos': {
+      'Gramos': 1000,
+      'Onzas': 35.274,
+      'Libras': 2.20462,
     },
-    'ml': {
-      'l': 0.001,
-      'tz': 0.00416667,
-      'cda': 0.0666667,
-      'cdta': 0.2,
+    'Mililitros': {
+      'Litros': 0.001,
+      'Centilitros': 0.1,
+      'Taza': 0.00416667,
+      'Cucharada': 0.0666667,
+      'Cucharadita': 0.2,
+      'Onza liquida': 0.033814,
+      'Pinta': 0.00211338,
+      'Cuarto galon': 0.00105669,
+      'Galon': 0.000264172,
     },
-    'l': {
-      'ml': 1000,
-      'tz': 4.16667,
-      'cda': 66.6667,
-      'cdta': 200,
-    },
-    'tz': {
-      'ml': 240,
-      'l': 0.24,
-      'cda': 16,
-      'cdta': 48,
-    },
-    'cda': {
-      'ml': 15,
-      'l': 0.015,
-      'tz': 0.0625,
-      'cdta': 3,
+    'Litros': {
+      'Mililitros': 1000,
+      'Centilitros': 100,
+      'Taza': 4.16667,
+      'Cucharada': 66.6667,
+      'Cucharadita': 200,
+      'Onza liquida': 33.814,
+      'Pinta': 2.11338,
+      'Cuarto galon': 1.05669,
+      'Galon': 0.264172,
     },
   };
 
@@ -116,8 +119,11 @@ class _ConversionCalculatorScreenState
       final parts = widget.recipe.servingSize.trim().split(' ');
       if (parts.length >= 2) {
         _platosOrigen = int.tryParse(parts[0]) ?? 1;
-        _unidadOriginal = parts[1];
-        _unidadDestino = parts[1];
+        String unidadOriginalTemp = parts[1];
+        // Convertir la unidad antigua a la nueva si existe en el mapa
+        _unidadOriginal =
+            _convertirUnidadAntigua[unidadOriginalTemp] ?? 'Gramos';
+        _unidadDestino = _unidadOriginal; // Usar la misma unidad convertida
       }
 
       // Inicialización segura de controladores
@@ -131,20 +137,29 @@ class _ConversionCalculatorScreenState
       if (widget.recipe.ingredients.isNotEmpty) {
         _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
           try {
+            String unidadOriginal = ingrediente.unit ?? 'Gramos';
+            // Convertir la unidad antigua a la nueva si existe en el mapa
+            String unidadConvertida =
+                _convertirUnidadAntigua[unidadOriginal] ?? 'Gramos';
+            print(
+                "Unidad original: $unidadOriginal, Unidad convertida: $unidadConvertida"); // Debug
+
             return IngredienteTabla(
               nombre: ingrediente.name ?? '',
-              cantidad: ingrediente.quantity,
-              unidad: _convertirUnidadAntigua[ingrediente.unit] ?? 'g',
+              cantidad: ingrediente.quantity ?? 0,
+              unidad: unidadConvertida,
             );
           } catch (e) {
             print("Error al convertir ingrediente: $e");
             return IngredienteTabla(
               nombre: '',
               cantidad: 0,
-              unidad: 'g',
+              unidad: 'Gramos',
             );
           }
         }).toList();
+      } else {
+        _ingredientesTabla = [];
       }
 
       _calcularConversion();
@@ -167,29 +182,50 @@ class _ConversionCalculatorScreenState
         final destino = _platosDestino;
 
         if (origen > 0 && destino > 0) {
-          double factor = destino / origen;
+          // Convertir la cantidad original y destino a una unidad base (gramos o mililitros)
+          double cantidadOriginalBase =
+              _convertirUnidad(origen.toDouble(), _unidadOriginal, 'Gramos');
+          double cantidadDestinoBase =
+              _convertirUnidad(destino.toDouble(), _unidadDestino, 'Gramos');
+
+          // Calcular el factor de escala basado en las cantidades convertidas a la misma unidad
+          double factorEscala = cantidadDestinoBase / cantidadOriginalBase;
+
           _resultado = destino.toDouble();
 
           _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
             try {
+              String unidadOriginal = ingrediente.unit ?? 'Gramos';
+              String unidadConvertida =
+                  _convertirUnidadAntigua[unidadOriginal] ?? 'Gramos';
+
+              // Aplicar el factor de escala a la cantidad original
+              double nuevaCantidad = (ingrediente.quantity ?? 0) * factorEscala;
+
+              // Si la unidad original es gramos y la unidad destino es mililitros, ajustar la conversión
+              if (unidadOriginal == 'Gramos' &&
+                  _unidadDestino == 'Mililitros') {
+                nuevaCantidad = (ingrediente.quantity ?? 0); // 1 gr = 1 ml
+              }
+
               return IngredienteTabla(
                 nombre: ingrediente.name ?? '',
-                cantidad: ((ingrediente.quantity ?? 0) * factor),
-                unidad: ingrediente.unit ?? '',
+                cantidad: nuevaCantidad,
+                unidad: unidadConvertida,
               );
             } catch (e) {
               print("Error al convertir ingrediente: $e");
               return IngredienteTabla(
                 nombre: '',
                 cantidad: 0,
-                unidad: 'g',
+                unidad: 'Gramos',
               );
             }
           }).toList();
         }
       });
     } catch (e) {
-      print("Error en _calcularConversion: $e"); // Debug print
+      print("Error en _calcularConversion: $e");
     }
   }
 
@@ -221,7 +257,7 @@ class _ConversionCalculatorScreenState
   }
 
   String _getTipoUnidad(String unit) {
-    if (['g', 'kg', 'oz', 'lb'].contains(unit)) return 'peso';
+    if (['gr', 'kg', 'oz', 'lb'].contains(unit)) return 'peso';
     if (['ml', 'l', 'tz', 'cda', 'cdta'].contains(unit)) return 'volumen';
     return 'unidad';
   }
@@ -244,17 +280,7 @@ class _ConversionCalculatorScreenState
 
   String _formatResult(double value) {
     String numero = _formatearPlatoDestino(value);
-    return '$numero ${_getPluralSuffix(numero)}';
-  }
-
-  String _getPluralSuffix(String value) {
-    try {
-      // Convertimos la coma a punto para poder parsearlo
-      double numero = double.parse(value.replaceAll(',', '.'));
-      return numero <= 1.0 ? 'persona' : 'personas';
-    } catch (e) {
-      return 'personas';
-    }
+    return numero;
   }
 
   String _formatearPlatoDestino(double valor) {
@@ -371,7 +397,8 @@ class _ConversionCalculatorScreenState
                         pw.Padding(
                           padding: pw.EdgeInsets.all(8),
                           child: pw.Text(
-                            ingrediente.unidad,
+                            _unidadesAbreviadas[ingrediente.unidad] ??
+                                ingrediente.unidad,
                             textAlign: pw.TextAlign.center,
                           ),
                         ),
@@ -488,6 +515,7 @@ class _ConversionCalculatorScreenState
                               controller: _cantidadController,
                               enabled: false,
                               textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 16),
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
                                 contentPadding: EdgeInsets.symmetric(
@@ -510,7 +538,9 @@ class _ConversionCalculatorScreenState
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _unidadOriginal,
+                                _unidadesAbreviadas[_unidadOriginal] ??
+                                    _unidadOriginal,
+                                style: const TextStyle(fontSize: 16),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -527,6 +557,7 @@ class _ConversionCalculatorScreenState
                                     controller: _destinoController,
                                     keyboardType: TextInputType.number,
                                     textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 14),
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
                                       contentPadding: EdgeInsets.symmetric(
@@ -548,20 +579,27 @@ class _ConversionCalculatorScreenState
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     value: _unidadDestino,
+                                    isExpanded: true,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                    ),
                                     decoration: const InputDecoration(
                                       border: OutlineInputBorder(),
                                       contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 4, vertical: 8),
+                                          horizontal: 8, vertical: 8),
                                       isDense: true,
                                     ),
+                                    icon: const Icon(Icons.arrow_drop_down,
+                                        size: 20),
                                     items: _unidadesRendimiento
                                         .map((String unidad) {
                                       return DropdownMenuItem<String>(
                                         value: unidad,
                                         child: Text(
-                                          unidad,
-                                          style: const TextStyle(fontSize: 12),
+                                          _unidadesAbreviadas[unidad] ?? unidad,
                                           textAlign: TextAlign.center,
+                                          style: const TextStyle(fontSize: 14),
                                         ),
                                       );
                                     }).toList(),
@@ -753,26 +791,32 @@ class _ConversionCalculatorScreenState
                         padding: const EdgeInsets.all(4.0),
                         child: DropdownButtonFormField<String>(
                           value: ingrediente.unidad,
+                          isExpanded: true,
                           decoration: InputDecoration(
                             border: const OutlineInputBorder(),
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 8),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 4),
                             isDense: true,
                             filled: true,
                             fillColor: isDarkMode
                                 ? Colors.grey.shade800
                                 : Colors.white,
                           ),
-                          items: _unidadesPorTipo[ingrediente.tipoMedida]!
-                              .map((String unidad) {
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          items: _unidadesRendimiento.map((String unidad) {
                             return DropdownMenuItem<String>(
                               value: unidad,
                               child: Text(
-                                unidad,
+                                _unidadesAbreviadas[unidad] ?? unidad,
                                 style: TextStyle(
+                                  fontSize: 14,
                                   color:
                                       isDarkMode ? Colors.white : Colors.black,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             );
                           }).toList(),
@@ -803,57 +847,35 @@ class _ConversionCalculatorScreenState
     }
 
     try {
-      double cantidadNuevaDisplay =
-          double.parse(nuevoValor.replaceAll(',', '.'));
-      const String baseUnidad = 'g';
-      final ingredienteMod = _ingredientesTabla[index];
+      double cantidadNueva = double.parse(nuevoValor.replaceAll(',', '.'));
+      final ingredienteModificado = _ingredientesTabla[index];
 
-      double cantidadOriginalModBase = _convertirUnidad(
-        ingredienteMod.cantidadOriginal,
-        ingredienteMod.unidadOriginal,
-        baseUnidad,
-      );
-
-      double cantidadNuevaModBase = _convertirUnidad(
-        cantidadNuevaDisplay,
-        ingredienteMod.unidad,
-        baseUnidad,
-      );
-
-      double factorEscala = cantidadNuevaModBase / cantidadOriginalModBase;
+      // Calcular el factor de escala basado en la cantidad original del ingrediente modificado
+      double factorEscala =
+          cantidadNueva / ingredienteModificado.cantidadOriginal;
 
       setState(() {
-        // Actualizamos el ingrediente modificado
-        ingredienteMod.cantidad = cantidadNuevaDisplay;
-        ingredienteMod.cantidadController.text =
-            _formatearNumero(cantidadNuevaDisplay);
+        // Actualizar el ingrediente modificado
+        ingredienteModificado.cantidad = cantidadNueva;
+        ingredienteModificado.cantidadController.text =
+            _formatearNumero(cantidadNueva);
 
-        // Actualizamos los demás ingredientes
-        for (int i = 0; i < _ingredientesTabla.length; i++) {
-          if (i != index) {
-            final ing = _ingredientesTabla[i];
-            double ingOriginalEnBase = _convertirUnidad(
-              ing.cantidadOriginal,
-              ing.unidadOriginal,
-              baseUnidad,
-            );
-
-            double nuevoIngEnBase = ingOriginalEnBase * factorEscala;
-            double nuevoDisplay =
-                _convertirUnidad(nuevoIngEnBase, baseUnidad, ing.unidad);
-
-            ing.cantidad = nuevoDisplay;
-            ing.cantidadController.text = _formatearNumero(nuevoDisplay);
+        // Actualizar los demás ingredientes manteniendo sus unidades originales
+        for (var ingrediente in _ingredientesTabla) {
+          if (_ingredientesTabla.indexOf(ingrediente) != index) {
+            // Aplicar el mismo factor de escala a la cantidad original
+            double nuevaCantidad = ingrediente.cantidadOriginal * factorEscala;
+            ingrediente.cantidad = nuevaCantidad;
+            ingrediente.cantidadController.text =
+                _formatearNumero(nuevaCantidad);
           }
         }
 
-        // Actualizamos el rendimiento con valor decimal
-        double nuevoPlatoDestino = _platosOrigen * factorEscala;
-        _platosDestino = nuevoPlatoDestino
-            .round(); // Mantenemos el entero para la lógica interna
-        _destinoController.text = _formatearPlatoDestino(nuevoPlatoDestino);
-        _resultado =
-            nuevoPlatoDestino; // Guardamos el valor decimal en lugar del factor
+        // Actualizar el rendimiento
+        double nuevoRendimiento = _platosOrigen * factorEscala;
+        _platosDestino = nuevoRendimiento.round();
+        _destinoController.text = _formatearPlatoDestino(nuevoRendimiento);
+        _resultado = nuevoRendimiento;
       });
     } catch (e) {
       print("Error al actualizar la cantidad: $e");
@@ -894,28 +916,38 @@ class _ConversionCalculatorScreenState
 
     // Definir unidades base por tipo
     final unidadesBase = {
-      'peso': 'g',
-      'volumen': 'ml',
+      'peso': 'Gramos',
+      'volumen': 'Mililitros',
     };
-
-    // Obtener tipo de medida y unidad base
-    String tipoMedida = _determinarTipoMedida(desde);
-    String unidadBase = unidadesBase[tipoMedida] ?? desde;
 
     // Factores de conversión a unidad base
     final factoresABase = {
       // Peso
-      'g': 1,
-      'kg': 1000,
-      'oz': 28.35,
-      'lb': 453.592,
+      'Gramos': 1,
+      'Kilos': 1000,
+      'Onzas': 28.35,
+      'Libras': 453.592,
       // Volumen
-      'ml': 1,
-      'l': 1000,
-      'tz': 240,
-      'cda': 15,
-      'cdta': 5,
+      'Mililitros': 1,
+      'Litros': 1000,
+      'Centilitros': 10,
+      'Taza': 240,
+      'Cucharada': 15,
+      'Cucharadita': 5,
+      'Onza liquida': 29.5735,
+      'Pinta': 473.176,
+      'Cuarto galon': 946.353,
+      'Galon': 3785.41,
     };
+
+    // Obtener tipo de medida
+    String tipoMedida = _determinarTipoMedida(desde);
+    if (tipoMedida != _determinarTipoMedida(hasta)) {
+      // Si las unidades son de diferentes tipos, no se puede convertir
+      return cantidad;
+    }
+
+    if (tipoMedida == 'unidad') return cantidad;
 
     // Convertir a unidad base
     double cantidadBase = cantidad * (factoresABase[desde] ?? 1);
@@ -925,8 +957,19 @@ class _ConversionCalculatorScreenState
   }
 
   String _determinarTipoMedida(String unidad) {
-    final unidadesVolumen = {'ml', 'l', 'tz', 'cda', 'cdta'};
-    final unidadesPeso = {'g', 'kg', 'oz', 'lb'};
+    final unidadesVolumen = {
+      'Mililitros',
+      'Litros',
+      'Centilitros',
+      'Cucharada',
+      'Cucharadita',
+      'Taza',
+      'Onza liquida',
+      'Pinta',
+      'Cuarto galon',
+      'Galon'
+    };
+    final unidadesPeso = {'Gramos', 'Kilos', 'Onzas', 'Libras'};
 
     if (unidadesVolumen.contains(unidad)) return 'volumen';
     if (unidadesPeso.contains(unidad)) return 'peso';
@@ -970,8 +1013,19 @@ class IngredienteTabla {
   }
 
   static String _determinarTipoMedida(String unidad) {
-    if (['g', 'kg', 'oz', 'lb'].contains(unidad)) return 'peso';
-    if (['ml', 'l', 'tz', 'cda', 'cdta'].contains(unidad)) return 'volumen';
+    if (['Gramos', 'Kilos', 'Onzas', 'Libras'].contains(unidad)) return 'peso';
+    if ([
+      'Mililitros',
+      'Litros',
+      'Centilitros',
+      'Cucharada',
+      'Cucharadita',
+      'Taza',
+      'Onza liquida',
+      'Pinta',
+      'Cuarto galon',
+      'Galon'
+    ].contains(unidad)) return 'volumen';
     return 'unidad';
   }
 }

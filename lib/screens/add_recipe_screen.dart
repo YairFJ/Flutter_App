@@ -30,16 +30,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   String? _imageUrl;
   bool _isPrivate = false;
   final List<Ingredient> _ingredients = [];
-  String _servingUnit = 'g';
+  String _servingUnit = 'gr';
 
-  // Unidades por categoría como en conversion_table_page.dart
-  final Map<String, List<String>> _unidadesPorCategoria = {
-    'Peso': ['g', 'kg', 'oz', 'lb'],
-    'Volumen': ['ml', 'l', 'tz', 'cda', 'cdta'],
-  };
-
-  // Lista de todas las unidades disponibles
-  late final List<String> _todasLasUnidades;
+  // Unidades disponibles para el rendimiento
+  final List<String> _todasLasUnidades = [
+    'gr', // Gramos
+    'kg', // Kilos
+    'oz', // Onzas
+    'lb', // Libras
+    'l', // Litros
+    'ml', // Mililitros
+    'porciones'
+  ];
 
   // Expresión regular para validar números positivos (enteros o decimales)
   final RegExp _numberRegExp = RegExp(r'^\d*\.?\d+$');
@@ -47,11 +49,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   @override
   void initState() {
     super.initState();
-    // Inicializar la lista de todas las unidades
-    _todasLasUnidades = [
-      ..._unidadesPorCategoria['Peso']!,
-      ..._unidadesPorCategoria['Volumen']!,
-    ];
   }
 
   @override
@@ -332,7 +329,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Rendimiento',
                           border: OutlineInputBorder(),
-                          helperText: 'Cantidad',
+                          //helperText: 'Cantidad',
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),

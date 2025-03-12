@@ -77,16 +77,6 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Por favor ingresa el rendimiento';
     }
-    if (!_numberRegExp.hasMatch(value)) {
-      return 'Ingresa solo números enteros positivos';
-    }
-    final servings = int.parse(value);
-    if (servings <= 0) {
-      return 'El rendimiento debe ser mayor a 0';
-    }
-    if (servings > 100) {
-      return 'El rendimiento no puede exceder las 100 porciones';
-    }
     return null;
   }
 
@@ -109,8 +99,11 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
         TextEditingController(text: widget.recipe.description);
     _cookingTimeController = TextEditingController(
         text: widget.recipe.cookingTime.inMinutes.toString());
+
+    // Ya no separamos el número de la unidad
     _servingSizeController =
         TextEditingController(text: widget.recipe.servingSize);
+
     _steps = List.from(widget.recipe.steps);
     _selectedCategory = widget.recipe.category;
     _isPrivate = widget.recipe.isPrivate;
@@ -394,11 +387,10 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 controller: _servingSizeController,
                 decoration: const InputDecoration(
                   labelText: 'Rendimiento',
-                  hintText: 'Ej: 4',
+                  hintText: 'Ej: 4 porciones',
                   border: OutlineInputBorder(),
-                  helperText: 'Número entero positivo (máximo 100)',
+                  helperText: 'Ingresa el rendimiento de la receta',
                 ),
-                keyboardType: TextInputType.number,
                 validator: _validateServingSize,
               ),
               const SizedBox(height: 16),
