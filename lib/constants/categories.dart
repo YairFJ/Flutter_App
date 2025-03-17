@@ -83,7 +83,7 @@ class RecipeCategories {
       case 'Vegetariano':
         return Colors.lightGreenAccent[200]!;
       case 'Verduras':
-        return const Color.fromARGB(255, 234, 74, 197)!;
+        return const Color.fromARGB(255, 234, 74, 197);
 
       case 'sin categoría':
         return Colors.grey[300]!;

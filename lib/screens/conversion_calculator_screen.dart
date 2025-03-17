@@ -404,7 +404,7 @@ class _ConversionCalculatorScreenState
                         ),
                       ],
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ],
@@ -872,10 +872,11 @@ class _ConversionCalculatorScreenState
         }
 
         // Actualizar el rendimiento
-        double nuevoRendimiento = _platosOrigen * factorEscala;
-        _platosDestino = nuevoRendimiento.round();
-        _destinoController.text = _formatearPlatoDestino(nuevoRendimiento);
-        _resultado = nuevoRendimiento;
+        int nuevoRendimiento = _platosOrigen; // Mantener como int
+        _platosDestino = nuevoRendimiento;
+        _destinoController.text =
+            _formatearPlatoDestino(nuevoRendimiento.toDouble());
+        _resultado = nuevoRendimiento.toDouble();
       });
     } catch (e) {
       print("Error al actualizar la cantidad: $e");
@@ -899,6 +900,14 @@ class _ConversionCalculatorScreenState
         ingrediente.cantidad = nuevaCantidad;
         ingrediente.unidad = nuevaUnidad;
         ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
+
+        // No restablecer la cantidad de otros ingredientes
+        // Solo actualizar el rendimiento si es necesario
+        int nuevoRendimiento = _platosOrigen; // Mantener como int
+        _platosDestino = nuevoRendimiento;
+        _destinoController.text =
+            _formatearPlatoDestino(nuevoRendimiento.toDouble());
+        _resultado = nuevoRendimiento.toDouble();
       });
     } catch (e) {
       // Si hay error en la conversión, restaurar valores originales
@@ -1025,7 +1034,9 @@ class IngredienteTabla {
       'Pinta',
       'Cuarto galon',
       'Galon'
-    ].contains(unidad)) return 'volumen';
+    ].contains(unidad)) {
+      return 'volumen';
+    }
     return 'unidad';
   }
 }

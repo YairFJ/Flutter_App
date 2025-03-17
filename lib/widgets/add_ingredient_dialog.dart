@@ -13,9 +13,9 @@ class AddIngredientDialog extends StatefulWidget {
 }
 
 class _AddIngredientDialogState extends State<AddIngredientDialog> {
-  List<IngredienteTabla> _tempIngredients = [];
-  List<IngredienteTabla> _ingredients = [];
-  bool _isAdding = false; // Variable para controlar el estado del botón
+  final List<IngredienteTabla> _tempIngredients = [];
+  final List<IngredienteTabla> _ingredients = [];
+  final bool _isAdding = false; // Variable para controlar el estado del botón
 
   @override
   void initState() {

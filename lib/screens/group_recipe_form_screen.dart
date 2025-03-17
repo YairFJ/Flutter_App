@@ -5,7 +5,6 @@ import '../models/recipe.dart';
 import '../models/ingredient.dart';
 import '../models/ingrediente_tabla.dart';
 import '../models/group.dart';
-import '../widgets/ingredient_table_widget.dart';
 import '../constants/categories.dart';
 import '../widgets/add_ingredient_dialog.dart';
 
