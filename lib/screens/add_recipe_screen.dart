@@ -254,6 +254,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   unidad: ing.unit,
                 ))
             .toList(),
+        unidades: _todasLasUnidades,
       ),
     );
 

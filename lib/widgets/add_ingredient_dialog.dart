@@ -5,8 +5,13 @@ import '../models/ingrediente_tabla.dart';
 
 class AddIngredientDialog extends StatefulWidget {
   final List<IngredienteTabla> ingredientes;
+  final List<String> unidades;
 
-  const AddIngredientDialog({super.key, required this.ingredientes});
+  const AddIngredientDialog({
+    Key? key,
+    required this.ingredientes,
+    required this.unidades,
+  }) : super(key: key);
 
   @override
   State<AddIngredientDialog> createState() => _AddIngredientDialogState();

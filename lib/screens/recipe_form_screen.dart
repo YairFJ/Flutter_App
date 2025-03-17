@@ -27,6 +27,28 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   late String _servingSize;
   bool _isPrivate = false;
 
+  // Mapa de unidades completas a abreviadas
+  final Map<String, String> _unidadesAbreviadas = {
+    'Gramo': 'gr',
+    'Kilogramo': 'kg',
+    'Miligramos': 'mg',
+    'Onza': 'oz',
+    'Libra': 'lb',
+    'Mililitros': 'ml',
+    'Litro': 'l',
+    'Centilitros': 'cl',
+    'Cucharada': 'cda',
+    'Cucharadita': 'cdta',
+    'Taza': 'tz',
+    'Onza liquida': 'oz liquida',
+    'Pinta': 'pinta',
+    'Cuarto galon': 'cuarto galon',
+    'Galon': 'galon',
+  };
+
+  // Lista de todas las unidades disponibles
+  late final List<String> _todasLasUnidades;
+
   @override
   void initState() {
     super.initState();
@@ -38,23 +60,30 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _cookingTime = widget.recipe?.cookingTime.inMinutes.toString() ?? '0';
     _category = widget.recipe?.category ?? '';
     _isPrivate = widget.recipe?.isPrivate ?? false;
+
+    // Inicializar la lista de todas las unidades
+    _todasLasUnidades = _unidadesAbreviadas.values.toList();
   }
 
   void _editIngredients() async {
     final result = await showDialog<List<Ingredient>>(
       context: context,
       builder: (context) => AddIngredientDialog(
-        ingredientes: _ingredients.map((ing) => IngredienteTabla(
-          nombre: ing.name,
-          cantidad: ing.quantity,
-          unidad: ing.unit,
-        )).toList(),
+        ingredientes: _ingredients
+            .map((ing) => IngredienteTabla(
+                  nombre: ing.name,
+                  cantidad: ing.quantity,
+                  unidad: ing.unit,
+                ))
+            .toList(),
+        unidades: _todasLasUnidades, // Usar la lista de unidades de medida
       ),
     );
 
     if (result != null) {
       setState(() {
-        _ingredients = result; // Update the ingredients list with the result
+        _ingredients =
+            result; // Actualizar la lista de ingredientes con el resultado
       });
     }
   }

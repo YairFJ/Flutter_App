@@ -89,6 +89,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                   unidad: ing.unit,
                 ))
             .toList(),
+        unidades: _todasLasUnidades,
       ),
     );
 
