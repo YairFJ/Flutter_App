@@ -1009,8 +1009,9 @@ class IngredienteTabla {
   }
 
   static String _determinarTipoMedida(String unidad) {
-    if (['Gramos', 'Kilogramo', 'Miligramos', 'Onza', 'Libra'].contains(unidad))
+    if (['Gramos', 'Kilogramo', 'Miligramos', 'Onza', 'Libra'].contains(unidad)) {
       return 'peso';
+    }
     if ([
       'Mililitros',
       'Litro',

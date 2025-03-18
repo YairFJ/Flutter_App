@@ -8,10 +8,10 @@ class AddIngredientDialog extends StatefulWidget {
   final List<String> unidades;
 
   const AddIngredientDialog({
-    Key? key,
+    super.key,
     required this.ingredientes,
     required this.unidades,
-  }) : super(key: key);
+  });
 
   @override
   State<AddIngredientDialog> createState() => _AddIngredientDialogState();
