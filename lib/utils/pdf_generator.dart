@@ -27,10 +27,14 @@ Future<Uint8List> generateRecipePdf(Recipe receta) async {
           style: pw.TextStyle(fontSize: 14),
         ),
         pw.SizedBox(height: 20),
+<<<<<<< Updated upstream
         pw.Text(
           'Rendimiento: ${receta.servingSize} ',
           style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
         ),
+=======
+        
+>>>>>>> Stashed changes
         pw.SizedBox(height: 20),
         pw.Text(
           "Ingredientes:",

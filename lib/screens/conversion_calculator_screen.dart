@@ -142,6 +142,15 @@ class _ConversionCalculatorScreenState
     },
   };
 
+  // Mapa de plurales para las unidades
+  final Map<String, String> _unidadesPlural = {
+    'Persona': 'Personas',
+    'Porción': 'Porciones',
+    'Ración': 'Raciones',
+    'Plato': 'Platos',
+    'Unidad': 'Unidades',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -351,11 +360,7 @@ class _ConversionCalculatorScreenState
               ),
               pw.SizedBox(height: 20),
               pw.Text(
-                'Rendimiento Original: $_platosOrigen $_unidadOriginal',
-                style: const pw.TextStyle(fontSize: 14),
-              ),
-              pw.Text(
-                'Rendimiento Nuevo: $_platosDestino $_unidadDestino',
+                'Rendimiento Nuevo: $_platosDestino ${_getUnidadPlural(_unidadDestino, _platosDestino)}',
                 style: const pw.TextStyle(fontSize: 14),
               ),
               pw.SizedBox(height: 20),
@@ -568,8 +573,8 @@ class _ConversionCalculatorScreenState
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _unidadesAbreviadas[_unidadOriginal] ??
-                                    _unidadOriginal,
+                                _unidadesAbreviadas[_getUnidadPlural(_unidadOriginal, _platosOrigen)] ?? 
+                                _getUnidadPlural(_unidadOriginal, _platosOrigen),
                                 style: const TextStyle(fontSize: 16),
                                 textAlign: TextAlign.center,
                               ),
@@ -993,6 +998,11 @@ class _ConversionCalculatorScreenState
       return numero.toInt().toString();
     }
     return numero.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+  }
+
+  String _getUnidadPlural(String unidad, int cantidad) {
+    if (cantidad <= 1) return unidad;
+    return _unidadesPlural[unidad] ?? '${unidad}s';
   }
 }
 
