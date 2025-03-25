@@ -15,20 +15,12 @@ import 'models/recipe.dart';
 import 'pages/profile_page.dart';
 import 'screens/groups_screen.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
-    // Remover el signOut automático
-    // await FirebaseAuth.instance.signOut();  // Eliminar esta línea
-  } catch (e) {
-    debugPrint('Error inicializando Firebase: $e');
-  }
-
+  await DefaultFirebaseOptions.loadEnv(); // Cargar variables de entorno
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 

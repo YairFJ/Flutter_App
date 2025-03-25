@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -15,6 +16,10 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
+  static Future<void> loadEnv() async {
+    await dotenv.load();
+  }
+
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       throw UnsupportedError(
@@ -49,21 +54,21 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBULTRsmcAClbPWDdIMTgdiCzaay1caoOM',
-    appId: '1:251928304911:android:a222768487b1b664db727a',
-    messagingSenderId: '251928304911',
-    projectId: 'restaurante-app-6e13d',
-    storageBucket: 'restaurante-app-6e13d.firebasestorage.app',
+  static final FirebaseOptions android = FirebaseOptions(
+    apiKey: dotenv.env['ANDROID_API_KEY'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_ANDROID'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCSR8_iCxaMy62CCaBHBh-YaxbeiEw99Eg',
-    appId: '1:251928304911:ios:b74380d6cf032265db727a',
-    messagingSenderId: '251928304911',
-    projectId: 'restaurante-app-6e13d',
-    storageBucket: 'restaurante-app-6e13d.firebasestorage.app',
-    iosBundleId: 'com.example.flutterApp',
+  static final FirebaseOptions ios = FirebaseOptions(
+    apiKey: dotenv.env['IOS_API_KEY'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_IOS'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+    iosBundleId: dotenv.env['IOS_BUNDLE_ID'] ?? '',
   );
 
 }
