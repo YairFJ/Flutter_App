@@ -2,62 +2,25 @@ import 'package:flutter/material.dart';
 
 class RecipeCategories {
   static const String sinCategoria = 'Sin Categoría';
-  
+
   static const List<String> categories = [
     // Comidas principales
-    'Desayunos',
+    /*'Desayunos',
     'Almuerzos',
-    'Cenas',
-    
-    // Tipos de platos
-    'Entradas',
-    'Sopas',
-    'Ensaladas',
-    'Platos Principales',
-    'Guarniciones',
-    'Salsas',
-    
-    // Por tipo de proteína
-    'Carnes Rojas',
-    'Pollo y Aves',
-    'Pescados y Mariscos',
-    'Vegetariano',
-    'Vegano',
-    
-    // Cocinas del mundo
-    'Italiana',
-    'Mexicana',
-    'China',
-    'Japonesa',
-    'Mediterránea',
-    'Peruana',
-    'India',
-    
-    // Horneados y postres
+    'Cenas',*/
+    'Aderezos',
+    'Arroz y cereales',
+    'Carne',
+    'Mariscos',
     'Panadería',
-    'Postres',
-    'Pasteles',
-    'Galletas',
-    
-    // Bebidas
-    'Bebidas',
-    'Smoothies',
-    'Cócteles',
-    'Café y Té',
-    
-    // Categorías especiales
-    'Saludable',
-    'Bajo en Calorías',
-    'Sin Gluten',
-    'Snacks',
-    'Comida Rápida',
-    
-    // Ocasiones
-    'Para Niños',
-    'Festivas',
-    'Para Eventos',
-    'Económicas',
-    
+    'Pastas',
+    'Pastelería',
+    'Salsas',
+    'Sopas',
+    'Vegano',
+    'Vegetariano',
+    'Verduras',
+
     // Categoría para recetas sin clasificar
     sinCategoria,
   ];
@@ -97,22 +60,35 @@ class RecipeCategories {
   // Colores para las categorías
   static Color getColorForCategory(String category) {
     switch (category.toLowerCase()) {
-      case 'desayunos':
+      case 'Aderezos':
         return Colors.orange[200]!;
-      case 'sopas':
+      case 'Arroz y cereales':
         return Colors.red[200]!;
-      case 'ensaladas':
+      case 'Carne':
         return Colors.green[200]!;
-      case 'postres':
+      case 'Mariscos':
         return Colors.pink[200]!;
-      case 'bebidas':
+      case 'Panadería':
         return Colors.blue[200]!;
-      case 'saludable':
+      case 'Pastas':
         return Colors.teal[200]!;
+      case 'Pastelería':
+        return Colors.yellow[200]!;
+      case 'Salsas':
+        return Colors.purple[200]!;
+      case 'Sopas':
+        return Colors.lightBlue[200]!;
+      case 'Vegano':
+        return Colors.blueGrey[200]!;
+      case 'Vegetariano':
+        return Colors.lightGreenAccent[200]!;
+      case 'Verduras':
+        return const Color.fromARGB(255, 234, 74, 197);
+
       case 'sin categoría':
         return Colors.grey[300]!;
       default:
         return Colors.grey[200]!;
     }
   }
-} 
+}

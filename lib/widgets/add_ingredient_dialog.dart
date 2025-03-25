@@ -4,14 +4,32 @@ import 'ingredient_table_widget.dart';
 import '../models/ingrediente_tabla.dart';
 
 class AddIngredientDialog extends StatefulWidget {
-  const AddIngredientDialog({super.key});
+  final List<IngredienteTabla> ingredientes;
+  final List<String> unidades;
+
+  const AddIngredientDialog({
+    super.key,
+    required this.ingredientes,
+    required this.unidades,
+  });
 
   @override
   State<AddIngredientDialog> createState() => _AddIngredientDialogState();
 }
 
 class _AddIngredientDialogState extends State<AddIngredientDialog> {
-  final List<IngredienteTabla> _tempIngredients = <IngredienteTabla>[];
+  final List<IngredienteTabla> _tempIngredients = [];
+  final List<IngredienteTabla> _ingredients = [];
+  final bool _isAdding = false; // Variable para controlar el estado del botón
+
+  @override
+  void initState() {
+    super.initState();
+    _tempIngredients
+        .addAll(widget.ingredientes); // Initialize with passed ingredients
+    _ingredients
+        .addAll(widget.ingredientes); // Initialize the main ingredients list
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,17 +93,30 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      if (_tempIngredients.every((ing) => ing.isValid())) {
-                        final updatedIngredients = _tempIngredients.map((ing) => Ingredient(
-                          name: ing.nombre,
-                          quantity: double.parse(ing.cantidadController.text),
-                          unit: ing.unidad,
-                        )).toList();
-                        Navigator.of(context).pop(updatedIngredients);
+                      // Check for duplicates before adding
+                      final newIngredients = _tempIngredients.where((newIng) {
+                        return !_ingredients.any((existingIng) =>
+                            existingIng.nombre == newIng.nombre &&
+                            existingIng.unidad == newIng.unidad);
+                      }).toList();
+
+                      if (newIngredients.isNotEmpty) {
+                        // Convert IngredienteTabla to Ingredient
+                        final ingredientsToReturn = newIngredients.map((ing) {
+                          return Ingredient(
+                            name: ing.nombre,
+                            quantity: double.parse(ing.cantidadController.text
+                                .replaceAll(',', '.')),
+                            unit: ing.unidad,
+                          );
+                        }).toList();
+
+                        Navigator.of(context).pop(
+                            ingredientsToReturn); // Return the correct type
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Por favor, complete todos los campos correctamente'),
+                            content: Text('Este ingrediente ya existe.'),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -101,4 +132,4 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
       ),
     );
   }
-} 
+}

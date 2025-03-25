@@ -1,0 +1,460 @@
+[33mcommit 05c0cd0f6cae7b106a11b95b5c8cafe83671d37b[m[33m ([m[1;36mHEAD -> [m[1;32myair[m[33m, [m[1;32mmain[m[33m)[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Mar 10 18:14:34 2025 -0300
+
+    busqueda solo por nombre
+
+[33mcommit 2854df5cee6140470751ea41fe35d70b6613eead[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Mar 10 18:00:55 2025 -0300
+
+    arreglo error modal ingredientes
+
+[33mcommit 66ad004234f0621697f2f5c10ac975ac4a029220[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Mar 7 19:33:38 2025 -0300
+
+    Arreglo de ingredientes y acceso
+
+[33mcommit 717a9e5fe34d5bfbcf1213aa6228e9179fc8bd5e[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Mar 7 18:43:07 2025 -0300
+
+    arreglando categorias
+
+[33mcommit 17499e35e11c139ebdc0c6641831b9615ce84afb[m
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Wed Mar 5 19:42:12 2025 -0300
+
+    boton unirse a comunidad y salir
+
+[33mcommit c2ce1bbef3e231c9f0274d95884fdb884b1e8cdd[m
+Merge: 2af36ce 1ba1e8d
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Wed Mar 5 19:01:41 2025 -0300
+
+    Merge branch 'Vane'
+
+[33mcommit 1ba1e8df2ac845e10251b7eff3009efe86cb6f3f[m
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Wed Mar 5 18:35:02 2025 -0300
+
+    categorias actualizadas
+
+[33mcommit 2af36ce3fb9ee6df18e2d1f4b341f16acdc17bfc[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Mar 5 18:21:01 2025 -0300
+
+    Buscador comunidades
+
+[33mcommit f530541fcc3ee76f5001e15a01ed8a626c2697bf[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Mar 5 18:03:12 2025 -0300
+
+    Validaciones de los campos de las recetas
+
+[33mcommit e2c109175d093bed68f9cd473375ab35c905e4a2[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Feb 26 19:15:54 2025 -0300
+
+    main
+
+[33mcommit 693372eee7f3a76e1528181705eaf47e3c3a0d0e[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Feb 26 18:07:46 2025 -0300
+
+    comunidades
+
+[33mcommit 5e86013235645c7b9da6f678b27d9c28db5002ca[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Feb 24 20:21:17 2025 -0300
+
+    fixes
+
+[33mcommit 641dda9f46416178c065c95be0bfdc57ccc36a8d[m
+Merge: 7d83f4c dc0312b
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Fri Feb 21 20:11:43 2025 -0300
+
+    Merge branch 'main' of https://github.com/YairFJ/Flutter_App
+
+[33mcommit 7d83f4c28549c3f904e295233fe4d5f0433ee849[m
+Merge: 4f44bf2 dbed89a
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Fri Feb 21 19:47:33 2025 -0300
+
+    Merge branch 'Vane'
+
+[33mcommit dc0312b153de5422a8a438dece56a199b415ebcb[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Feb 21 18:15:06 2025 -0300
+
+    changin version
+
+[33mcommit dbed89a112179d08911e2dddeba54a72f956127e[m
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Tue Feb 18 19:31:59 2025 -0300
+
+    Elimine imagen y corregi volver hacia atras
+
+[33mcommit dc7f58658471d028a68385163b5913e95983df81[m
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Mon Feb 17 20:29:15 2025 -0300
+
+    correcciones 0,0
+
+[33mcommit 4f44bf233fd99c5c8305947af9c9c9d2ffb4434f[m
+Merge: 4b7e4be a6c1849
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Mon Feb 17 17:45:17 2025 -0300
+
+    Merge branch 'main' of https://github.com/YairFJ/Flutter_App
+
+[33mcommit 4b7e4be7f794cd5aaa7ebdc8d16aa0a2ac09c048[m
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Mon Feb 17 17:36:09 2025 -0300
+
+    Rendimiento
+
+[33mcommit 77093025079c786ee2da96c8b852455c3b1eb122[m
+Author: Vane <vanesagisel.vc@gmail.com>
+Date:   Fri Feb 14 18:26:33 2025 -0300
+
+    Rendimiento
+
+[33mcommit a6c1849ae1a0d0fb3082f44af8c57405724aff0a[m
+Author: Enzo Lanati <enzolanaticara@gmail.com>
+Date:   Wed Feb 12 18:37:21 2025 -0300
+
+    Terminazion Temporizador
+
+[33mcommit c80eaa0e1ef70b4c3f25afe569ffba23bd9bfab3[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Tue Feb 11 18:39:56 2025 -0300
+
+    adding versions
+
+[33mcommit 8b8dfd0e8078ea93b648e557ae67955b78b67500[m
+Author: Enzo Lanati <enzolanaticara@gmail.com>
+Date:   Thu Feb 6 17:34:55 2025 -0300
+
+    Modo oscuro
+
+[33mcommit 06a84ffe1276a586f0421660bc52832e9c3b2dcd[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Feb 5 19:05:50 2025 -0300
+
+    import to pdf
+
+[33mcommit b834088daac419779f88b0e160eaf91a50b24f61[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Feb 5 18:25:29 2025 -0300
+
+    ingredients_validator
+
+[33mcommit 600a9caa7ebb138c654748b649bfdea5dd93138e[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Feb 5 18:15:48 2025 -0300
+
+    ingredientes table
+
+[33mcommit 2b4868aa04447921b664b32de65aeab47c5f1d8f[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Feb 5 17:56:02 2025 -0300
+
+    arreglando detalles
+
+[33mcommit 11b52143d76b3707447f1eba2fa95e93578ddd67[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Feb 3 20:06:21 2025 -0300
+
+    fix flotantes
+
+[33mcommit 6d8cc5b2676690bd407712bb4e46627cb24d7396[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Feb 3 19:55:14 2025 -0300
+
+    fix unidades_conversion
+
+[33mcommit c1e2e2cb7bb5e744d3ffc7b3dc35fc874b8644a3[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Feb 3 18:58:00 2025 -0300
+
+    fix calculadora_ing
+
+[33mcommit aa665e7cd9fe1787b1964713e193e09953590150[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Feb 3 18:09:02 2025 -0300
+
+    fix add_recipe
+
+[33mcommit acc7a4c4f87379eedff0cb2233ebe10985b8f4c2[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Jan 31 19:45:45 2025 -0300
+
+    temporizador_y_recetas
+
+[33mcommit 402121d34b330b1f6164d132b6c1fbb9a0ba58e7[m
+Author: Enzo Lanati <enzolanaticara@gmail.com>
+Date:   Fri Jan 31 18:46:44 2025 -0300
+
+    Cambios Receta
+
+[33mcommit 2cd444c587096614ebeb8a85b7ba8ed04395a0b5[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Jan 31 18:01:33 2025 -0300
+
+    favoritos fix
+
+[33mcommit 5c788f6c5d51a71a44eac6ba6e2db54f1bb38b12[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Jan 29 19:31:14 2025 -0300
+
+    profile_name
+
+[33mcommit 7524fd615bf382764ad2c7029e326154b54daa73[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Jan 29 17:54:26 2025 -0300
+
+    fav_name
+
+[33mcommit 258f7356b7283103a7634efedc783ab2f6951367[m[33m ([m[1;31morigin/yair[m[33m)[m
+Merge: dd7ea91 cb1a23f
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Jan 29 17:19:28 2025 -0300
+
+    user_name
+
+[33mcommit cb1a23fd1cde4db4c82fe32cd443ad203c9ea029[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Wed Jan 29 17:18:23 2025 -0300
+
+    name_recipes
+
+[33mcommit dbf90ff14cd0dad3e1b0d5cbdc65147920eb5cc5[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Tue Jan 28 20:59:58 2025 -0300
+
+    favorites
+
+[33mcommit dd7ea914b72d405a07eb3747ba67f78a7d2d0a1e[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Tue Jan 28 18:25:43 2025 -0300
+
+    Jijiji
+
+[33mcommit 17535359fe0f8c756095ca0b3ba94fd5769c7abe[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Tue Jan 28 17:52:22 2025 -0300
+
+    calculator_for_all
+
+[33mcommit e0a6b82f9a1ab486edc2401131f12c75fd089257[m
+Author: Enzo Lanati <enzolanaticara@gmail.com>
+Date:   Tue Jan 28 17:37:17 2025 -0300
+
+    Equivalencia
+
+[33mcommit 1662f4ff44401c3ec4415f5510d053875063c185[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Jan 27 20:05:18 2025 -0300
+
+    fix changes
+
+[33mcommit 60bd91efbd307fe36ee2af344345c7d4aa7f862e[m
+Merge: 685e65f 8d87187
+Author: Enzo Lanati <enzolanaticara@gmail.com>
+Date:   Mon Jan 27 19:33:08 2025 -0300
+
+    timer
+
+[33mcommit 685e65f19dee2d980f870cd75b2b6689ce312116[m
+Author: Enzo Lanati <enzolanaticara@gmail.com>
+Date:   Mon Jan 27 19:27:46 2025 -0300
+
+    Conversiones
+
+[33mcommit 8d8718766c8805fbe840dc6b67dcf0f122493c7c[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Jan 27 19:19:19 2025 -0300
+
+    fix error
+
+[33mcommit a175909882cf7f69b68f9b5e6a21e195cb422e23[m
+Author: Enzo Lanati <enzolanaticara@gmail.com>
+Date:   Mon Jan 27 18:48:57 2025 -0300
+
+    Menu Completo
+
+[33mcommit 27262f9467d7cdf22df11c530fe126cc8bd458c8[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Jan 27 18:42:06 2025 -0300
+
+    calculadora
+
+[33mcommit c0c198c7ed61650003702f5dc950fca197600bdc[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Sat Jan 25 20:24:43 2025 -0300
+
+    fix overflow
+
+[33mcommit 84598b48074c0fe1b41369ff796750120eb6e628[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Sat Jan 25 20:06:21 2025 -0300
+
+    calculator
+
+[33mcommit d2a93e5e61521c1accc0ee037c4c820d07fde0f0[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Sat Jan 25 17:38:02 2025 -0300
+
+    fix edit ingredients
+
+[33mcommit d9da59ae619303cc813aba0e8d2b373139f624cf[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Jan 24 17:46:59 2025 -0300
+
+    cant/unidad ingredientes
+
+[33mcommit e184f0b3fb7c9cc42332f161ccd74eb874f90f80[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Jan 24 16:56:22 2025 -0300
+
+    recetas_publicas/privadas y justificado
+
+[33mcommit 56052e8f8881654cc27456198f26c2b678a971b5[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Jan 24 16:12:02 2025 -0300
+
+    botones_recetas
+
+[33mcommit 71c22d930a322509b732084143e031a425e662c5[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Thu Jan 23 21:50:29 2025 -0300
+
+    v1
+
+[33mcommit 63aa240cce634dda4416be34ed523470231c7acf[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Thu Jan 23 20:57:44 2025 -0300
+
+    modern_menu
+
+[33mcommit 44aa71d5eabcf82498a1b1cd2de0d3a8bb594b00[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Thu Jan 23 20:48:53 2025 -0300
+
+    recetas_lindas
+
+[33mcommit 055f8e234939d94cab7a9e5bbbfa18632e56becb[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Thu Jan 23 19:44:24 2025 -0300
+
+    recetas
+
+[33mcommit b71393326a85fcf5eba0d76b63177b28ca605464[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Thu Jan 23 17:57:08 2025 -0300
+
+    forgot_password
+
+[33mcommit 258b68c36ef96933c060c022d0efe070696eda45[m
+Merge: b2ee0db 9e19e21
+Author: Yali <farinayair1@gmail.com>
+Date:   Tue Jan 21 19:38:03 2025 -0300
+
+    Merge branch 'yair'
+
+[33mcommit 9e19e21ce13ecc167db9d9f8715c9b98445d668e[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Tue Jan 21 19:31:05 2025 -0300
+
+    register_google
+
+[33mcommit b2ee0db8a523736fcfc49be33af339ffebd4dbad[m
+Merge: df5a599 6571db7
+Author: Yair Farina <107144772+YairFJ@users.noreply.github.com>
+Date:   Tue Jan 21 19:19:53 2025 -0300
+
+    Merge pull request #3 from YairFJ/yair
+    
+    google_login
+
+[33mcommit 6571db73e7d92b4878fc4b7f1c1cd1212c293d05[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Tue Jan 21 19:19:04 2025 -0300
+
+    google_login
+
+[33mcommit df5a59915df67ee0ffc8e696a47fbf317dd3ba92[m
+Merge: 4a9693f 5b1526b
+Author: Yair Farina <107144772+YairFJ@users.noreply.github.com>
+Date:   Tue Jan 21 17:53:52 2025 -0300
+
+    Merge pull request #2 from YairFJ/yair
+    
+    register page
+
+[33mcommit 5b1526b624f8989fbb98d7ba41b40e3cf2c80fb1[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Tue Jan 21 17:51:45 2025 -0300
+
+    register page
+
+[33mcommit 4a9693f49c79b61a5ed3ec165be75e646ad92bdc[m
+Merge: f296a05 ffd977f
+Author: Yair Farina <107144772+YairFJ@users.noreply.github.com>
+Date:   Mon Jan 20 20:10:32 2025 -0300
+
+    Merge pull request #1 from YairFJ/yair
+    
+    fidxed bug
+
+[33mcommit ffd977f1134d7fa6134f993540d40dbcf1297dfc[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Jan 20 20:03:22 2025 -0300
+
+    fidxed bug
+
+[33mcommit f296a05d27b1ef2a4c7f1343c2c7026fa703cd12[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Mon Jan 20 19:20:43 2025 -0300
+
+    login firebase
+
+[33mcommit 98844152caa0407b3a6d4b7c79633c6b3154d628[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Sat Jan 18 17:24:44 2025 -0300
+
+    routes
+
+[33mcommit c9f5ac20d9e91bcf3cef67eac7ed8d56730cfc54[m
+Merge: 4ef96ee 29499ff
+Author: Yali <farinayair1@gmail.com>
+Date:   Sat Jan 18 17:15:58 2025 -0300
+
+    Merge branch 'main' of https://github.com/YairFJ/Flutter_App into yair
+
+[33mcommit 4ef96eed5543e5b0d45bf0a1a5fdb9d2c09ab60d[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Sat Jan 18 17:12:44 2025 -0300
+
+    register page
+
+[33mcommit 29499ffe273e345213b2562d4d3429a58255740f[m
+Author: Enzo Lanati <enzolanaticara@gmail.com>
+Date:   Sat Jan 18 16:47:26 2025 -0300
+
+    resposive
+
+[33mcommit 1e1d5f03e326b12c3ed45a20729c8c022554702e[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Fri Jan 17 18:36:51 2025 -0300
+
+    new version
+
+[33mcommit 27c17513333b5deef5273d509d56a6b3da578428[m[33m ([m[1;31morigin/dev[m[33m)[m
+Author: Yali <farinayair1@gmail.com>
+Date:   Thu Jan 16 19:03:11 2025 -0300
+
+    init app

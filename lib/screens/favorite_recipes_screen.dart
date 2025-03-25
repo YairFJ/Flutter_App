@@ -128,7 +128,7 @@ class FavoriteRecipesScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              recipe.description,
+                              recipe.description ?? '',
                                style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,

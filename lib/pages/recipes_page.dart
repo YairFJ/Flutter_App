@@ -61,37 +61,29 @@ class _RecipesPageState extends State<RecipesPage> {
           ),
         ),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('recipes')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          child:   StreamBuilder<QuerySnapshot>(
+     stream: FirebaseFirestore.instance.collection('recipes').orderBy('createdAt', descending: true).snapshots(),
+     builder: (context, snapshot) {
+       if (snapshot.connectionState == ConnectionState.waiting) {
+         return const Center(child: CircularProgressIndicator());
+       }
 
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
+       if (snapshot.hasError) {
+         return Center(child: Text('Error: ${snapshot.error}'));
+       }
 
-              final currentUser = FirebaseAuth.instance.currentUser;
-              final recipes = snapshot.data!.docs.map((doc) {
-                return Recipe.fromMap(
-                  doc.data() as Map<String, dynamic>,
-                  doc.id,
-                );
-              }).where((recipe) {
-                return !recipe.isPrivate || recipe.userId == currentUser?.uid;
-              }).toList();
+       final recipes = snapshot.data!.docs.map((doc) {
+         return Recipe.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+       }).toList();
 
               // Filtrar las recetas según la búsqueda
               var filteredRecipes = recipes;
               if (_searchQuery.isNotEmpty) {
                 filteredRecipes = recipes.where((recipe) {
+                  final description = recipe.description?.toLowerCase() ?? '';
                   return recipe.title.toLowerCase().contains(_searchQuery) ||
-                         recipe.description.toLowerCase().contains(_searchQuery) ||
-                         recipe.category.toLowerCase().contains(_searchQuery);
+                      description.contains(_searchQuery) ||
+                      recipe.category.toLowerCase().contains(_searchQuery);
                 }).toList();
               }
 
@@ -100,10 +92,8 @@ class _RecipesPageState extends State<RecipesPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.restaurant_menu, 
-                        size: 64, 
-                        color: Colors.grey[400]
-                      ),
+                      Icon(Icons.restaurant_menu,
+                          size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
                         'No hay recetas disponibles',
@@ -119,7 +109,8 @@ class _RecipesPageState extends State<RecipesPage> {
 
               return ListView(
                 children: RecipeCategories.categories.map((category) {
-                  return _buildCategoryCarousel(category, filteredRecipes, context);
+                  return _buildCategoryCarousel(
+                      category, filteredRecipes, context);
                 }).toList(),
               );
             },
@@ -129,12 +120,14 @@ class _RecipesPageState extends State<RecipesPage> {
     );
   }
 
-  Widget _buildCategoryCarousel(String category, List<Recipe> recipes, BuildContext context) {
+  Widget _buildCategoryCarousel(
+      String category, List<Recipe> recipes, BuildContext context) {
     final categoryRecipes = category == RecipeCategories.sinCategoria
-        ? recipes.where((recipe) => 
-            recipe.category.isEmpty || 
-            !RecipeCategories.categories.contains(recipe.category)
-          ).toList()
+        ? recipes
+            .where((recipe) =>
+                recipe.category.isEmpty ||
+                !RecipeCategories.categories.contains(recipe.category))
+            .toList()
         : recipes.where((recipe) => recipe.category == category).toList();
 
     if (categoryRecipes.isEmpty) return const SizedBox.shrink();
@@ -181,7 +174,8 @@ class _RecipesPageState extends State<RecipesPage> {
             itemBuilder: (context, index) {
               final recipe = categoryRecipes[index];
               final currentUser = FirebaseAuth.instance.currentUser;
-              final isFavorite = currentUser != null && recipe.favoritedBy.contains(currentUser.uid);
+              final isFavorite = currentUser != null &&
+                  recipe.favoritedBy.contains(currentUser.uid);
 
               return SizedBox(
                 width: 180,
@@ -196,7 +190,8 @@ class _RecipesPageState extends State<RecipesPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => RecipeDetailScreen(recipe: recipe),
+                          builder: (context) =>
+                              RecipeDetailScreen(recipe: recipe),
                         ),
                       );
                     },
@@ -216,7 +211,7 @@ class _RecipesPageState extends State<RecipesPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            recipe.description,
+                            recipe.description ?? '',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -249,11 +244,14 @@ class _RecipesPageState extends State<RecipesPage> {
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                                 icon: Icon(
-                                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                                  isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
                                   size: 18,
                                   color: isFavorite ? Colors.red : const Color.fromARGB(255, 158, 158, 158),
                                 ),
-                                onPressed: () => _toggleFavorite(context, recipe),
+                                onPressed: () =>
+                                    _toggleFavorite(context, recipe),
                               ),
                             ],
                           ),
@@ -270,7 +268,8 @@ class _RecipesPageState extends State<RecipesPage> {
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         recipe.creatorName,
@@ -327,8 +326,9 @@ class _RecipesPageState extends State<RecipesPage> {
       return;
     }
 
-    final recipeRef = FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
-    
+    final recipeRef =
+        FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
+
     try {
       if (recipe.favoritedBy.contains(currentUser.uid)) {
         await recipeRef.update({
@@ -366,4 +366,4 @@ class _RecipesPageState extends State<RecipesPage> {
       }
     }
   }
-} 
+}

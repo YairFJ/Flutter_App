@@ -5,14 +5,15 @@ import '../models/recipe.dart';
 import '../models/ingredient.dart';
 import '../models/ingrediente_tabla.dart';
 import '../models/group.dart';
-import '../widgets/ingredient_table_widget.dart';
+import '../constants/categories.dart';
+import '../widgets/add_ingredient_dialog.dart';
 
 class GroupRecipeFormScreen extends StatefulWidget {
   final Group group;
-  final Recipe? recipe; // Si se pasa una receta, el formulario funcionará en modo edición
+  final Recipe?
+      recipe; // Si se pasa una receta, el formulario funcionará en modo edición
 
-  const GroupRecipeFormScreen({Key? key, required this.group, this.recipe})
-      : super(key: key);
+  const GroupRecipeFormScreen({super.key, required this.group, this.recipe});
 
   @override
   State<GroupRecipeFormScreen> createState() => _GroupRecipeFormScreenState();
@@ -28,125 +29,73 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
   late List<String> _steps;
   late String _cookingTime;
   late String _category;
-  bool _isPrivate = false;
+  late String _servingSize;
+  late String _servingUnit;
+
+  // Unidades por categoría como en conversion_table_page.dart
+  final Map<String, List<String>> _unidadesPorCategoria = {
+    'Peso': ['g', 'kg', 'oz', 'lb'],
+    'Volumen': ['ml', 'l', 'tz', 'cda', 'cdta'],
+  };
+
+  // Lista de todas las unidades disponibles
+  late final List<String> _todasLasUnidades;
+
+  // Expresión regular para validar números positivos (enteros o decimales)
+  final RegExp _numberRegExp = RegExp(r'^\d*\.?\d+$');
 
   @override
   void initState() {
     super.initState();
+    // Inicializar la lista de todas las unidades
+    _todasLasUnidades = [
+      ..._unidadesPorCategoria['Peso']!,
+      ..._unidadesPorCategoria['Volumen']!,
+    ];
+
     _title = widget.recipe?.title ?? '';
     _description = widget.recipe?.description ?? '';
     _ingredients = List<Ingredient>.from(widget.recipe?.ingredients ?? []);
     _steps = List<String>.from(widget.recipe?.steps ?? []);
     _cookingTime = widget.recipe?.cookingTime.inMinutes.toString() ?? '0';
     _category = widget.recipe?.category ?? '';
-    _isPrivate = widget.recipe?.isPrivate ?? false;
 
-    // Si no hay pasos ingresados, se agrega uno en blanco para que siempre haya al menos un campo.
+    // Separar el número y la unidad del servingSize
+    if (widget.recipe?.servingSize != null &&
+        widget.recipe!.servingSize.isNotEmpty) {
+      final parts = widget.recipe!.servingSize.split(' ');
+      _servingSize = parts[0];
+      _servingUnit = parts.length > 1 ? parts[1] : 'g';
+    } else {
+      _servingSize = '0';
+      _servingUnit = 'g';
+    }
+
+    // Si no hay pasos ingresados, se agrega uno en blanco
     if (_steps.isEmpty) {
       _steps.add('');
     }
   }
 
   /// Llama a un diálogo que contiene la tabla de edición de ingredientes.
-  void _editIngredients() async {
-    final ingredientesConvertidos = _ingredients
-        .map((ing) => Ingredient(
-              name: ing.name,
-              quantity: ing.quantity,
-              unit: _convertirUnidadAntigua(ing.unit),
-            ))
-        .toList();
-
+  Future<void> _editIngredients() async {
     final result = await showDialog<List<Ingredient>>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        insetPadding: EdgeInsets.zero,
-        child: Container(
-          width: double.infinity,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.recipe == null
-                          ? 'Agregar Ingredientes'
-                          : 'Editar Ingredientes',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(_ingredients),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: IngredientTableWidget(
-                    ingredientes: ingredientesConvertidos
-                        .map((ing) => IngredienteTabla(
-                              nombre: ing.name,
-                              cantidad: ing.quantity,
-                              unidad: ing.unit,
-                            ))
-                        .toList(),
-                    onIngredientsChanged: (ingredients) {
-                      setState(() {
-                        _ingredients = ingredients.map((ing) => Ingredient(
-                              name: ing.nombre,
-                              quantity: ing.cantidad ?? 0,
-                              unit: ing.unidad,
-                            )).toList();
-                      });
-                    },
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(_ingredients),
-                      child: const Text('Cancelar'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(_ingredients);
-                      },
-                      child: const Text('Guardar'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => AddIngredientDialog(
+        ingredientes: _ingredients
+            .map((ing) => IngredienteTabla(
+                  nombre: ing.name,
+                  cantidad: ing.quantity,
+                  unidad: ing.unit,
+                ))
+            .toList(),
+        unidades: _todasLasUnidades,
       ),
     );
 
     if (result != null) {
       setState(() {
-        _ingredients = result;
+        _ingredients = result; // Update the ingredients list with the result
       });
     }
   }
@@ -185,51 +134,185 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     });
   }
 
+  // Validar que el título tenga un formato válido
+  String? _validateTitle(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor ingresa un título';
+    }
+    if (value.length < 3) {
+      return 'El título debe tener al menos 3 caracteres';
+    }
+    if (value.length > 100) {
+      return 'El título no puede tener más de 100 caracteres';
+    }
+    return null;
+  }
+
+  // Validar que la descripción tenga un formato válido
+  String? _validateDescription(String? value) {
+    if (value != null && value.length > 500) {
+      return 'La descripción no puede tener más de 500 caracteres';
+    }
+    return null;
+  }
+
+  // Validar que el rendimiento sea un número válido
+  String? _validateServingSize(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor ingresa el rendimiento';
+    }
+    if (!_numberRegExp.hasMatch(value)) {
+      return 'Ingresa un número válido';
+    }
+    double? servings = double.tryParse(value);
+    if (servings == null || servings <= 0) {
+      return 'El rendimiento debe ser mayor a 0';
+    }
+    if (servings > 10000) {
+      return 'El rendimiento es demasiado grande';
+    }
+    return null;
+  }
+
+  // Validar que el tiempo de cocción sea un número válido
+  String? _validateCookingTime(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor ingresa el tiempo de cocción';
+    }
+    if (!_numberRegExp.hasMatch(value)) {
+      return 'El tiempo debe ser un número entero positivo';
+    }
+    int? time = int.tryParse(value);
+    if (time == null || time <= 0) {
+      return 'El tiempo debe ser mayor a 0';
+    }
+    if (time > 1440) {
+      // 24 horas en minutos
+      return 'El tiempo no puede ser mayor a 24 horas';
+    }
+    return null;
+  }
+
+  // Validar que haya al menos un ingrediente
+  bool _validateIngredients() {
+    if (_ingredients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes agregar al menos un ingrediente'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  // Validar que los pasos no estén vacíos
+  bool _validateSteps() {
+    bool hasEmptySteps = _steps.any((step) => step.trim().isEmpty);
+    if (hasEmptySteps) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Todos los pasos deben tener contenido'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
   /// Valida el formulario y guarda la receta en la subcolección "recipes"
   /// de la comunidad seleccionada.
   Future<void> _saveRecipe() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
+    // Validar ingredientes y pasos antes del formulario
+    if (!_validateIngredients() || !_validateSteps()) {
+      return;
+    }
 
-      final newRecipe = Recipe(
-        id: '',
-        title: _title,
-        description: _description,
-        userId: currentUser.uid,
-        creatorEmail: currentUser.email ?? 'No disponible',
-        creatorName: currentUser.displayName ?? 'Usuario',
-        ingredients: _ingredients,
-        steps: _steps,
-        cookingTime: Duration(minutes: int.parse(_cookingTime)),
-        category: _category,
-        isPrivate: _isPrivate,
-        favoritedBy: [],
-        imageUrl: null, // Aquí podrías integrar la carga de una imagen si lo deseas.
+    // Validar que todos los ingredientes tengan una cantidad mayor que 0
+    bool hasValidIngredients = _ingredients.every((ingredient) {
+      double quantity = ingredient.quantity;
+      return quantity > 0;
+    });
+
+    if (!hasValidIngredients) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
+          backgroundColor: Colors.red,
+        ),
       );
+      return;
+    }
 
+    if (_formKey.currentState!.validate()) {
       try {
-        await FirebaseFirestore.instance
-            .collection('groups')
-            .doc(widget.group.id)
-            .collection('recipes')
-            .add(newRecipe.toMap());
+        _formKey.currentState!.save();
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: No hay usuario autenticado'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Receta creada en la comunidad exitosamente'),
-            backgroundColor: Colors.green,
-          ),
+        final recipeData = Recipe(
+          id: widget.recipe?.id ?? '',
+          title: _title.trim(),
+          description: _description.trim(),
+          userId: currentUser.uid,
+          creatorEmail: currentUser.email ?? 'No disponible',
+          creatorName: currentUser.displayName ?? 'Usuario',
+          ingredients: _ingredients,
+          steps: _steps.map((step) => step.trim()).toList(),
+          cookingTime: Duration(minutes: int.parse(_cookingTime)),
+          category: _category,
+          isPrivate: false,
+          favoritedBy: [],
+          imageUrl: null,
+          servingSize: '$_servingSize $_servingUnit',
         );
-        Navigator.pop(context);
+
+        if (widget.recipe == null) {
+          // Crear nueva receta
+          await FirebaseFirestore.instance
+              .collection('groups')
+              .doc(widget.group.id)
+              .collection('recipes')
+              .add(recipeData.toMap());
+        } else {
+          // Actualizar receta existente
+          await FirebaseFirestore.instance
+              .collection('groups')
+              .doc(widget.group.id)
+              .collection('recipes')
+              .doc(widget.recipe!.id)
+              .update(recipeData.toMap());
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Receta guardada exitosamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al crear la receta: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al guardar la receta: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -253,10 +336,11 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
               decoration: const InputDecoration(
                 labelText: 'Título',
                 border: OutlineInputBorder(),
+                helperText: 'Entre 3 y 100 caracteres',
               ),
-              validator: (value) =>
-                  value == null || value.isEmpty ? 'Por favor ingresa un título' : null,
+              validator: _validateTitle,
               onSaved: (value) => _title = value ?? '',
+              textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 16),
             // Descripción
@@ -265,9 +349,58 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
               decoration: const InputDecoration(
                 labelText: 'Descripción',
                 border: OutlineInputBorder(),
+                helperText: 'Máximo 500 caracteres',
               ),
               maxLines: 3,
+              validator: _validateDescription,
               onSaved: (value) => _description = value ?? '',
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 16),
+            // Rendimiento
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    initialValue: _servingSize,
+                    decoration: const InputDecoration(
+                      labelText: 'Rendimiento',
+                      border: OutlineInputBorder(),
+                      helperText: 'Cantidad',
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    validator: _validateServingSize,
+                    onSaved: (value) => _servingSize = value ?? '0',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: DropdownButtonFormField<String>(
+                    value: _servingUnit,
+                    decoration: const InputDecoration(
+                      labelText: 'Unidad',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _todasLasUnidades.map((String unidad) {
+                      return DropdownMenuItem<String>(
+                        value: unidad,
+                        child: Text(unidad),
+                      );
+                    }).toList(),
+                    onChanged: (String? value) {
+                      if (value != null) {
+                        setState(() {
+                          _servingUnit = value;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             // Sección de ingredientes
@@ -281,7 +414,9 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                 TextButton.icon(
                   onPressed: _editIngredients,
                   icon: const Icon(Icons.edit),
-                  label: Text(widget.recipe == null ? 'Agregar ingredientes' : 'Editar ingredientes'),
+                  label: Text(_ingredients.isEmpty
+                      ? 'Agregar ingredientes'
+                      : 'Editar ingredientes'),
                 ),
               ],
             ),
@@ -295,7 +430,8 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                   return Card(
                     child: ListTile(
                       title: Text(ingredient.name),
-                      subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                      subtitle:
+                          Text('${ingredient.quantity} ${ingredient.unit}'),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () {
@@ -317,14 +453,10 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
               decoration: const InputDecoration(
                 labelText: 'Tiempo de cocción (minutos)',
                 border: OutlineInputBorder(),
+                helperText: 'Número entero positivo (máximo 1440)',
               ),
               keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Por favor ingresa el tiempo de cocción';
-                }
-                return null;
-              },
+              validator: _validateCookingTime,
               onSaved: (value) => _cookingTime = value ?? '0',
             ),
             const SizedBox(height: 16),
@@ -334,24 +466,28 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
               decoration: const InputDecoration(
                 labelText: 'Categoría',
                 border: OutlineInputBorder(),
+                helperText: 'Selecciona una categoría',
               ),
-              items: ['Desayuno', 'Almuerzo', 'Cena', 'Postre', 'Snack']
+              items: RecipeCategories.categories
+                  .toSet()
                   .map((category) => DropdownMenuItem(
                         value: category,
                         child: Text(category),
                       ))
                   .toList(),
-              validator: (value) =>
-                  value == null || value.isEmpty ? 'Por favor selecciona una categoría' : null,
-              onChanged: (value) => setState(() => _category = value!),
-              onSaved: (value) => _category = value!,
-            ),
-            const SizedBox(height: 16),
-            // Privacidad
-            SwitchListTile(
-              title: const Text('Receta Privada'),
-              value: _isPrivate,
-              onChanged: (value) => setState(() => _isPrivate = value),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _category = value;
+                  });
+                }
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Por favor selecciona una categoría';
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             // Pasos
@@ -380,6 +516,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                     decoration: InputDecoration(
                       hintText: 'Paso ${index + 1}',
                     ),
+                    textCapitalization: TextCapitalization.sentences,
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete),
@@ -398,4 +535,4 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
       ),
     );
   }
-} 
+}

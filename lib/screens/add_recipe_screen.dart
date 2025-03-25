@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/models/ingredient.dart';
 import 'package:flutter_app/widgets/add_ingredient_dialog.dart';
 import 'package:flutter_app/models/recipe.dart';
+import '../models/ingrediente_tabla.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   const AddRecipeScreen({super.key});
@@ -18,15 +19,143 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _cookingTimeController = TextEditingController();
-  final List<TextEditingController> _ingredientControllers = [TextEditingController()];
-  final List<TextEditingController> _stepControllers = [TextEditingController()];
-  String _selectedCategory = 'Platos Principales';
+  final _servingSizeController = TextEditingController();
+  final List<TextEditingController> _ingredientControllers = [
+    TextEditingController()
+  ];
+  final List<TextEditingController> _stepControllers = [
+    TextEditingController()
+  ];
+  String _selectedCategory = '';
   String? _imageUrl;
   bool _isPrivate = false;
   final List<Ingredient> _ingredients = [];
+  String _servingUnit = 'gr';
+
+  // Unidades disponibles para el rendimiento
+  final List<String> _todasLasUnidades = [
+    'gr', // Gramos
+    'kg', // Kilos
+    'oz', // Onzas
+    'lb', // Libras
+    'l', // Litros
+    'ml', // Mililitros
+    'porciones'
+  ];
+
+  // Expresión regular para validar números positivos (enteros o decimales)
+  final RegExp _numberRegExp = RegExp(r'^\d*\.?\d+$');
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _cookingTimeController.dispose();
+    _servingSizeController.dispose();
+    for (var controller in _ingredientControllers) {
+      controller.dispose();
+    }
+    for (var controller in _stepControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  String? _validateTitle(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa un título';
+    }
+    if (value.trim().length < 3) {
+      return 'El título debe tener al menos 3 caracteres';
+    }
+    if (value.trim().length > 100) {
+      return 'El título no puede exceder los 100 caracteres';
+    }
+    return null;
+  }
+
+  String? _validateDescription(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa una descripción';
+    }
+    if (value.trim().length > 500) {
+      return 'La descripción no puede exceder los 500 caracteres';
+    }
+    return null;
+  }
+
+  String? _validateCookingTime(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa el tiempo de cocción';
+    }
+    if (!_numberRegExp.hasMatch(value)) {
+      return 'Ingresa solo números enteros positivos';
+    }
+    final minutes = int.parse(value);
+    if (minutes <= 0) {
+      return 'El tiempo debe ser mayor a 0';
+    }
+    if (minutes > 1440) {
+      return 'El tiempo no puede exceder las 24 horas (1440 minutos)';
+    }
+    return null;
+  }
+
+  String? _validateServingSize(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Por favor ingresa el rendimiento';
+    }
+    if (!_numberRegExp.hasMatch(value)) {
+      return 'Ingresa un número válido';
+    }
+    double? servings = double.tryParse(value);
+    if (servings == null || servings <= 0) {
+      return 'El rendimiento debe ser mayor a 0';
+    }
+    if (servings > 10000) {
+      return 'El rendimiento es demasiado grande';
+    }
+    return null;
+  }
+
+  bool _validateSteps() {
+    bool isValid = true;
+    for (var controller in _stepControllers) {
+      if (controller.text.trim().isEmpty) {
+        isValid = false;
+        break;
+      }
+    }
+    return isValid;
+  }
 
   Future<void> _saveRecipe() async {
     if (_formKey.currentState!.validate()) {
+      if (_ingredients.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Debes agregar al menos un ingrediente'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (!_validateSteps()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Todos los pasos deben estar completos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       try {
         // Mostrar indicador de carga
         if (!mounted) return;
@@ -48,11 +177,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             .collection('users')
             .doc(currentUser.uid)
             .get();
-        
+
         if (!userDoc.exists) {
           throw Exception('No se encontraron datos del usuario');
         }
-        
+
         final userName = userDoc.data()?['name'] ?? 'Usuario desconocido';
 
         final steps = _stepControllers
@@ -61,14 +190,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             .toList();
 
         final recipe = Recipe(
-          id: '',
+          id: "",
           title: _titleController.text,
           description: _descriptionController.text,
           userId: currentUser.uid,
           creatorEmail: currentUser.email ?? 'No disponible',
           creatorName: userName,
           favoritedBy: [],
-          cookingTime: Duration(minutes: int.parse(_cookingTimeController.text.trim())),
+          cookingTime:
+              Duration(minutes: int.parse(_cookingTimeController.text.trim())),
+          servingSize: '${_servingSizeController.text.trim()} $_servingUnit',
           ingredients: _ingredients,
           steps: steps,
           imageUrl: _imageUrl,
@@ -84,12 +215,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         await FirebaseFirestore.instance.collection('recipes').add(recipeData);
 
         if (!mounted) return;
-        
+
         // Cerrar el diálogo de carga
         Navigator.pop(context);
         // Volver a la pantalla anterior
         Navigator.pop(context);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('¡Receta guardada con éxito!'),
@@ -98,10 +229,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         );
       } catch (e) {
         if (!mounted) return;
-        
+
         // Asegurarse de cerrar el diálogo de carga si está abierto
         Navigator.of(context).popUntil((route) => route.isFirst);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al guardar la receta: ${e.toString()}'),
@@ -115,7 +246,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Future<void> _addIngredient() async {
     final ingredients = await showDialog<List<Ingredient>>(
       context: context,
-      builder: (context) => const AddIngredientDialog(),
+      builder: (context) => AddIngredientDialog(
+        ingredientes: _ingredients
+            .map((ing) => IngredienteTabla(
+                  nombre: ing.name,
+                  cantidad: ing.quantity,
+                  unidad: ing.unit,
+                ))
+            .toList(),
+        unidades: _todasLasUnidades,
+      ),
     );
 
     if (ingredients != null) {
@@ -154,19 +294,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   decoration: InputDecoration(
                     labelText: 'Título',
-                    labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
-                    ),
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                    border: OutlineInputBorder(),
+                    helperText: 'Entre 3 y 100 caracteres',
                   ),
-                  validator: (value) {
-                    if (value?.trim().isEmpty ?? true) {
-                      return 'Por favor ingresa un título';
-                    }
-                    return null;
-                  },
+                  validator: _validateTitle,
+                  textCapitalization: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -176,20 +308,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   decoration: InputDecoration(
                     labelText: 'Descripción',
-                    labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
-                    ),
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                    border: OutlineInputBorder(),
+                    helperText: 'Máximo 500 caracteres',
                   ),
                   maxLines: 3,
-                  validator: (value) {
-                    if (value?.trim().isEmpty ?? true) {
-                      return 'Por favor ingresa una descripción';
-                    }
-                    return null;
-                  },
+                  validator: _validateDescription,
+                  textCapitalization: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -199,26 +323,58 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   decoration: InputDecoration(
                     labelText: 'Tiempo de preparación (minutos)',
-                    labelStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
-                    ),
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                    border: OutlineInputBorder(),
+                    helperText: 'Número entero positivo (máximo 1440)',
                   ),
                   keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value?.trim().isEmpty ?? true) {
-                      return 'Por favor ingresa el tiempo de preparación';
-                    }
-                    final number = int.tryParse(value!);
-                    if (number == null || number <= 0) {
-                      return 'Por favor ingresa un número válido mayor a 0';
-                    }
-                    return null;
-                  },
+                  validator: _validateCookingTime,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                // Rendimiento
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _servingSizeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Rendimiento',
+                          border: OutlineInputBorder(),
+                          //helperText: 'Cantidad',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        validator: _validateServingSize,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButtonFormField<String>(
+                        value: _servingUnit,
+                        decoration: const InputDecoration(
+                          labelText: 'Unidad',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _todasLasUnidades.map((String unidad) {
+                          return DropdownMenuItem<String>(
+                            value: unidad,
+                            child: Text(unidad),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            setState(() {
+                              _servingUnit = value;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
@@ -230,7 +386,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: _selectedCategory,
+                      value: _selectedCategory.isNotEmpty
+                          ? _selectedCategory
+                          : null,
                       isExpanded: true,
                       dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
                       style: TextStyle(
@@ -249,7 +407,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             children: [
                               Icon(
                                 RecipeCategories.getIconForCategory(category),
-                                color: RecipeCategories.getColorForCategory(category),
+                                color: RecipeCategories.getColorForCategory(
+                                    category),
                                 size: 24,
                               ),
                               const SizedBox(width: 12),
@@ -286,7 +445,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    _isPrivate 
+                    _isPrivate
                         ? 'Solo tú podrás ver esta receta'
                         : 'Todos podrán ver esta receta',
                     style: TextStyle(
@@ -306,7 +465,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 ElevatedButton(
                   onPressed: _saveRecipe,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 30),
                     backgroundColor: Theme.of(context).primaryColor,
                   ),
                   child: const Text(
@@ -421,18 +581,4 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       ],
     );
   }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _cookingTimeController.dispose();
-    for (var controller in _ingredientControllers) {
-      controller.dispose();
-    }
-    for (var controller in _stepControllers) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-} 
+}

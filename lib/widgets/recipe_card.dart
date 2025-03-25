@@ -19,7 +19,8 @@ class RecipeCard extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar Receta'),
-        content: const Text('¿Estás seguro de que deseas eliminar esta receta?'),
+        content:
+            const Text('¿Estás seguro de que deseas eliminar esta receta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -42,7 +43,7 @@ class RecipeCard extends StatelessWidget {
             .collection('recipes')
             .doc(recipe.id)
             .delete();
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -76,8 +77,9 @@ class RecipeCard extends StatelessWidget {
       return;
     }
 
-    final recipeRef = FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
-    
+    final recipeRef =
+        FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
+
     try {
       if (recipe.favoritedBy.contains(currentUser.uid)) {
         await recipeRef.update({
@@ -119,7 +121,8 @@ class RecipeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    final isFavorite = currentUser != null && recipe.favoritedBy.contains(currentUser.uid);
+    final isFavorite =
+        currentUser != null && recipe.favoritedBy.contains(currentUser.uid);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
@@ -149,7 +152,7 @@ class RecipeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    recipe.description,
+                    recipe.description ?? '',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
@@ -249,7 +252,8 @@ class RecipeCard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => EditRecipeScreen(recipe: recipe),
+                            builder: (context) =>
+                                EditRecipeScreen(recipe: recipe),
                           ),
                         );
                       },
@@ -277,4 +281,4 @@ class RecipeCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -3,8 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
 import '../models/ingredient.dart';
 import '../models/ingrediente_tabla.dart';
-import '../widgets/ingredient_table_widget.dart';
+//import '../widgets/ingredient_table_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/add_ingredient_dialog.dart';
 
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? recipe; // null si es nueva receta
@@ -23,11 +24,35 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   late List<String> _steps;
   late String _cookingTime;
   late String _category;
+  late String _servingSize;
   bool _isPrivate = false;
+
+  // Mapa de unidades completas a abreviadas
+  final Map<String, String> _unidadesAbreviadas = {
+    'Gramo': 'gr',
+    'Kilogramo': 'kg',
+    'Miligramos': 'mg',
+    'Onza': 'oz',
+    'Libra': 'lb',
+    'Mililitros': 'ml',
+    'Litro': 'l',
+    'Centilitros': 'cl',
+    'Cucharada': 'cda',
+    'Cucharadita': 'cdta',
+    'Taza': 'tz',
+    'Onza liquida': 'oz liquida',
+    'Pinta': 'pinta',
+    'Cuarto galon': 'cuarto galon',
+    'Galon': 'galon',
+  };
+
+  // Lista de todas las unidades disponibles
+  late final List<String> _todasLasUnidades;
 
   @override
   void initState() {
     super.initState();
+    _servingSize = '4 porciones';
     _title = widget.recipe?.title ?? '';
     _description = widget.recipe?.description ?? '';
     _ingredients = List<Ingredient>.from(widget.recipe?.ingredients ?? []);
@@ -35,100 +60,30 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _cookingTime = widget.recipe?.cookingTime.inMinutes.toString() ?? '0';
     _category = widget.recipe?.category ?? '';
     _isPrivate = widget.recipe?.isPrivate ?? false;
+
+    // Inicializar la lista de todas las unidades
+    _todasLasUnidades = _unidadesAbreviadas.values.toList();
   }
 
   void _editIngredients() async {
-    final ingredientesConvertidos = _ingredients.map((ing) => Ingredient(
-      name: ing.name,
-      quantity: ing.quantity,
-      unit: _convertirUnidadAntigua(ing.unit),
-    )).toList();
-
     final result = await showDialog<List<Ingredient>>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        insetPadding: EdgeInsets.zero,
-        child: Container(
-          width: double.infinity,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.recipe == null ? 'Agregar Ingredientes' : 'Editar Ingredientes',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(_ingredients),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: IngredientTableWidget(
-                    ingredientes: ingredientesConvertidos.map((ing) => IngredienteTabla(
-                      nombre: ing.name,
-                      cantidad: ing.quantity,
-                      unidad: ing.unit,
-                    )).toList(),
-                    onIngredientsChanged: (ingredients) {
-                      setState(() {
-                        _ingredients = ingredients.map((ing) => Ingredient(
-                          name: ing.nombre,
-                          quantity: ing.cantidad ?? 0,
-                          unit: ing.unidad,
-                        )).toList();
-                      });
-                    },
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(_ingredients),
-                      child: const Text('Cancelar'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(_ingredients);
-                      },
-                      child: const Text('Guardar'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => AddIngredientDialog(
+        ingredientes: _ingredients
+            .map((ing) => IngredienteTabla(
+                  nombre: ing.name,
+                  cantidad: ing.quantity,
+                  unidad: ing.unit,
+                ))
+            .toList(),
+        unidades: _todasLasUnidades, // Usar la lista de unidades de medida
       ),
     );
 
     if (result != null) {
       setState(() {
-        _ingredients = result;
+        _ingredients =
+            result; // Actualizar la lista de ingredientes con el resultado
       });
     }
   }
@@ -191,7 +146,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               onSaved: (value) => _description = value ?? '',
             ),
             const SizedBox(height: 16),
-            
+
             // Sección de ingredientes
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -206,12 +161,14 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 TextButton.icon(
                   onPressed: _editIngredients,
                   icon: const Icon(Icons.edit),
-                  label: Text(widget.recipe == null ? 'Agregar ingredientes' : 'Editar ingredientes'),
+                  label: Text(widget.recipe == null
+                      ? 'Agregar ingredientes'
+                      : 'Editar ingredientes'),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Lista de ingredientes existentes
             if (_ingredients.isNotEmpty) ...[
               ListView.builder(
@@ -223,7 +180,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   return Card(
                     child: ListTile(
                       title: Text(ingredient.name),
-                      subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                      subtitle:
+                          Text('${ingredient.quantity} ${ingredient.unit}'),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () {
@@ -341,7 +299,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
       // Crear la receta
       final newRecipe = Recipe(
-        id: '', 
+        id: '',
         title: _title,
         description: _description,
         userId: currentUser?.uid ?? '',
@@ -353,11 +311,14 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
         category: _category,
         isPrivate: _isPrivate,
         favoritedBy: [],
+        servingSize: _servingSize,
       );
 
       // Guardar en Firestore
-      await FirebaseFirestore.instance.collection('recipes').add(newRecipe.toMap());
+      await FirebaseFirestore.instance
+          .collection('recipes')
+          .add(newRecipe.toMap());
       Navigator.pop(context); // Regresar a la pantalla anterior
     }
   }
-} 
+}
