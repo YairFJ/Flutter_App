@@ -17,7 +17,16 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// ```
 class DefaultFirebaseOptions {
   static Future<void> loadEnv() async {
-    await dotenv.load();
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      print('Error loading .env file: $e');
+      print('Make sure to:');
+      print('1. Copy .env.example to .env');
+      print('2. Fill in your Firebase configuration values');
+      print('3. Run "flutter pub get" to update dependencies');
+      rethrow; // Re-throw the error after logging instructions
+    }
   }
 
   static FirebaseOptions get currentPlatform {

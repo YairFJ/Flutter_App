@@ -74,6 +74,7 @@ flutter:
     - lib/images/apple.png
     - lib/images/google.png
     - lib/sounds/alarm.mp3
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
