@@ -203,7 +203,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         const Icon(Icons.restaurant, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Rendimiento: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}',
+                          'Rendimiento: ${widget.recipe.servingSize} ',
                           style: const TextStyle(
                             fontSize: 16,
                           ),
@@ -351,12 +351,5 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
-  String _getPluralSuffix(String servingSize) {
-    try {
-      final number = double.parse(servingSize.replaceAll(',', '.'));
-      return number <= 1.0 ? 'persona' : 'personas';
-    } catch (e) {
-      return 'personas';
-    }
-  }
+  
 }
