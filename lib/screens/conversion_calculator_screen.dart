@@ -79,7 +79,7 @@ class _ConversionCalculatorScreenState
     'platos': 'Plato',
     'unidad': 'Unidad',
     'unidades': 'Unidad',
-    'Gramos': 'Gramo'
+    
   };
 
   // Mapa de unidades completas a abreviadas
@@ -550,13 +550,21 @@ class _ConversionCalculatorScreenState
                               controller: _cantidadController,
                               enabled: false,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 16),
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Colors.black,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 8),
                                 filled: true,
-                                fillColor: Color(0xFFEEEEEE),
+                                fillColor: isDarkMode ? const Color.fromRGBO(21, 21, 21, 1.0) : Colors.grey[200],
                               ),
                             ),
                           ),
@@ -567,7 +575,7 @@ class _ConversionCalculatorScreenState
                             height: 48,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEEEEEE),
+                                color: isDarkMode ? const Color.fromRGBO(21, 21, 21, 1.0) : Colors.grey[200],
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(color: Colors.grey.shade400),
                               ),
@@ -575,7 +583,10 @@ class _ConversionCalculatorScreenState
                               child: Text(
                                 _unidadesAbreviadas[_getUnidadPlural(_unidadOriginal, _platosOrigen)] ?? 
                                 _getUnidadPlural(_unidadOriginal, _platosOrigen),
-                                style: const TextStyle(fontSize: 16),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: isDarkMode ? Colors.white : Colors.black,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -592,11 +603,21 @@ class _ConversionCalculatorScreenState
                                     controller: _destinoController,
                                     keyboardType: TextInputType.number,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(fontSize: 14),
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      contentPadding: EdgeInsets.symmetric(
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isDarkMode ? Colors.white : Colors.black,
+                                    ),
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                        borderSide: BorderSide(
+                                          color: isDarkMode ? Colors.grey.shade400 : Colors.black,
+                                        ),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 8),
+                                      filled: true,
+                                      fillColor: isDarkMode ? const Color.fromRGBO(21, 21, 21, 1.0) : Colors.grey[200],
                                     ),
                                     onChanged: (value) {
                                       if (value.isEmpty) {
@@ -615,18 +636,26 @@ class _ConversionCalculatorScreenState
                                   child: DropdownButtonFormField<String>(
                                     value: _unidadDestino,
                                     isExpanded: true,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.black,
+                                      color: isDarkMode ? Colors.white : Colors.black,
                                     ),
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      contentPadding: EdgeInsets.symmetric(
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                        borderSide: BorderSide(
+                                          color: isDarkMode ? Colors.grey.shade400 : Colors.black,
+                                        ),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 8),
                                       isDense: true,
+                                      filled: true,
+                                      fillColor: isDarkMode ? const Color.fromRGBO(21, 21, 21, 1.0) : Colors.grey[200],
                                     ),
-                                    icon: const Icon(Icons.arrow_drop_down,
-                                        size: 20),
+                                    icon: Icon(Icons.arrow_drop_down,
+                                        size: 20,
+                                        color: isDarkMode ? Colors.white : Colors.black),
                                     items: _unidadesRendimiento
                                         .map((String unidad) {
                                       return DropdownMenuItem<String>(
@@ -634,7 +663,10 @@ class _ConversionCalculatorScreenState
                                         child: Text(
                                           _unidadesAbreviadas[unidad] ?? unidad,
                                           textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 14),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: isDarkMode ? Colors.white : Colors.black,
+                                          ),
                                         ),
                                       );
                                     }).toList(),
@@ -781,7 +813,12 @@ class _ConversionCalculatorScreenState
                             color: isDarkMode ? Colors.white : Colors.black,
                           ),
                           decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(4),
+                              borderSide: BorderSide(
+                                color: isDarkMode ? Colors.grey.shade400 : Colors.black,
+                              ),
+                            ),
                             contentPadding:
                                 const EdgeInsets.symmetric(horizontal: 8),
                             isDense: true,
@@ -804,7 +841,12 @@ class _ConversionCalculatorScreenState
                             color: isDarkMode ? Colors.white : Colors.black,
                           ),
                           decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(4),
+                              borderSide: BorderSide(
+                                color: isDarkMode ? Colors.grey.shade400 : Colors.black,
+                              ),
+                            ),
                             contentPadding:
                                 const EdgeInsets.symmetric(horizontal: 8),
                             isDense: true,
@@ -829,7 +871,12 @@ class _ConversionCalculatorScreenState
                           value: ingrediente.unidad,
                           isExpanded: true,
                           decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(4),
+                              borderSide: BorderSide(
+                                color: isDarkMode ? Colors.grey.shade400 : Colors.black,
+                              ),
+                            ),
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 4, vertical: 4),
                             isDense: true,
