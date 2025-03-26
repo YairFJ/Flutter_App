@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'add_recipe_screen.dart';
 
 class ConversionCalculatorScreen extends StatefulWidget {
   final Recipe recipe;
@@ -32,13 +33,17 @@ class _ConversionCalculatorScreenState
   String _unidadOriginal = 'Persona';
   String _unidadDestino = 'Persona';
 
+
+
   // Lista de unidades para RENDIMIENTO
   final List<String> _unidadesRendimiento = [
-    'Persona',
+    'Gramo',
+    'Kilogramo',
+    'Onza',
+    'Libra',
+    'Mililitros',
+    'Litro', 
     'Porción',
-    'Ración',
-    'Plato',
-    'Unidad',
   ];
 
   // Lista de unidades para la TABLA DE INGREDIENTES
