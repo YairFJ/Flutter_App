@@ -34,7 +34,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+              foregroundColor: const Color.fromARGB(255, 255, 1, 1),
             ),
             child: const Text('Eliminar'),
           ),
@@ -122,7 +122,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () => _deleteRecipe(context),
-              
+             
             ),
           ],
           IconButton(
