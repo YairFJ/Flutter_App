@@ -34,7 +34,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+              foregroundColor: const Color.fromARGB(255, 223, 13, 13),
             ),
             child: const Text('Eliminar'),
           ),
@@ -99,7 +99,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           if (isOwner) ...[
             IconButton(
               icon: const Icon(Icons.edit),
-              
               onPressed: () async {
                 final updatedRecipe = await Navigator.push<Recipe>(
                   context,
@@ -122,7 +121,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () => _deleteRecipe(context),
-              
             ),
           ],
           IconButton(
@@ -141,7 +139,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -328,7 +325,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                     height: 1.5,
                                     letterSpacing: 0.2,
                                     wordSpacing: 1.2,
-                                    color: isDarkMode ? Colors.white : Colors.black,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black,
                                     fontFamily: Theme.of(context)
                                         .textTheme
                                         .bodyLarge
@@ -350,6 +349,4 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ),
     );
   }
-
-  
 }

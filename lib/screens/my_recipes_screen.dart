@@ -22,8 +22,18 @@ class MyRecipesScreen extends StatelessWidget {
             child: const Text('Cancelar'),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -199,8 +209,10 @@ class MyRecipesScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? const Color.fromRGBO(28, 28, 34, 1) // Modo oscuro
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color.fromRGBO(
+                                        28, 28, 34, 1) // Modo oscuro
                                     : Colors.grey[100], // Modo claro
                                 borderRadius: BorderRadius.circular(6),
                               ),
@@ -222,7 +234,9 @@ class MyRecipesScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
-                                            color: Theme.of(context).brightness == Brightness.dark
+                                            color: Theme.of(context)
+                                                        .brightness ==
+                                                    Brightness.dark
                                                 ? Colors.white // Modo oscuro
                                                 : Colors.black87, // Modo claro
                                           ),
@@ -234,7 +248,9 @@ class MyRecipesScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
-                                            color: Theme.of(context).brightness == Brightness.dark
+                                            color: Theme.of(context)
+                                                        .brightness ==
+                                                    Brightness.dark
                                                 ? Colors.white // Modo oscuro
                                                 : Colors.black87, // Modo claro
                                           ),
@@ -259,8 +275,10 @@ class MyRecipesScreen extends StatelessWidget {
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? const Color.fromRGBO(28, 28, 34, 1) // Modo oscuro
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color.fromRGBO(
+                                      28, 28, 34, 1) // Modo oscuro
                                   : Colors.white, // Modo claro
                               shape: BoxShape.circle,
                             ),
@@ -284,8 +302,10 @@ class MyRecipesScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           Container(
                             decoration: BoxDecoration(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? const Color.fromRGBO(28, 28, 34, 1) // Modo oscuro
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color.fromRGBO(
+                                      28, 28, 34, 1) // Modo oscuro
                                   : Colors.white.withOpacity(0.9), // Modo claro
                               shape: BoxShape.circle,
                             ),
