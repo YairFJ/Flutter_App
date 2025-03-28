@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class ConversionTablePage extends StatefulWidget {
-  const ConversionTablePage({super.key});
+  final bool isEnglish;
+  
+  const ConversionTablePage({
+    super.key,
+    required this.isEnglish,
+  });
 
   @override
   State<ConversionTablePage> createState() => _ConversionTablePageState();
@@ -13,6 +18,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
   String _unidadDestino = 'kg';
   double _resultado = 0.0;
   String _categoriaSeleccionada = 'Peso';
+  late bool isEnglish;
 
   final Map<String, List<String>> _unidadesPorCategoria = {
     'Peso': ['g', 'kg', 'oz', 'lb'],
@@ -51,6 +57,22 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
       'cdta': 3,
     },
   };
+
+  @override
+  void initState() {
+    super.initState();
+    isEnglish = widget.isEnglish;
+  }
+
+  @override
+  void didUpdateWidget(ConversionTablePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
+    }
+  }
 
   void _calcularConversion() {
     if (_cantidadController.text.isEmpty) return;
@@ -174,7 +196,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'CANTIDAD',
+                      isEnglish ? 'AMOUNT' : 'CANTIDAD',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isDarkMode ? Colors.white : Colors.black,
@@ -185,7 +207,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'DE',
+                      isEnglish ? 'FROM' : 'DE',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isDarkMode ? Colors.white : Colors.black,
@@ -196,7 +218,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'A',
+                      isEnglish ? 'TO' : 'A',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isDarkMode ? Colors.white : Colors.black,
@@ -306,7 +328,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Resultado: ',
+                  isEnglish ? 'Result: ' : 'Resultado: ',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

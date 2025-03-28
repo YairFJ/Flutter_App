@@ -125,21 +125,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool isDarkMode = false;
-
-  // Lista de páginas/widgets para cada elemento del menú
-  final List<Widget> _pages = [
-    const RecipesPage(),
-    const ConversionTablePage(),
-    const TimerPage(),
-    const StopwatchPage(),
-  ];
-
-  final List<String> _pageTitles = [
-    'Recetas',
-    'Conversión',
-    'Temporizador',
-    'Cronómetro',
-  ];
+  bool isEnglish = false; // Variable para controlar el idioma
 
   @override
   void initState() {
@@ -153,6 +139,12 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       isDarkMode = !isDarkMode;
       widget.toggleTheme();
+    });
+  }
+
+  void toggleLanguage() {
+    setState(() {
+      isEnglish = !isEnglish;
     });
   }
 
@@ -173,13 +165,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     print('HomeScreen build llamado');
+    
+    // Lista de páginas/widgets para cada elemento del menú
+    final List<Widget> _pages = [
+      const RecipesPage(),
+      ConversionTablePage(isEnglish: isEnglish),
+      const TimerPage(),
+      const StopwatchPage(),
+    ];
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: primaryColor,
         title: Text(
-          _pageTitles[_selectedIndex],
+          isEnglish ? 'Recipes' : 'Recetas',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -187,6 +188,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              isEnglish ? Icons.language : Icons.translate,
+              color: Colors.white,
+            ),
+            onPressed: toggleLanguage,
+            tooltip: isEnglish ? 'Cambiar a Español' : 'Switch to English',
+          ),
           IconButton(
             icon: Icon(
               isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
@@ -272,22 +281,22 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant_menu),
-            label: 'Recetas',
+            icon: const Icon(Icons.restaurant_menu),
+            label: isEnglish ? 'Recipes' : 'Recetas',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calculate),
-            label: 'Conversión',
+            icon: const Icon(Icons.calculate),
+            label: isEnglish ? 'Conversion' : 'Conversión',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.timer),
-            label: 'Temporizador',
+            icon: const Icon(Icons.timer),
+            label: isEnglish ? 'Timer' : 'Temporizador',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.timer_outlined),
-            label: 'Cronómetro',
+            icon: const Icon(Icons.timer_outlined),
+            label: isEnglish ? 'Stopwatch' : 'Cronómetro',
           ),
         ],
       ),
