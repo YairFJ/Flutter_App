@@ -324,7 +324,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   decoration: InputDecoration(
                     labelText: 'Tiempo de preparación (minutos)',
                     border: OutlineInputBorder(),
-                    helperText: 'Número entero positivo (máximo 1440)',
+                    //helperText: 'Número entero positivo (máximo 1440)',
                   ),
                   keyboardType: TextInputType.number,
                   validator: _validateCookingTime,
