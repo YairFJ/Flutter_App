@@ -37,7 +37,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+              foregroundColor: const Color.fromARGB(255, 235, 6, 6),
             ),
             child: const Text('Eliminar'),
           ),
