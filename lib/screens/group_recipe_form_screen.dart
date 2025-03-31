@@ -367,8 +367,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                     initialValue: _servingSize,
                     decoration: const InputDecoration(
                       labelText: 'Rendimiento',
-                      border: OutlineInputBorder(),
-                      helperText: 'Cantidad',
+                      border: OutlineInputBorder(),                  
                     ),
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),

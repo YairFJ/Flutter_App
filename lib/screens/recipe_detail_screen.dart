@@ -121,7 +121,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () => _deleteRecipe(context),
-             
             ),
           ],
           IconButton(
@@ -194,21 +193,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.restaurant, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Rendimiento: ${widget.recipe.servingSize} ',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'Rendimiento: ${widget.recipe.servingSize}',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
+                  const SizedBox(height: 24),
                   Text(
                     'Ingredientes:',
                     style: TextStyle(
