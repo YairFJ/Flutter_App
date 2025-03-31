@@ -543,6 +543,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             .where((text) => text.isNotEmpty)
             .toList();
 
+        // Actualizamos la receta en Firestore
         await FirebaseFirestore.instance
             .collection('recipes')
             .doc(widget.recipe.id)
@@ -560,15 +561,30 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
         });
 
         if (mounted) {
-          Navigator.pop(context); // Cierra el diálogo de carga
-          Navigator.pop(context); // Vuelve a la pantalla anterior
+          // Obtenemos la receta actualizada
+          final updatedRecipeDoc = await FirebaseFirestore.instance
+              .collection('recipes')
+              .doc(widget.recipe.id)
+              .get();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta actualizada con éxito'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          if (updatedRecipeDoc.exists) {
+            final data = updatedRecipeDoc.data()!;
+            final updatedRecipe = Recipe.fromMap(
+              data,
+              updatedRecipeDoc.id,
+            );
+
+            Navigator.pop(context); // Cierra el diálogo de carga
+            Navigator.pop(context,
+                updatedRecipe); // Vuelve a la pantalla anterior con la receta actualizada
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Receta actualizada con éxito'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
