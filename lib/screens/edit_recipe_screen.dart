@@ -6,6 +6,7 @@ import '../constants/categories.dart';
 import '../main.dart';
 import '../models/ingredient.dart';
 import '../widgets/ingredient_table_widget.dart';
+import '../widgets/add_ingredient_dialog.dart';
 
 class EditRecipeScreen extends StatefulWidget {
   final Recipe recipe;
@@ -23,16 +24,71 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _cookingTimeController;
   late TextEditingController _servingSizeController;
-  late String _selectedCategory;
-  late String _imageUrl;
-
-  late bool _isPrivate;
+  final List<TextEditingController> _stepControllers = [];
+  String _selectedCategory = '';
+  String? _imageUrl;
+  bool _isPrivate = false;
   List<Ingredient> _ingredients = [];
-  late List<String> _steps;
-  String _category = '';
+  String _servingUnit = 'gr';
 
-  // Expresión regular para validar números enteros positivos
-  final RegExp _numberRegExp = RegExp(r'^[1-9]\d*$');
+  // Unidades disponibles para el rendimiento
+  final List<String> _todasLasUnidades = [
+    'gr', // Gramos
+    'kg', // Kilos
+    'oz', // Onzas
+    'lb', // Libras
+    'l', // Litros
+    'ml', // Mililitros
+    'porciones'
+  ];
+
+  // Expresión regular para validar números positivos
+  final RegExp _numberRegExp = RegExp(r'^\d*\.?\d+$');
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.recipe.title);
+    _descriptionController =
+        TextEditingController(text: widget.recipe.description);
+    _cookingTimeController = TextEditingController(
+        text: widget.recipe.cookingTime.inMinutes.toString());
+
+    // Extraer el número y la unidad del servingSize
+    final servingSizeParts = widget.recipe.servingSize.split(' ');
+    if (servingSizeParts.length > 1) {
+      _servingSizeController = TextEditingController(text: servingSizeParts[0]);
+      _servingUnit = servingSizeParts[1];
+    } else {
+      _servingSizeController =
+          TextEditingController(text: widget.recipe.servingSize);
+    }
+
+    _selectedCategory = widget.recipe.category;
+    _isPrivate = widget.recipe.isPrivate;
+    _ingredients = List.from(widget.recipe.ingredients);
+    _imageUrl = widget.recipe.imageUrl;
+
+    // Inicializar los controladores de pasos
+    for (var step in widget.recipe.steps) {
+      _stepControllers.add(TextEditingController(text: step));
+    }
+    if (_stepControllers.isEmpty) {
+      _stepControllers.add(TextEditingController());
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _cookingTimeController.dispose();
+    _servingSizeController.dispose();
+    for (var controller in _stepControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   String? _validateTitle(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -62,7 +118,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       return 'Por favor ingresa el tiempo de cocción';
     }
     if (!_numberRegExp.hasMatch(value)) {
-      return 'Ingresa solo números enteros positivos';
+      return 'Ingresa un número válido';
     }
     final minutes = int.parse(value);
     if (minutes <= 0) {
@@ -78,13 +134,23 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'Por favor ingresa el rendimiento';
     }
+    if (!_numberRegExp.hasMatch(value)) {
+      return 'Ingresa un número válido';
+    }
+    double? servings = double.tryParse(value);
+    if (servings == null || servings <= 0) {
+      return 'El rendimiento debe ser mayor a 0';
+    }
+    if (servings > 10000) {
+      return 'El rendimiento es demasiado grande';
+    }
     return null;
   }
 
   bool _validateSteps() {
     bool isValid = true;
-    for (var step in _steps) {
-      if (step.trim().isEmpty) {
+    for (var controller in _stepControllers) {
+      if (controller.text.trim().isEmpty) {
         isValid = false;
         break;
       }
@@ -92,460 +158,352 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     return isValid;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _titleController = TextEditingController(text: widget.recipe.title);
-    _descriptionController =
-        TextEditingController(text: widget.recipe.description);
-    _cookingTimeController = TextEditingController(
-        text: widget.recipe.cookingTime.inMinutes.toString());
-
-    // Ya no separamos el número de la unidad
-    _servingSizeController =
-        TextEditingController(text: widget.recipe.servingSize);
-
-    _steps = List.from(widget.recipe.steps);
-    _selectedCategory = widget.recipe.category;
-    _isPrivate = widget.recipe.isPrivate;
-    
-    _ingredients = List.from(widget.recipe.ingredients);
-    _category = _selectedCategory;
-    _imageUrl = widget.recipe.imageUrl ?? '';
-
-    // Asegurar que haya al menos un ingrediente y un paso
-    if (_steps.isEmpty) {
-      _steps.add('');
-    }
-  }
-
-  void _addStep() {
-    setState(() {
-      _steps.add('');
-    });
-  }
-
-  void _removeStep(int index) {
-    setState(() {
-      _steps.removeAt(index);
-    });
-  }
-
-  void _editIngredients() async {
-    final ingredientesConvertidos = widget.recipe.ingredients
-        .map((ing) => IngredienteTabla(
-              nombre: ing.name,
-              cantidad: ing.quantity,
-              unidad: _convertirUnidadAntigua(ing.unit),
-            ))
-        .toList();
-
-    final result = await showDialog<List<Ingredient>>(
+  Future<void> _addIngredient() async {
+    final ingredients = await showDialog<List<Ingredient>>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        insetPadding: EdgeInsets.zero,
-        child: Container(
-          width: double.infinity,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Editar Ingredientes',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(_ingredients),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: IngredientTableWidget(
-                    ingredientes: ingredientesConvertidos,
-                    onIngredientsChanged: (ingredients) {
-                      setState(() {
-                        _ingredients = ingredients
-                            .map((ing) => Ingredient(
-                                  name: ing.nombre,
-                                  quantity: ing.cantidad ?? 0,
-                                  unit: ing.unidad,
-                                ))
-                            .toList();
-                      });
-                    },
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(_ingredients),
-                      child: const Text('Cancelar'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(_ingredients);
-                      },
-                      child: const Text('Guardar'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => AddIngredientDialog(
+        ingredientes: _ingredients
+            .map((ing) => IngredienteTabla(
+                  nombre: ing.name,
+                  cantidad: ing.quantity,
+                  unidad: ing.unit,
+                ))
+            .toList(),
+        unidades: _todasLasUnidades,
       ),
     );
 
-    if (result != null) {
+    if (ingredients != null) {
       setState(() {
-        _ingredients = result;
+        _ingredients.addAll(ingredients.where((newIngredient) {
+          return !_ingredients.any((existing) =>
+              existing.name == newIngredient.name &&
+              existing.quantity == newIngredient.quantity &&
+              existing.unit == newIngredient.unit);
+        }));
       });
     }
   }
 
-  String _convertirUnidadAntigua(String unidadAntigua) {
-    final Map<String, String> conversion = {
-      'gramos': 'g',
-      'gr': 'g',
-      'kilogramos': 'kg',
-      'kg': 'kg',
-      'mililitros': 'ml',
-      'ml': 'ml',
-      'litros': 'l',
-      'l': 'l',
-      'taza': 'tz',
-      'cucharada': 'cda',
-      'cucharadita': 'cdta',
-      'unidad': 'u',
-      'onzas': 'oz',
-      'oz': 'oz',
-      'libras': 'lb',
-      'lb': 'lb',
-    };
-    return conversion[unidadAntigua.toLowerCase()] ?? 'g';
-  }
-
-  // Agregar esta función para verificar si hubo cambios
-  bool _hasChanges() {
-    return _titleController.text != widget.recipe.title ||
-        _descriptionController.text != widget.recipe.description ||
-        _cookingTimeController.text !=
-            widget.recipe.cookingTime.inMinutes.toString() ||
-        _servingSizeController.text != widget.recipe.servingSize ||
-        _selectedCategory != widget.recipe.category ||
-        _isPrivate != widget.recipe.isPrivate ||
-        _ingredients.length != widget.recipe.ingredients.length ||
-        _steps.length != widget.recipe.steps.length ||
-        !_compareIngredients() ||
-        !_compareSteps();
-  }
-
-  // Función auxiliar para comparar ingredientes
-  bool _compareIngredients() {
-    if (_ingredients.length != widget.recipe.ingredients.length) return false;
-    for (int i = 0; i < _ingredients.length; i++) {
-      if (_ingredients[i].name != widget.recipe.ingredients[i].name ||
-          _ingredients[i].quantity != widget.recipe.ingredients[i].quantity ||
-          _ingredients[i].unit != widget.recipe.ingredients[i].unit) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // Función auxiliar para comparar pasos
-  bool _compareSteps() {
-    if (_steps.length != widget.recipe.steps.length) return false;
-    for (int i = 0; i < _steps.length; i++) {
-      if (_steps[i] != widget.recipe.steps[i]) return false;
-    }
-    return true;
-  }
-
-  // Función para manejar la navegación hacia atrás
-  void _handleBack() {
-    if (!_hasChanges()) {
-      // Si no hay cambios, simplemente volver con pop
-      Navigator.pop(context);
-    } else {
-      // Si hay cambios, mostrar diálogo de confirmación
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('¿Guardar cambios?'),
-          content: const Text('¿Deseas guardar los cambios realizados?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Cerrar diálogo
-                Navigator.pop(context); // Volver a la pantalla anterior
-              },
-              child: const Text('Descartar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Cerrar diálogo
-                _updateRecipe();
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
-      );
-    }
+  void _removeIngredient(int index) {
+    setState(() {
+      _ingredients.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        _handleBack();
-        return false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Editar Receta'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _handleBack,
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _updateRecipe,
-            ),
-          ],
-        ),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Título',
-                  border: OutlineInputBorder(),
-                  helperText: 'Entre 3 y 100 caracteres',
-                ),
-                validator: _validateTitle,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 16),
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-              // Descripción
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
-                  border: OutlineInputBorder(),
-                  helperText: 'Máximo 500 caracteres',
-                ),
-                maxLines: 3,
-                validator: _validateDescription,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 16),
-
-              // Tiempo de cocción
-              TextFormField(
-                controller: _cookingTimeController,
-                decoration: const InputDecoration(
-                  labelText: 'Tiempo de cocción (minutos)',
-                  border: OutlineInputBorder(),
-                  helperText: 'Número entero positivo (máximo 1440)',
-                ),
-                keyboardType: TextInputType.number,
-                validator: _validateCookingTime,
-              ),
-              const SizedBox(height: 16),
-
-              // Rendimiento
-              TextFormField(
-                controller: _servingSizeController,
-                decoration: const InputDecoration(
-                  labelText: 'Rendimiento',
-                  hintText: 'Ej: 4 porciones',
-                  border: OutlineInputBorder(),
-                  helperText: 'Ingresa el rendimiento de la receta',
-                ),
-                validator: _validateServingSize,
-              ),
-              const SizedBox(height: 16),
-
-              // Categoría
-              DropdownButtonFormField<String>(
-                value: _category.isNotEmpty ? _category : null,
-                decoration: const InputDecoration(
-                  labelText: 'Categoría',
-                  border: OutlineInputBorder(),
-                ),
-                items: RecipeCategories.categories
-                    .toSet()
-                    .map((category) => DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _category = value;
-                    });
-                  }
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor selecciona una categoría';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Switch de privacidad
-              SwitchListTile(
-                title: const Text('Receta Privada'),
-                subtitle: Text(
-                  _isPrivate
-                      ? 'Solo tú podrás ver esta receta'
-                      : 'Todos podrán ver esta receta',
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Editar Receta'),
+        backgroundColor: const Color(0xFF96B4D8),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _titleController,
                   style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
+                  decoration: const InputDecoration(
+                    labelText: 'Título',
+                    border: OutlineInputBorder(),
+                    helperText: 'Entre 3 y 100 caracteres',
+                  ),
+                  validator: _validateTitle,
+                  textCapitalization: TextCapitalization.sentences,
                 ),
-                value: _isPrivate,
-                onChanged: (bool value) {
-                  setState(() {
-                    _isPrivate = value;
-                  });
-                },
-                activeColor: primaryColor,
-              ),
-              const Divider(),
-
-              // Pasos
-              const Text(
-                'Pasos',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descriptionController,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción',
+                    border: OutlineInputBorder(),
+                    helperText: 'Máximo 500 caracteres',
+                  ),
+                  maxLines: 3,
+                  validator: _validateDescription,
+                  textCapitalization: TextCapitalization.sentences,
                 ),
-              ),
-              const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _steps.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: _steps[index],
-                            decoration: InputDecoration(
-                              labelText: 'Paso ${index + 1}',
-                              border: const OutlineInputBorder(),
-                            ),
-                            maxLines: 2,
-                            onChanged: (value) {
-                              setState(() {
-                                _steps[index] = value;
-                              });
-                            },
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () => _removeStep(index),
-                          color: Colors.red,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              ElevatedButton.icon(
-                onPressed: _addStep,
-                icon: const Icon(Icons.add),
-                label: const Text('Agregar Paso'),
-              ),
-
-              // Sección de ingredientes
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Ingredientes',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _cookingTimeController,
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
-                  TextButton.icon(
-                    onPressed: _editIngredients,
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Editar ingredientes'),
+                  decoration: const InputDecoration(
+                    labelText: 'Tiempo de preparación (minutos)',
+                    border: OutlineInputBorder(),
                   ),
-                ],
-              ),
-              if (_ingredients.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _ingredients.length,
-                  itemBuilder: (context, index) {
-                    final ingredient = _ingredients[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text(ingredient.name),
-                        subtitle:
-                            Text('${ingredient.quantity} ${ingredient.unit}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
+                  keyboardType: TextInputType.number,
+                  validator: _validateCookingTime,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _servingSizeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Rendimiento',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        validator: _validateServingSize,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButtonFormField<String>(
+                        value: _servingUnit,
+                        decoration: const InputDecoration(
+                          labelText: 'Unidad',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _todasLasUnidades.map((String unidad) {
+                          return DropdownMenuItem<String>(
+                            value: unidad,
+                            child: Text(unidad),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          if (value != null) {
                             setState(() {
-                              _ingredients.removeAt(index);
+                              _servingUnit = value;
                             });
-                          },
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: isDarkMode ? Colors.grey[800] : Colors.white,
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCategory.isNotEmpty
+                          ? _selectedCategory
+                          : null,
+                      isExpanded: true,
+                      dropdownColor:
+                          isDarkMode ? Colors.grey[800] : Colors.white,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      hint: Text(
+                        'Selecciona una categoría',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
                         ),
                       ),
-                    );
+                      items: RecipeCategories.categories.map((String category) {
+                        return DropdownMenuItem<String>(
+                          value: category,
+                          child: Row(
+                            children: [
+                              Icon(
+                                RecipeCategories.getIconForCategory(category),
+                                color: RecipeCategories.getColorForCategory(
+                                    category),
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                category,
+                                style: TextStyle(
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedCategory = newValue;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildIngredientsList(),
+                const SizedBox(height: 24),
+                _buildStepsList(),
+                const SizedBox(height: 24),
+                SwitchListTile(
+                  title: Text(
+                    'Receta Privada',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _isPrivate
+                        ? 'Solo tú podrás ver esta receta'
+                        : 'Todos podrán ver esta receta',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                  value: _isPrivate,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _isPrivate = value;
+                    });
                   },
+                  activeColor: Theme.of(context).primaryColor,
+                ),
+                const Divider(),
+                ElevatedButton(
+                  onPressed: _updateRecipe,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 30),
+                    backgroundColor: Theme.of(context).primaryColor,
+                  ),
+                  child: const Text(
+                    'Guardar Cambios',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildIngredientsList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ingredientes',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _ingredients.length,
+          itemBuilder: (context, index) {
+            final ingredient = _ingredients[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(ingredient.name),
+                subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: () => _removeIngredient(index),
+                  color: Colors.red,
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton(
+          onPressed: _addIngredient,
+          child: const Text('Agregar Ingrediente'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepsList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Pasos',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _stepControllers.length,
+          itemBuilder: (context, index) {
+            return Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _stepControllers[index],
+                    decoration: InputDecoration(
+                      labelText: 'Paso ${index + 1}',
+                    ),
+                    maxLines: 2,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    setState(() {
+                      _stepControllers.add(TextEditingController());
+                    });
+                  },
+                ),
+                if (_stepControllers.length > 1)
+                  IconButton(
+                    icon: const Icon(Icons.remove),
+                    onPressed: () {
+                      setState(() {
+                        _stepControllers[index].dispose();
+                        _stepControllers.removeAt(index);
+                      });
+                    },
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -580,11 +538,12 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           ),
         );
 
-        final steps = _steps
-            .map((step) => step.trim())
+        final steps = _stepControllers
+            .map((controller) => controller.text.trim())
             .where((text) => text.isNotEmpty)
             .toList();
 
+        // Actualizamos la receta en Firestore
         await FirebaseFirestore.instance
             .collection('recipes')
             .doc(widget.recipe.id)
@@ -595,46 +554,41 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           'ingredients': _ingredients.map((i) => i.toMap()).toList(),
           'steps': steps,
           'imageUrl': _imageUrl,
-          'category': _category,
+          'category': _selectedCategory,
           'isPrivate': _isPrivate,
-          'servingSize': _servingSizeController.text.trim(),
+          'servingSize': '${_servingSizeController.text.trim()} $_servingUnit',
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
         if (mounted) {
-          Navigator.pop(context); // Cierra el diálogo de carga
+          // Obtenemos la receta actualizada
+          final updatedRecipeDoc = await FirebaseFirestore.instance
+              .collection('recipes')
+              .doc(widget.recipe.id)
+              .get();
 
-          // Crear receta actualizada
-          final updatedRecipe = Recipe(
-            id: widget.recipe.id,
-            title: _titleController.text.trim(),
-            description: _descriptionController.text.trim(),
-            ingredients: _ingredients,
-            steps: steps,
-            imageUrl: _imageUrl,
-            cookingTime: Duration(
-                minutes: int.parse(_cookingTimeController.text.trim())),
-            category: _category,
-            userId: widget.recipe.userId,
-            creatorName: widget.recipe.creatorName,
-            creatorEmail: widget.recipe.creatorEmail,
-            favoritedBy: widget.recipe.favoritedBy,
-            isPrivate: _isPrivate,
-            servingSize: _servingSizeController.text.trim(),
-          );
+          if (updatedRecipeDoc.exists) {
+            final data = updatedRecipeDoc.data()!;
+            final updatedRecipe = Recipe.fromMap(
+              data,
+              updatedRecipeDoc.id,
+            );
 
-          Navigator.pop(context, updatedRecipe);
+            Navigator.pop(context); // Cierra el diálogo de carga
+            Navigator.pop(context,
+                updatedRecipe); // Vuelve a la pantalla anterior con la receta actualizada
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta actualizada con éxito'),
-              backgroundColor: Colors.green,
-            ),
-          );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Receta actualizada con éxito'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
-          Navigator.pop(context);
+          Navigator.pop(context); // Cierra el diálogo de carga
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error al actualizar la receta: ${e.toString()}'),
@@ -644,14 +598,5 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
         }
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _cookingTimeController.dispose();
-    _servingSizeController.dispose();
-    super.dispose();
   }
 }
