@@ -27,8 +27,11 @@ class _ConversionCalculatorScreenState
   double _platosOrigen = 1.0;
   double _platosDestino = 1.0;
   double _valorOriginalRendimiento = 1.0;
-  double _valorActualGramos = 0.0; // Para mantener el valor actual en una unidad base (gramos)
-  double _valorActualMililitros = 0.0; // Para mantener el valor actual en una unidad base (mililitros)
+  
+  // Valores base para conversiones consistentes
+  double _valorBaseGramos = 0.0;
+  double _valorBaseMililitros = 0.0;
+  
   late List<IngredienteTabla> _ingredientesTabla;
   String _unidadOriginal = 'Persona';
   String _unidadDestino = 'Persona';
@@ -143,19 +146,95 @@ class _ConversionCalculatorScreenState
       'Kilogramo': 0.001,
       'Litro': 0.001,
       'Porción': 0.004,    // 1ml = 0.004 porciones (250ml = 1 porción)
+      'Centilitros': 0.1,
+      'Cucharada': 0.0666667,
+      'Cucharadita': 0.2,
+      'Taza': 0.00416667,
+      'Onza liquida': 0.033814,
+      'Pinta': 0.00211338,
+      'Cuarto galon': 0.00105669,
+      'Galon': 0.000264172,
     },
     'Litro': {
       'Mililitros': 1000,
       'Gramo': 1000.0,
       'Kilogramo': 1.0,
       'Porción': 4.0,      // 1L = 4 porciones (250ml = 1 porción)
+      'Centilitros': 100,
+      'Cucharada': 66.6667,
+      'Cucharadita': 200,
+      'Taza': 4.16667,
+      'Onza liquida': 33.814,
+      'Pinta': 2.11338,
+      'Cuarto galon': 1.05669,
+      'Galon': 0.264172,
+    },
+    'Centilitros': {
+      'Mililitros': 10,
+      'Litro': 0.01,
+      'Cucharada': 0.666667,
+      'Cucharadita': 2,
+      'Taza': 0.0416667,
+    },
+    'Cucharada': {
+      'Mililitros': 15,
+      'Litro': 0.015,
+      'Centilitros': 1.5,
+      'Cucharadita': 3,
+      'Taza': 0.0625,
+    },
+    'Cucharadita': {
+      'Mililitros': 5,
+      'Litro': 0.005,
+      'Centilitros': 0.5,
+      'Cucharada': 0.333333,
+      'Taza': 0.0208333,
+    },
+    'Taza': {
+      'Mililitros': 240,
+      'Litro': 0.24,
+      'Centilitros': 24,
+      'Cucharada': 16,
+      'Cucharadita': 48,
+    },
+    'Onza liquida': {
+      'Mililitros': 29.5735,
+      'Litro': 0.0295735,
+      'Pinta': 0.0625,
+      'Cuarto galon': 0.03125,
+      'Galon': 0.0078125,
+    },
+    'Pinta': {
+      'Mililitros': 473.176,
+      'Litro': 0.473176,
+      'Onza liquida': 16,
+      'Cuarto galon': 0.5,
+      'Galon': 0.125,
+    },
+    'Cuarto galon': {
+      'Mililitros': 946.353,
+      'Litro': 0.946353,
+      'Onza liquida': 32,
+      'Pinta': 2,
+      'Galon': 0.25,
+    },
+    'Galon': {
+      'Mililitros': 3785.41,
+      'Litro': 3.78541,
+      'Onza liquida': 128,
+      'Pinta': 8,
+      'Cuarto galon': 4,
     },
     'Porción': {
       'Gramo': 250.0,      // 1 porción = 250g
       'Kilogramo': 0.25,   // 1 porción = 0.25kg
       'Mililitros': 250.0, // 1 porción = 250ml
       'Litro': 0.25,      // 1 porción = 0.25L
-    }
+    },
+    'Miligramos': {
+      'Gramo': 0.001,
+      'Kilogramo': 0.000001,
+    },
   };
 
   // Mapa de plurales para las unidades
@@ -183,11 +262,11 @@ class _ConversionCalculatorScreenState
         _unidadDestino = _unidadOriginal;
         _unidadActual = _unidadOriginal;
         
-        // Inicializamos los valores en unidades base
-        if (['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(_unidadOriginal)) {
-          _valorActualGramos = _convertirRendimiento(_platosOrigen, _unidadOriginal, 'Gramo');
-        } else if (['Mililitros', 'Litro'].contains(_unidadOriginal)) {
-          _valorActualMililitros = _convertirRendimiento(_platosOrigen, _unidadOriginal, 'Mililitros');
+        // Inicializamos valores base de conversión
+        if (_esTipoUnidadPeso(_unidadOriginal)) {
+          _valorBaseGramos = _convertirAUnidadBase(_platosOrigen, _unidadOriginal, 'peso');
+        } else if (_esTipoUnidadVolumen(_unidadOriginal)) {
+          _valorBaseMililitros = _convertirAUnidadBase(_platosOrigen, _unidadOriginal, 'volumen');
         }
       } else {
         _unidadOriginal = 'Persona';
@@ -245,24 +324,61 @@ class _ConversionCalculatorScreenState
     try {
       setState(() {
         if (_platosOrigen > 0 && _platosDestino > 0) {
-          // Calculamos el factor de escala basado en el valor actual
-          double factorEscala = _platosDestino / _platosOrigen;
+          // Calculamos el valor real para comparar correctamente
+          double valorOriginalEnBase;
+          double valorDestinoEnBase;
+          
+          // Determinar qué unidad base usar
+          String unidadBase = "";
+          if (['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(_unidadOriginal) ||
+              ['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(_unidadDestino)) {
+            unidadBase = "Gramo";
+            valorOriginalEnBase = _convertirRendimiento(_platosOrigen, _unidadOriginal, unidadBase);
+            valorDestinoEnBase = _convertirRendimiento(_platosDestino, _unidadDestino, unidadBase);
+          } else if (['Mililitros', 'Litro'].contains(_unidadOriginal) ||
+                     ['Mililitros', 'Litro'].contains(_unidadDestino)) {
+            unidadBase = "Mililitros";
+            valorOriginalEnBase = _convertirRendimiento(_platosOrigen, _unidadOriginal, unidadBase);
+            valorDestinoEnBase = _convertirRendimiento(_platosDestino, _unidadDestino, unidadBase);
+          } else {
+            // Para otro tipo de unidades como porciones
+            valorOriginalEnBase = _platosOrigen;
+            valorDestinoEnBase = _platosDestino;
+          }
+          
+          // Calculamos el factor de escala basado en los valores en unidad base
+          double factorEscala = valorDestinoEnBase / valorOriginalEnBase;
+          
+          print("DIAGNÓSTICO: Rendimiento original: $_platosOrigen $_unidadOriginal");
+          print("DIAGNÓSTICO: Rendimiento nuevo: $_platosDestino $_unidadDestino");
+          print("DIAGNÓSTICO: En unidad base ($unidadBase): Original=$valorOriginalEnBase, Nuevo=$valorDestinoEnBase");
+          print("DIAGNÓSTICO: Factor de escala: $factorEscala");
 
           // Actualizamos todos los ingredientes con el factor de escala
           for (var ingrediente in _ingredientesTabla) {
+            // Usamos ingrediente.cantidadOriginal para el cálculo
             double nuevaCantidad = ingrediente.cantidadOriginal * factorEscala;
+            
+            print("DIAGNÓSTICO: Ingrediente ${ingrediente.nombre}:");
+            print("  - Cantidad original guardada: ${ingrediente.cantidadOriginal} ${ingrediente.unidad}");
+            print("  - Cantidad actual: ${ingrediente.cantidad} ${ingrediente.unidad}");
+            print("  - Nueva cantidad (con factor $factorEscala): $nuevaCantidad ${ingrediente.unidad}");
+            
+            // Actualizamos el ingrediente
             ingrediente.cantidad = nuevaCantidad;
+            // Formateamos el número correctamente
             ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
           }
           
           // Actualizamos los valores en unidades base
           if (['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(_unidadDestino)) {
-            _valorActualGramos = _convertirRendimiento(_platosDestino, _unidadDestino, 'Gramo');
+            _valorBaseGramos = valorDestinoEnBase;
           } else if (['Mililitros', 'Litro'].contains(_unidadDestino)) {
-            _valorActualMililitros = _convertirRendimiento(_platosDestino, _unidadDestino, 'Mililitros');
+            _valorBaseMililitros = valorDestinoEnBase;
           }
           
           _unidadActual = _unidadDestino;
+          _resultado = _platosDestino;
         }
       });
     } catch (e) {
@@ -274,99 +390,245 @@ class _ConversionCalculatorScreenState
     if (nuevoValor.trim().endsWith('.')) return;
 
     try {
-      double cantidadNueva = double.parse(nuevoValor.replaceAll(',', '.'));
+      // Manejo seguro de entrada
+      double cantidadNueva = 0.0;
+      try {
+        cantidadNueva = double.parse(nuevoValor.replaceAll(',', '.'));
+      } catch (e) {
+        print("Error al convertir '$nuevoValor' a número: $e");
+        return;
+      }
+
+      if (cantidadNueva <= 0) {
+        print("Advertencia: cantidad debe ser mayor que cero");
+        cantidadNueva = 0.01; // Valor mínimo para evitar divisiones por cero
+      }
+
       final ingredienteModificado = _ingredientesTabla[index];
       
-      // Calcular el factor de escala basado en el ingrediente modificado
-      double factorEscala = cantidadNueva / ingredienteModificado.cantidadOriginal;
+      // Calculamos el factor de cambio para este ingrediente específico
+      double factorCambio = cantidadNueva / ingredienteModificado.cantidad;
+      
+      print("DIAGNÓSTICO: Actualización manual de ingrediente ${ingredienteModificado.nombre}");
+      print("  - Cantidad anterior: ${ingredienteModificado.cantidad} ${ingredienteModificado.unidad}");
+      print("  - Nueva cantidad: $cantidadNueva ${ingredienteModificado.unidad}");
+      print("  - Factor de cambio: $factorCambio");
       
       setState(() {
-        // Actualizar el ingrediente modificado
+        // Actualizamos el ingrediente modificado
         ingredienteModificado.cantidad = cantidadNueva;
         ingredienteModificado.cantidadController.text = _formatearNumero(cantidadNueva);
+        
+        // IMPORTANTE: Actualizamos también la cantidad original para futuros cálculos
+        ingredienteModificado.cantidadOriginal = cantidadNueva;
 
-        // Actualizar todos los demás ingredientes
+        // Actualizar todos los demás ingredientes con el mismo factor
         for (var i = 0; i < _ingredientesTabla.length; i++) {
           if (i != index) {
             var ingrediente = _ingredientesTabla[i];
-            double nuevaCantidad = ingrediente.cantidadOriginal * factorEscala;
-            ingrediente.cantidad = nuevaCantidad;
-            ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
+            double nuevaCantidadIngrediente = ingrediente.cantidad * factorCambio;
+            
+            ingrediente.cantidad = nuevaCantidadIngrediente;
+            // Actualizamos también la cantidad original para mantener la referencia
+            ingrediente.cantidadOriginal = nuevaCantidadIngrediente;
+            ingrediente.cantidadController.text = _formatearNumero(nuevaCantidadIngrediente);
+            
+            print("  - Actualizado: ${ingrediente.nombre} de ${ingrediente.cantidad / factorCambio} a $nuevaCantidadIngrediente ${ingrediente.unidad}");
           }
         }
 
-        // Actualizar el rendimiento
-        _platosDestino = _valorOriginalRendimiento * factorEscala;
-        _destinoController.text = _formatearNumero(_platosDestino);
-        _resultado = _platosDestino;
+        // Actualizar solo el rendimiento nuevo con el mismo factor, manteniendo el original fijo
+        double nuevoRendimiento = _platosDestino * factorCambio;
+        _platosDestino = nuevoRendimiento;
+        // NO actualizamos _platosOrigen para mantenerlo como referencia original
+        _destinoController.text = _formatearNumero(nuevoRendimiento);
+        _resultado = nuevoRendimiento;
+        
+        print("  - Rendimiento nuevo actualizado de ${_platosDestino / factorCambio} a $nuevoRendimiento $_unidadDestino");
+        print("  - Rendimiento original mantenido en: $_platosOrigen $_unidadOriginal");
       });
     } catch (e) {
       print("Error al actualizar cantidad: $e");
     }
   }
 
-  String _getTipoUnidad(String unit) {
-    if (['gr', 'kg', 'oz', 'lb'].contains(unit)) return 'peso';
-    if (['ml', 'l', 'tz', 'cda', 'cdta'].contains(unit)) return 'volumen';
-    return 'unidad';
+  // Método para validar conversiones seguras
+  bool _esConversionValida(String desde, String hasta) {
+    // Comprueba si hay un camino directo o indirecto para convertir entre estas unidades
+    if (desde == hasta) return true;
+    
+    if (_factoresRendimiento.containsKey(desde) && _factoresRendimiento[desde]!.containsKey(hasta)) {
+      return true; // Conversión directa disponible
+    }
+    
+    if (_factoresRendimiento.containsKey(hasta) && _factoresRendimiento[hasta]!.containsKey(desde)) {
+      return true; // Conversión inversa disponible
+    }
+    
+    // Verifiquemos si podemos convertir a través de una unidad base
+    String unidadBase = "";
+    if (['Gramo', 'Kilogramo', 'Onza', 'Libra', 'Miligramos'].contains(desde) ||
+        ['Gramo', 'Kilogramo', 'Onza', 'Libra', 'Miligramos'].contains(hasta)) {
+      unidadBase = 'Gramo';
+    } else if (['Mililitros', 'Litro', 'Centilitros', 'Cucharada', 'Cucharadita', 
+                'Taza', 'Onza liquida', 'Pinta', 'Cuarto galon', 'Galon'].contains(desde) ||
+               ['Mililitros', 'Litro', 'Centilitros', 'Cucharada', 'Cucharadita',
+                'Taza', 'Onza liquida', 'Pinta', 'Cuarto galon', 'Galon'].contains(hasta)) {
+      unidadBase = 'Mililitros';
+    } else {
+      return false; // No podemos determinar una unidad base común
+    }
+    
+    // Comprobamos si podemos convertir desde y hacia la unidad base
+    bool desdeABase = (_factoresRendimiento.containsKey(desde) && _factoresRendimiento[desde]!.containsKey(unidadBase)) ||
+                       (_factoresRendimiento.containsKey(unidadBase) && _factoresRendimiento[unidadBase]!.containsKey(desde));
+    
+    bool baseAHasta = (_factoresRendimiento.containsKey(unidadBase) && _factoresRendimiento[unidadBase]!.containsKey(hasta)) ||
+                       (_factoresRendimiento.containsKey(hasta) && _factoresRendimiento[hasta]!.containsKey(unidadBase));
+    
+    return desdeABase && baseAHasta;
+  }
+
+  void _actualizarUnidad(int index, String nuevaUnidad) {
+    final ingrediente = _ingredientesTabla[index];
+    if (ingrediente.unidad == nuevaUnidad) return;
+
+    try {
+      // Comprobemos primero si la conversión es válida
+      if (!_esConversionValida(ingrediente.unidad, nuevaUnidad)) {
+        print("ADVERTENCIA: No hay una conversión válida de ${ingrediente.unidad} a $nuevaUnidad");
+        // Podríamos mostrar un diálogo al usuario aquí
+        return;
+      }
+
+      setState(() {
+        // Convertir la cantidad ACTUAL a la nueva unidad (no la cantidad base)
+        double nuevaCantidad = _convertirRendimiento(
+          ingrediente.cantidad, 
+          ingrediente.unidad, 
+          nuevaUnidad
+        );
+        
+        print("DIAGNÓSTICO: Cambio de unidad en ingrediente ${ingrediente.nombre}");
+        print("  - Unidad anterior: ${ingrediente.unidad}");
+        print("  - Nueva unidad: $nuevaUnidad");
+        print("  - Cantidad actual: ${ingrediente.cantidad} ${ingrediente.unidad}");
+        print("  - Cantidad convertida: $nuevaCantidad $nuevaUnidad");
+
+        // Actualizar el ingrediente con los nuevos valores
+        ingrediente.cantidad = nuevaCantidad;
+        ingrediente.unidad = nuevaUnidad;
+        ingrediente.cantidadOriginal = nuevaCantidad; // Actualizar también la base de referencia
+        ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
+      });
+    } catch (e) {
+      print("Error al actualizar unidad: $e");
+    }
+  }
+
+  // Método para formatear números con precisión adecuada
+  String _formatearNumero(double numero) {
+    try {
+      // Manejo de NaN o infinito
+      if (numero.isNaN || numero.isInfinite) {
+        return "0";
+      }
+
+      // Para valores muy pequeños, mostrar más decimales
+      if (numero.abs() < 0.01 && numero.abs() > 0) {
+        return numero.toStringAsFixed(4).replaceAll(RegExp(r'\.?0+$'), '');
+      }
+      
+      // Para valores normales
+      if (numero == numero.roundToDouble()) {
+        return numero.toInt().toString();
+      }
+      
+      String resultado = numero.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+      return resultado;
+    } catch (e) {
+      print("Error al formatear número: $e");
+      return "0";
+    }
   }
 
   double _convertirRendimiento(double cantidad, String desde, String hasta) {
-    // Si es la misma unidad, devolvemos la misma cantidad
-    if (desde == hasta) return cantidad;
+    try {
+      // Manejo de casos especiales
+      if (cantidad.isNaN || cantidad.isInfinite) {
+        print("Error: cantidad no válida para conversión");
+        return 0.0;
+      }
 
-    // Si tenemos una conversión directa, la usamos
-    if (_factoresRendimiento.containsKey(desde) &&
-        _factoresRendimiento[desde]!.containsKey(hasta)) {
-      print("Conversión directa: $cantidad $desde a $hasta = ${cantidad * _factoresRendimiento[desde]![hasta]!}");
-      return cantidad * _factoresRendimiento[desde]![hasta]!;
-    }
+      // Si es la misma unidad, devolvemos la misma cantidad
+      if (desde == hasta) return cantidad;
 
-    // Si tenemos la conversión inversa, la invertimos
-    if (_factoresRendimiento.containsKey(hasta) &&
-        _factoresRendimiento[hasta]!.containsKey(desde)) {
-      print("Conversión inversa: $cantidad $desde a $hasta = ${cantidad / _factoresRendimiento[hasta]![desde]!}");
-      return cantidad / _factoresRendimiento[hasta]![desde]!;
-    }
+      // Convertimos a minúsculas y eliminamos espacios para normalizar
+      String desdeNorm = desde.trim();
+      String hastaNorm = hasta.trim();
 
-    // Si no hay conversión directa, intentamos convertir a través de Gramo o Mililitros como unidades base
-    String unidadBase;
-    
-    // Determinar la unidad base adecuada
-    if (['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(desde) ||
-        ['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(hasta)) {
-      unidadBase = 'Gramo';  // Para unidades de peso
-    } else {
-      unidadBase = 'Mililitros';  // Para unidades de volumen
-    }
-    
-    // Convertimos a través de la unidad base
-    print("Conversión a través de $unidadBase: $cantidad $desde -> $unidadBase -> $hasta");
-    double cantidadBase;
-    
-    // Desde -> Unidad Base
-    if (_factoresRendimiento.containsKey(desde) && _factoresRendimiento[desde]!.containsKey(unidadBase)) {
-      cantidadBase = cantidad * _factoresRendimiento[desde]![unidadBase]!;
-    } else if (_factoresRendimiento.containsKey(unidadBase) && _factoresRendimiento[unidadBase]!.containsKey(desde)) {
-      cantidadBase = cantidad / _factoresRendimiento[unidadBase]![desde]!;
-    } else {
-      print("No se pudo convertir $desde a $unidadBase");
+      // Casos especiales de depuración
+      print("Convirtiendo $cantidad $desdeNorm a $hastaNorm");
+
+      // Si tenemos una conversión directa, la usamos
+      if (_factoresRendimiento.containsKey(desdeNorm) &&
+          _factoresRendimiento[desdeNorm]!.containsKey(hastaNorm)) {
+        double resultado = cantidad * _factoresRendimiento[desdeNorm]![hastaNorm]!;
+        print("Conversión directa: $cantidad $desdeNorm a $hastaNorm = $resultado");
+        return resultado;
+      }
+
+      // Si tenemos la conversión inversa, la invertimos
+      if (_factoresRendimiento.containsKey(hastaNorm) &&
+          _factoresRendimiento[hastaNorm]!.containsKey(desdeNorm)) {
+        double resultado = cantidad / _factoresRendimiento[hastaNorm]![desdeNorm]!;
+        print("Conversión inversa: $cantidad $desdeNorm a $hastaNorm = $resultado");
+        return resultado;
+      }
+
+      // Si no hay conversión directa, intentamos convertir a través de una unidad base
+      String unidadBase;
+      
+      // Determinar la unidad base adecuada
+      if (['Gramo', 'Kilogramo', 'Onza', 'Libra', 'Miligramos'].contains(desdeNorm) ||
+          ['Gramo', 'Kilogramo', 'Onza', 'Libra', 'Miligramos'].contains(hastaNorm)) {
+        unidadBase = 'Gramo';  // Para unidades de peso
+      } else {
+        unidadBase = 'Mililitros';  // Para unidades de volumen
+      }
+      
+      // Convertimos a través de la unidad base
+      print("Conversión a través de $unidadBase: $cantidad $desdeNorm -> $unidadBase -> $hastaNorm");
+      double cantidadBase;
+      
+      // Desde -> Unidad Base
+      if (_factoresRendimiento.containsKey(desdeNorm) && _factoresRendimiento[desdeNorm]!.containsKey(unidadBase)) {
+        cantidadBase = cantidad * _factoresRendimiento[desdeNorm]![unidadBase]!;
+      } else if (_factoresRendimiento.containsKey(unidadBase) && _factoresRendimiento[unidadBase]!.containsKey(desdeNorm)) {
+        cantidadBase = cantidad / _factoresRendimiento[unidadBase]![desdeNorm]!;
+      } else {
+        print("No se pudo convertir $desdeNorm a $unidadBase");
+        return cantidad;
+      }
+      
+      // Unidad Base -> Hasta
+      double resultado;
+      if (_factoresRendimiento.containsKey(unidadBase) && _factoresRendimiento[unidadBase]!.containsKey(hastaNorm)) {
+        resultado = cantidadBase * _factoresRendimiento[unidadBase]![hastaNorm]!;
+      } else if (_factoresRendimiento.containsKey(hastaNorm) && _factoresRendimiento[hastaNorm]!.containsKey(unidadBase)) {
+        resultado = cantidadBase / _factoresRendimiento[hastaNorm]![unidadBase]!;
+      } else {
+        print("No se pudo convertir $unidadBase a $hastaNorm");
+        return cantidad;
+      }
+      
+      print("Resultado final de conversión: $cantidad $desdeNorm -> $cantidadBase $unidadBase -> $resultado $hastaNorm");
+      return resultado;
+    } catch (e) {
+      print("Error en conversión: $e");
+      // En caso de error, devolvemos la misma cantidad
       return cantidad;
     }
-    
-    // Unidad Base -> Hasta
-    double resultado;
-    if (_factoresRendimiento.containsKey(unidadBase) && _factoresRendimiento[unidadBase]!.containsKey(hasta)) {
-      resultado = cantidadBase * _factoresRendimiento[unidadBase]![hasta]!;
-    } else if (_factoresRendimiento.containsKey(hasta) && _factoresRendimiento[hasta]!.containsKey(unidadBase)) {
-      resultado = cantidadBase / _factoresRendimiento[hasta]![unidadBase]!;
-    } else {
-      print("No se pudo convertir $unidadBase a $hasta");
-      return cantidad;
-    }
-    
-    print("Resultado final de conversión: $cantidad $desde -> $cantidadBase $unidadBase -> $resultado $hasta");
-    return resultado;
   }
 
   String _formatResult(double value) {
@@ -731,47 +993,195 @@ class _ConversionCalculatorScreenState
                                           // Solo convertimos si la unidad realmente cambió
                                           if (unidadAnterior != value) {
                                             double cantidadActual = _platosDestino;
-                                            String tipoUnidadAnterior = _getTipoUnidad(_unidadesAbreviadas[unidadAnterior] ?? unidadAnterior);
-                                            String tipoUnidadNueva = _getTipoUnidad(_unidadesAbreviadas[value] ?? value);
                                             
-                                            print("Convirtiendo $cantidadActual $unidadAnterior a $value");
+                                            // IMPLEMENTACIÓN FORZADA DE CONVERSIONES EXACTAS
+                                            // Usamos conversiones directas y explícitas para evitar problemas
+                                            double nuevaCantidad = 0.0;
                                             
-                                            // Lógica para usar el valor actual correcto
-                                            double cantidadConvertida;
-                                            
-                                            if (['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(unidadAnterior) && 
-                                                ['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(value)) {
-                                              // Conversión peso -> peso
-                                              cantidadConvertida = _convertirRendimiento(cantidadActual, unidadAnterior, value);
+                                            // DE PESO A PESO
+                                            if (unidadAnterior == "Gramo" && value == "Kilogramo") {
+                                              nuevaCantidad = cantidadActual / 1000.0;
                                             } 
-                                            else if (['Mililitros', 'Litro'].contains(unidadAnterior) && 
-                                                     ['Mililitros', 'Litro'].contains(value)) {
-                                              // Conversión volumen -> volumen
-                                              cantidadConvertida = _convertirRendimiento(cantidadActual, unidadAnterior, value);
+                                            else if (unidadAnterior == "Kilogramo" && value == "Gramo") {
+                                              nuevaCantidad = cantidadActual * 1000.0;
                                             }
-                                            else if (['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(unidadAnterior)) {
-                                              // Conversión desde peso a otro tipo
-                                              // Primero convertimos a gramos como base
-                                              double valorEnGramos = _convertirRendimiento(cantidadActual, unidadAnterior, 'Gramo');
-                                              _valorActualGramos = valorEnGramos;
-                                              cantidadConvertida = _convertirRendimiento(valorEnGramos, 'Gramo', value);
+                                            else if (unidadAnterior == "Gramo" && value == "Onza") {
+                                              nuevaCantidad = cantidadActual / 28.3495;
                                             }
-                                            else if (['Mililitros', 'Litro'].contains(unidadAnterior)) {
-                                              // Conversión desde volumen a otro tipo
-                                              // Primero convertimos a mililitros como base
-                                              double valorEnMililitros = _convertirRendimiento(cantidadActual, unidadAnterior, 'Mililitros');
-                                              _valorActualMililitros = valorEnMililitros;
-                                              cantidadConvertida = _convertirRendimiento(valorEnMililitros, 'Mililitros', value);
+                                            else if (unidadAnterior == "Onza" && value == "Gramo") {
+                                              nuevaCantidad = cantidadActual * 28.3495;
                                             }
-                                            else {
-                                              // Para otros tipos o cuando la unidad anterior es 'Porción', etc.
-                                              cantidadConvertida = _convertirRendimiento(cantidadActual, unidadAnterior, value);
+                                            else if (unidadAnterior == "Kilogramo" && value == "Onza") {
+                                              nuevaCantidad = cantidadActual * 35.274;
+                                            }
+                                            else if (unidadAnterior == "Onza" && value == "Kilogramo") {
+                                              nuevaCantidad = cantidadActual / 35.274;
+                                            }
+                                            else if (unidadAnterior == "Kilogramo" && value == "Libra") {
+                                              nuevaCantidad = cantidadActual * 2.20462;
+                                            }
+                                            else if (unidadAnterior == "Libra" && value == "Kilogramo") {
+                                              nuevaCantidad = cantidadActual / 2.20462;
+                                            }
+                                            else if (unidadAnterior == "Gramo" && value == "Libra") {
+                                              nuevaCantidad = cantidadActual / 453.592;
+                                            }
+                                            else if (unidadAnterior == "Libra" && value == "Gramo") {
+                                              nuevaCantidad = cantidadActual * 453.592;
+                                            }
+                                            else if (unidadAnterior == "Onza" && value == "Libra") {
+                                              nuevaCantidad = cantidadActual / 16.0;
+                                            }
+                                            else if (unidadAnterior == "Libra" && value == "Onza") {
+                                              nuevaCantidad = cantidadActual * 16.0;
                                             }
                                             
-                                            print("Resultado de la conversión: $cantidadConvertida");
-                                            _platosDestino = cantidadConvertida;
-                                            _destinoController.text = _formatearNumero(cantidadConvertida);
-                                            _calcularConversion();
+                                            // DE VOLUMEN A VOLUMEN
+                                            else if (unidadAnterior == "Mililitros" && value == "Litro") {
+                                              nuevaCantidad = cantidadActual / 1000.0;
+                                            }
+                                            else if (unidadAnterior == "Litro" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 1000.0;
+                                            }
+                                            else if (unidadAnterior == "Centilitros" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 10.0;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Centilitros") {
+                                              nuevaCantidad = cantidadActual / 10.0;
+                                            }
+                                            else if (unidadAnterior == "Centilitros" && value == "Litro") {
+                                              nuevaCantidad = cantidadActual / 100.0;
+                                            }
+                                            else if (unidadAnterior == "Litro" && value == "Centilitros") {
+                                              nuevaCantidad = cantidadActual * 100.0;
+                                            }
+                                            else if (unidadAnterior == "Cucharada" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 15.0;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Cucharada") {
+                                              nuevaCantidad = cantidadActual / 15.0;
+                                            }
+                                            else if (unidadAnterior == "Cucharadita" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 5.0;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Cucharadita") {
+                                              nuevaCantidad = cantidadActual / 5.0;
+                                            }
+                                            else if (unidadAnterior == "Taza" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 240.0;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Taza") {
+                                              nuevaCantidad = cantidadActual / 240.0;
+                                            }
+                                            
+                                            // PORCIONES
+                                            else if (unidadAnterior == "Porción" && value == "Gramo") {
+                                              nuevaCantidad = cantidadActual * 250.0;
+                                            }
+                                            else if (unidadAnterior == "Gramo" && value == "Porción") {
+                                              nuevaCantidad = cantidadActual / 250.0;
+                                            }
+                                            else if (unidadAnterior == "Porción" && value == "Kilogramo") {
+                                              nuevaCantidad = cantidadActual * 0.25;
+                                            }
+                                            else if (unidadAnterior == "Kilogramo" && value == "Porción") {
+                                              nuevaCantidad = cantidadActual * 4.0;
+                                            }
+                                            else if (unidadAnterior == "Porción" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 250.0;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Porción") {
+                                              nuevaCantidad = cantidadActual / 250.0;
+                                            }
+                                            else if (unidadAnterior == "Porción" && value == "Litro") {
+                                              nuevaCantidad = cantidadActual * 0.25;
+                                            }
+                                            else if (unidadAnterior == "Litro" && value == "Porción") {
+                                              nuevaCantidad = cantidadActual * 4.0;
+                                            }
+                                            
+                                            // ONZAS LÍQUIDAS
+                                            else if (unidadAnterior == "Onza liquida" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 29.5735;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Onza liquida") {
+                                              nuevaCantidad = cantidadActual / 29.5735;
+                                            }
+                                            else if (unidadAnterior == "Onza liquida" && value == "Litro") {
+                                              nuevaCantidad = cantidadActual * 0.0295735;
+                                            }
+                                            else if (unidadAnterior == "Litro" && value == "Onza liquida") {
+                                              nuevaCantidad = cantidadActual * 33.814;
+                                            }
+                                            
+                                            // CONVERSIONES ADICIONALES
+                                            else if (unidadAnterior == "Pinta" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 473.176;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Pinta") {
+                                              nuevaCantidad = cantidadActual / 473.176;
+                                            }
+                                            else if (unidadAnterior == "Pinta" && value == "Litro") {
+                                              nuevaCantidad = cantidadActual * 0.473176;
+                                            }
+                                            else if (unidadAnterior == "Litro" && value == "Pinta") {
+                                              nuevaCantidad = cantidadActual * 2.11338;
+                                            }
+                                            else if (unidadAnterior == "Cuarto galon" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 946.353;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Cuarto galon") {
+                                              nuevaCantidad = cantidadActual / 946.353;
+                                            }
+                                            else if (unidadAnterior == "Cuarto galon" && value == "Litro") {
+                                              nuevaCantidad = cantidadActual * 0.946353;
+                                            }
+                                            else if (unidadAnterior == "Litro" && value == "Cuarto galon") {
+                                              nuevaCantidad = cantidadActual * 1.05669;
+                                            }
+                                            else if (unidadAnterior == "Galon" && value == "Mililitros") {
+                                              nuevaCantidad = cantidadActual * 3785.41;
+                                            }
+                                            else if (unidadAnterior == "Mililitros" && value == "Galon") {
+                                              nuevaCantidad = cantidadActual / 3785.41;
+                                            }
+                                            else if (unidadAnterior == "Galon" && value == "Litro") {
+                                              nuevaCantidad = cantidadActual * 3.78541;
+                                            }
+                                            else if (unidadAnterior == "Litro" && value == "Galon") {
+                                              nuevaCantidad = cantidadActual * 0.264172;
+                                            }
+                                            else if (unidadAnterior == "Miligramos" && value == "Gramo") {
+                                              nuevaCantidad = cantidadActual / 1000.0;
+                                            }
+                                            else if (unidadAnterior == "Gramo" && value == "Miligramos") {
+                                              nuevaCantidad = cantidadActual * 1000.0;
+                                            }
+                                            else if (unidadAnterior == "Miligramos" && value == "Kilogramo") {
+                                              nuevaCantidad = cantidadActual / 1000000.0;
+                                            }
+                                            else if (unidadAnterior == "Kilogramo" && value == "Miligramos") {
+                                              nuevaCantidad = cantidadActual * 1000000.0;
+                                            }
+                                            // Caso por defecto: mantenemos la cantidad si no tenemos una conversión específica
+                                            else {
+                                              print("⚠️ No se encontró conversión directa de $unidadAnterior a $value, manteniendo valor");
+                                              nuevaCantidad = cantidadActual;
+                                            }
+                                            
+                                            print("DEBUG: Conversión de $cantidadActual $unidadAnterior a $nuevaCantidad $value");
+                                            
+                                            // Actualizamos SOLO el rendimiento destino
+                                            _platosDestino = nuevaCantidad;
+                                            _destinoController.text = _formatearNumero(nuevaCantidad);
+                                            _resultado = nuevaCantidad;
+                                            
+                                            // Actualizamos los valores base también
+                                            if (_esTipoUnidadPeso(value)) {
+                                              _valorBaseGramos = _convertirAUnidadBase(nuevaCantidad, value, 'peso');
+                                            } else if (_esTipoUnidadVolumen(value)) {
+                                              _valorBaseMililitros = _convertirAUnidadBase(nuevaCantidad, value, 'volumen');
+                                            }
                                           }
                                         });
                                       }
@@ -1020,48 +1430,39 @@ class _ConversionCalculatorScreenState
     );
   }
 
-  void _actualizarUnidad(int index, String nuevaUnidad) {
-    final ingrediente = _ingredientesTabla[index];
-    if (ingrediente.unidad == nuevaUnidad) return;
-
-    try {
-      setState(() {
-        // Convertir la cantidad a la nueva unidad usando la cantidad base
-        double nuevaCantidad = IngredienteTabla._convertirDesdeBase(
-          ingrediente._cantidadBase,
-          nuevaUnidad,
-        );
-
-        // Actualizar el ingrediente con los nuevos valores
-        ingrediente.cantidad = nuevaCantidad;
-        ingrediente.unidad = nuevaUnidad;
-        ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
-      });
-    } catch (e) {
-      print("Error al actualizar unidad: $e");
-    }
-  }
-
-  String _determinarUnidadBase(String unidad) {
-    if (['Gramo', 'Kilogramo', 'Onza', 'Libra'].contains(unidad)) {
-      return 'Gramo';
-    }
-    if (['Mililitros', 'Litro'].contains(unidad)) {
-      return 'Mililitros';
-    }
-    return unidad;
-  }
-
-  String _formatearNumero(double numero) {
-    if (numero == numero.roundToDouble()) {
-      return numero.toInt().toString();
-    }
-    return numero.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
-  }
-
   String _getUnidadPlural(String unidad, double cantidad) {
     if (cantidad <= 1) return unidad;
     return _unidadesPlural[unidad] ?? '${unidad}s';
+  }
+
+  // Nuevos métodos para simplificar la comprobación de tipo de unidad
+  bool _esTipoUnidadPeso(String unidad) {
+    return ['Gramo', 'Kilogramo', 'Onza', 'Libra', 'Miligramos'].contains(unidad);
+  }
+  
+  bool _esTipoUnidadVolumen(String unidad) {
+    return ['Mililitros', 'Litro', 'Centilitros', 'Cucharada', 'Cucharadita', 
+            'Taza', 'Onza liquida', 'Pinta', 'Cuarto galon', 'Galon'].contains(unidad);
+  }
+  
+  // Método para convertir a unidad base (gramos o mililitros)
+  double _convertirAUnidadBase(double cantidad, String unidad, String tipo) {
+    if (tipo == 'peso') {
+      return _convertirRendimiento(cantidad, unidad, 'Gramo');
+    } else if (tipo == 'volumen') {
+      return _convertirRendimiento(cantidad, unidad, 'Mililitros');
+    }
+    return cantidad;
+  }
+  
+  // Método para convertir desde unidad base
+  double _convertirDesdeUnidadBase(double cantidadBase, String unidadDestino, String tipo) {
+    if (tipo == 'peso') {
+      return _convertirRendimiento(cantidadBase, 'Gramo', unidadDestino);
+    } else if (tipo == 'volumen') {
+      return _convertirRendimiento(cantidadBase, 'Mililitros', unidadDestino);
+    }
+    return cantidadBase;
   }
 }
 
@@ -1072,7 +1473,7 @@ class IngredienteTabla {
   String tipoMedida;
   final TextEditingController nombreController;
   final TextEditingController cantidadController;
-  final double cantidadOriginal;
+  double cantidadOriginal;
   final String unidadOriginal;
   final double _cantidadBase; // Nueva propiedad para mantener la cantidad en unidad base
 
