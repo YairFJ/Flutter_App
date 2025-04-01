@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../screens/recipe_detail_screen.dart';
-import '../widgets/recipe_card.dart';
 
 class FavoriteRecipesScreen extends StatelessWidget {
   const FavoriteRecipesScreen({super.key});

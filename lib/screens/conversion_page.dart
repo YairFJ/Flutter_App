@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ConversionPage extends StatelessWidget {
-  const ConversionPage({Key? key}) : super(key: key);
+  const ConversionPage({super.key});
 
   @override
   Widget build(BuildContext context) {

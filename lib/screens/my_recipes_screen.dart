@@ -337,8 +337,8 @@ class MyRecipesScreen extends StatelessWidget {
             ),
           );
         },
-        child: const Icon(Icons.add),
         backgroundColor: const Color(0xFF96B4D8),
+        child: const Icon(Icons.add),
       ),
     );
   }
