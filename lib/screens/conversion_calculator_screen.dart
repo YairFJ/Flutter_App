@@ -1149,6 +1149,11 @@ class _ConversionCalculatorScreenState
         title: const Text('Calculadora de Conversiones'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.help_outline),
+            onPressed: _mostrarTablaEquivalencias,
+            tooltip: 'Ver tabla de equivalencias',
+          ),
+          IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: _generarPDF,
             tooltip: 'Generar PDF',
@@ -1866,6 +1871,102 @@ class _ConversionCalculatorScreenState
       return _convertirRendimiento(cantidadBase, 'Mililitros', unidadDestino);
     }
     return cantidadBase;
+  }
+
+  void _mostrarTablaEquivalencias() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Tabla de Equivalencias',
+            style: TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildEquivalenciasSection('UNIDADES DE PESO', [
+                  '1 Kilogramo (kg) = 1000 Gramos (g)',
+                  '1 Gramo (g) = 1000 Miligramos (mg)',
+                  '1 Libra (lb) = 453.6 Gramos (g)',
+                  '1 Libra (lb) = 16 Onzas (oz)',
+                  '1 Onza (oz) = 28.35 Gramos (g)',
+                ]),
+                const SizedBox(height: 12),
+                _buildEquivalenciasSection('UNIDADES DE VOLUMEN', [
+                  '1 Litro (L) = 1000 Mililitros (ml)',
+                  '1 Litro (L) = 100 Centilitros (cl)',
+                  '1 Centilitro (cl) = 10 Mililitros (ml)',
+                  '1 Taza = 240 Mililitros (ml)',
+                  '1 Cucharada (cda) = 15 Mililitros (ml)',
+                  '1 Cucharadita (cdta) = 5 Mililitros (ml)',
+                  '1 Taza = 16 Cucharadas (cda)',
+                  '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
+                  '1 Onza líquida = 29.57 Mililitros (ml)',
+                  '1 Pinta = 473.2 Mililitros (ml)',
+                  '1 Cuarto galón = 946.4 Mililitros (ml)',
+                  '1 Galón = 3.785 Litros (L)',
+                ]),
+                const SizedBox(height: 12),
+                _buildEquivalenciasSection('PORCIONES', [
+                  '1 Porción = 250 Gramos (g)',
+                  '1 Porción = 0.25 Kilogramos (kg)',
+                  '1 Porción = 250 Mililitros (ml)',
+                  '1 Porción = 8.8 Onzas (oz)',
+                  '1 Porción = 0.55 Libras (lb)',
+                  '1 Kilogramo (kg) = 4 Porciones',
+                  '1 Litro (L) = 4 Porciones',
+                ]),
+                const SizedBox(height: 12),
+                _buildEquivalenciasSection('PESO-VOLUMEN (aprox.)', [
+                  '1 Gramo (g) = 1 Mililitro (ml) de agua',
+                  '1 Kilogramo (kg) = 1 Litro (L) de agua',
+                  '1 Libra (lb) = 454 Mililitros (ml) de agua',
+                  '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
+                ]),
+                const SizedBox(height: 8),
+                const Text('Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEquivalenciasSection(String title, List<String> equivalencias) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.blueGrey.shade800 
+              : Colors.blue.shade100,
+          child: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 4),
+        ...equivalencias.map((e) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          child: Text(e, style: const TextStyle(fontSize: 14)),
+        )).toList(),
+      ],
+    );
   }
 }
 
