@@ -240,6 +240,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
                       decoration: InputDecoration(
+                        labelText: isEnglish ? 'Amount' : 'Cantidad',
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                         fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,

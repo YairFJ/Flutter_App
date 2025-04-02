@@ -7,7 +7,12 @@ import './add_recipe_screen.dart';
 import './edit_recipe_screen.dart';
 
 class MyRecipesScreen extends StatelessWidget {
-  const MyRecipesScreen({super.key});
+  final bool isEnglish;
+  
+  const MyRecipesScreen({
+    super.key,
+    this.isEnglish = false,
+  });
 
   Future<void> _deleteRecipe(BuildContext context, Recipe recipe) async {
     final confirmed = await showDialog<bool>(
@@ -123,7 +128,9 @@ class MyRecipesScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const AddRecipeScreen(),
+                          builder: (context) => AddRecipeScreen(
+                            isEnglish: isEnglish,
+                          ),
                         ),
                       );
                     },
@@ -333,7 +340,9 @@ class MyRecipesScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const AddRecipeScreen(),
+              builder: (context) => AddRecipeScreen(
+                isEnglish: isEnglish,
+              ),
             ),
           );
         },

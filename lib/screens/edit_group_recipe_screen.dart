@@ -6,15 +6,18 @@ import '../constants/categories.dart';
 import '../models/ingredient.dart';
 import '../widgets/ingredient_table_widget.dart';
 import '../models/group.dart';
+import '../services/language_service.dart';
 
 class EditGroupRecipeScreen extends StatefulWidget {
   final Recipe recipe;
   final Group group;
+  final bool isEnglish;
 
   const EditGroupRecipeScreen({
     super.key, 
     required this.recipe,
     required this.group,
+    this.isEnglish = false,
   });
 
   @override
@@ -29,9 +32,19 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
   late TextEditingController _servingSizeController;
   late String _selectedCategory;
   late bool _isPrivate;
+  late bool isEnglish;
   List<Ingredient> _ingredients = [];
   late List<String> _steps;
   String _category = '';
+  
+  // Listener para cambios de idioma
+  void _languageChanged() {
+    if (mounted && isEnglish != LanguageService().isEnglish) {
+      setState(() {
+        isEnglish = LanguageService().isEnglish;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -45,9 +58,28 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
     _isPrivate = widget.recipe.isPrivate;
     _ingredients = List.from(widget.recipe.ingredients);
     _category = _selectedCategory;
-
+    isEnglish = widget.isEnglish;
+    
+    // Sincronizar con el servicio de idioma global
+    if (isEnglish != LanguageService().isEnglish) {
+      isEnglish = LanguageService().isEnglish;
+    }
+    
+    // Suscribirse a cambios de idioma
+    LanguageService().addListener(_languageChanged);
+    
     if (_steps.isEmpty) {
       _steps.add('');
+    }
+  }
+
+  @override
+  void didUpdateWidget(EditGroupRecipeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
     }
   }
 
@@ -78,9 +110,9 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Editar Ingredientes',
-                      style: TextStyle(
+                    Text(
+                      isEnglish ? 'Edit Ingredients' : 'Editar Ingredientes',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -116,10 +148,12 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                         // Solo mostramos la alerta si se filtró algún ingrediente
                         ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
+                          SnackBar(
+                            content: Text(isEnglish 
+                              ? 'All ingredients must have a quantity greater than 0'
+                              : 'Todos los ingredientes deben tener una cantidad mayor a 0'),
                             backgroundColor: Colors.red,
-                            duration: Duration(seconds: 2),
+                            duration: const Duration(seconds: 2),
                           ),
                         );
                       }
@@ -139,7 +173,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(_ingredients),
-                      child: const Text('Cancelar'),
+                      child: Text(isEnglish ? 'Cancel' : 'Cancelar'),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
@@ -149,8 +183,10 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                         
                         if (hasInvalidIngredient) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Todos los ingredientes deben tener una cantidad mayor a 0'),
+                            SnackBar(
+                              content: Text(isEnglish 
+                                ? 'All ingredients must have a quantity greater than 0'
+                                : 'Todos los ingredientes deben tener una cantidad mayor a 0'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -159,7 +195,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                           Navigator.of(context).pop(_ingredients);
                         }
                       },
-                      child: const Text('Guardar'),
+                      child: Text(isEnglish ? 'Save' : 'Guardar'),
                     ),
                   ],
                 ),
@@ -255,8 +291,10 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
           Navigator.pop(context, updatedRecipe);
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta actualizada con éxito'),
+            SnackBar(
+              content: Text(isEnglish 
+                ? 'Recipe updated successfully'
+                : 'Receta actualizada con éxito'),
               backgroundColor: Colors.green,
             ),
           );
@@ -266,7 +304,9 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al actualizar la receta: ${e.toString()}'),
+              content: Text(isEnglish 
+                ? 'Error updating recipe: ${e.toString()}'
+                : 'Error al actualizar la receta: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -277,9 +317,11 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('build - isEnglish: $isEnglish'); // Verificar valor durante la construcción
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Editar Receta de Comunidad'),
+        backgroundColor: isEnglish ? Colors.blue : Colors.red, // Color diferente según idioma
+        title: Text(isEnglish ? 'Edit Community Recipe' : 'Editar Receta de Comunidad'),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -294,13 +336,13 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
           children: [
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Título',
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Title' : 'Título',
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value?.trim().isEmpty ?? true) {
-                  return 'Por favor ingresa un título';
+                  return isEnglish ? 'Please enter a title' : 'Por favor ingresa un título';
                 }
                 return null;
               },
@@ -309,8 +351,8 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
 
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Description' : 'Descripción',
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -319,14 +361,14 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
 
             TextFormField(
               controller: _servingSizeController,
-              decoration: const InputDecoration(
-                labelText: 'Rendimiento',
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Serving Size' : 'Rendimiento',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Por favor ingresa el rendimiento';
+                  return isEnglish ? 'Please enter the serving size' : 'Por favor ingresa el rendimiento';
                 }
                 return null;
               },
@@ -336,14 +378,14 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Ingredientes',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  isEnglish ? 'Ingredients' : 'Ingredientes',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 TextButton.icon(
                   onPressed: _editIngredients,
                   icon: const Icon(Icons.edit),
-                  label: const Text('Editar ingredientes'),
+                  label: Text(isEnglish ? 'Edit ingredients' : 'Editar ingredientes'),
                 ),
               ],
             ),
@@ -376,14 +418,14 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _cookingTimeController,
-              decoration: const InputDecoration(
-                labelText: 'Tiempo de cocción (minutos)',
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Cooking Time (minutes)' : 'Tiempo de cocción (minutos)',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Por favor ingresa el tiempo de cocción';
+                  return isEnglish ? 'Please enter the cooking time' : 'Por favor ingresa el tiempo de cocción';
                 }
                 return null;
               },
@@ -392,8 +434,8 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
 
             DropdownButtonFormField<String>(
               value: _category.isNotEmpty ? _category : null,
-              decoration: const InputDecoration(
-                labelText: 'Categoría',
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Category' : 'Categoría',
                 border: OutlineInputBorder(),
               ),
               items: RecipeCategories.categories
@@ -411,7 +453,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
               },
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Por favor selecciona una categoría';
+                  return isEnglish ? 'Please select a category' : 'Por favor selecciona una categoría';
                 }
                 return null;
               },
@@ -419,15 +461,15 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
             const SizedBox(height: 16),
 
             SwitchListTile(
-              title: const Text('Receta Privada'),
+              title: Text(isEnglish ? 'Private Recipe' : 'Receta Privada'),
               value: _isPrivate,
               onChanged: (value) => setState(() => _isPrivate = value),
             ),
             const SizedBox(height: 16),
 
-            const Text(
-              'Pasos',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              isEnglish ? 'Steps' : 'Pasos',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             ListView.builder(
@@ -439,7 +481,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                   return TextButton.icon(
                     onPressed: () => setState(() => _steps.add('')),
                     icon: const Icon(Icons.add),
-                    label: const Text('Agregar paso'),
+                    label: Text(isEnglish ? 'Add step' : 'Agregar paso'),
                   );
                 }
                 return ListTile(
@@ -448,7 +490,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                     initialValue: _steps[index],
                     onChanged: (value) => _steps[index] = value,
                     decoration: InputDecoration(
-                      hintText: 'Paso ${index + 1}',
+                      hintText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
                     ),
                   ),
                   trailing: IconButton(
@@ -470,6 +512,10 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
     _descriptionController.dispose();
     _cookingTimeController.dispose();
     _servingSizeController.dispose();
+    
+    // Cancelar suscripción
+    LanguageService().removeListener(_languageChanged);
+    
     super.dispose();
   }
 }

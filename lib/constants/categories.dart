@@ -2,8 +2,25 @@ import 'package:flutter/material.dart';
 
 class RecipeCategories {
   static const String sinCategoria = 'Sin Categoría';
+  static const String noCategory = 'No Category';
 
-  static const List<String> categories = [
+  static final Map<String, String> _categoryTranslations = {
+    'Aderezos': 'Dressings',
+    'Arroz y cereales': 'Rice and cereals',
+    'Carne': 'Meat',
+    'Mariscos': 'Seafood',
+    'Panadería': 'Bakery',
+    'Pastas': 'Pasta',
+    'Pastelería': 'Pastry',
+    'Salsas': 'Sauces',
+    'Sopas': 'Soups',
+    'Vegano': 'Vegan',
+    'Vegetariano': 'Vegetarian',
+    'Verduras': 'Vegetables',
+    'Sin Categoría': 'No Category',
+  };
+
+  static List<String> categories = [
     // Comidas principales
     /*'Desayunos',
     'Almuerzos',
@@ -24,6 +41,13 @@ class RecipeCategories {
     // Categoría para recetas sin clasificar
     sinCategoria,
   ];
+
+  static String getTranslatedCategory(String category, bool isEnglish) {
+    if (isEnglish) {
+      return _categoryTranslations[category] ?? category;
+    }
+    return category;
+  }
 
   // Puedes agregar íconos para cada categoría
   static IconData getIconForCategory(String category) {

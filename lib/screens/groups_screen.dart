@@ -325,7 +325,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const CreateGroupScreen(),
+                            builder: (context) => CreateGroupScreen(isEnglish: false),
                           ),
                         );
                       },

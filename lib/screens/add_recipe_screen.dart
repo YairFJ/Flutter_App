@@ -8,7 +8,12 @@ import 'package:flutter_app/models/recipe.dart';
 import '../models/ingrediente_tabla.dart';
 
 class AddRecipeScreen extends StatefulWidget {
-  const AddRecipeScreen({super.key});
+  final bool isEnglish;
+  
+  const AddRecipeScreen({
+    super.key,
+    required this.isEnglish,
+  });
 
   @override
   State<AddRecipeScreen> createState() => _AddRecipeScreenState();
@@ -31,6 +36,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   bool _isPrivate = false;
   final List<Ingredient> _ingredients = [];
   String _servingUnit = 'gr';
+  late bool isEnglish;
 
   // Unidades disponibles para el rendimiento
   final List<String> _todasLasUnidades = [
@@ -49,6 +55,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   @override
   void initState() {
     super.initState();
+    isEnglish = widget.isEnglish;
+  }
+
+  @override
+  void didUpdateWidget(AddRecipeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
+    }
   }
 
   @override
@@ -277,7 +294,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nueva Receta'),
+        title: Text(isEnglish ? 'New Recipe' : 'Nueva Receta'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -293,9 +310,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Título',
+                    labelText: isEnglish ? 'Title' : 'Título',
                     border: OutlineInputBorder(),
-                    helperText: 'Entre 3 y 100 caracteres',
+                    helperText: isEnglish ? 'Between 3 and 100 characters' : 'Entre 3 y 100 caracteres',
                   ),
                   validator: _validateTitle,
                   textCapitalization: TextCapitalization.sentences,
@@ -307,9 +324,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Descripción',
+                    labelText: isEnglish ? 'Description' : 'Descripción',
                     border: OutlineInputBorder(),
-                    helperText: 'Máximo 500 caracteres',
+                    helperText: isEnglish ? 'Maximum 500 characters' : 'Máximo 500 caracteres',
                   ),
                   maxLines: 3,
                   validator: _validateDescription,
@@ -322,9 +339,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Tiempo de preparación (minutos)',
+                    labelText: isEnglish ? 'Preparation Time (minutes)' : 'Tiempo de preparación (minutos)',
                     border: OutlineInputBorder(),
-                    helperText: 'Número entero positivo (máximo 1440)',
+                    helperText: isEnglish ? 'Positive integer (maximum 1440)' : 'Número entero positivo (máximo 1440)',
                   ),
                   keyboardType: TextInputType.number,
                   validator: _validateCookingTime,
@@ -338,8 +355,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       flex: 2,
                       child: TextFormField(
                         controller: _servingSizeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Rendimiento',
+                        decoration: InputDecoration(
+                          labelText: isEnglish ? 'Yield' : 'Rendimiento',
                           border: OutlineInputBorder(),
                           //helperText: 'Cantidad',
                         ),
@@ -353,8 +370,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       flex: 1,
                       child: DropdownButtonFormField<String>(
                         value: _servingUnit,
-                        decoration: const InputDecoration(
-                          labelText: 'Unidad',
+                        decoration: InputDecoration(
+                          labelText: isEnglish ? 'Unit' : 'Unidad',
                           border: OutlineInputBorder(),
                         ),
                         items: _todasLasUnidades.map((String unidad) {
@@ -395,7 +412,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
                       hint: Text(
-                        'Selecciona una categoría',
+                        isEnglish ? 'Select a category' : 'Selecciona una categoría',
                         style: TextStyle(
                           color: isDarkMode ? Colors.white70 : Colors.grey[700],
                         ),
@@ -413,7 +430,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                category,
+                                RecipeCategories.getTranslatedCategory(category, isEnglish),
                                 style: TextStyle(
                                   color: isDarkMode ? Colors.white : Colors.black,
                                 ),
@@ -439,15 +456,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 const SizedBox(height: 24),
                 SwitchListTile(
                   title: Text(
-                    'Receta Privada',
+                    isEnglish ? 'Private Recipe' : 'Receta Privada',
                     style: TextStyle(
                       color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                   subtitle: Text(
                     _isPrivate
-                        ? 'Solo tú podrás ver esta receta'
-                        : 'Todos podrán ver esta receta',
+                        ? isEnglish ? 'Only you can see this recipe' : 'Solo tú podrás ver esta receta'
+                        : isEnglish ? 'Everyone can see this recipe' : 'Todos podrán ver esta receta',
                     style: TextStyle(
                       color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 12,
@@ -469,8 +486,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         vertical: 15, horizontal: 30),
                     backgroundColor: Theme.of(context).primaryColor,
                   ),
-                  child: const Text(
-                    'Guardar Receta',
+                  child: Text(
+                    isEnglish ? 'Save Recipe' : 'Guardar Receta',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -491,7 +508,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ingredientes',
+          isEnglish ? 'Ingredients' : 'Ingredientes',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -522,7 +539,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _addIngredient,
-          child: const Text('Agregar Ingrediente'),
+          child: Text(
+            isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente',
+          ),
         ),
       ],
     );
@@ -533,7 +552,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pasos',
+          isEnglish ? 'Steps' : 'Pasos',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -552,7 +571,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   child: TextFormField(
                     controller: _stepControllers[index],
                     decoration: InputDecoration(
-                      labelText: 'Paso ${index + 1}',
+                      labelText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
                     ),
                     maxLines: 2,
                   ),

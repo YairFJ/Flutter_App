@@ -14,6 +14,7 @@ import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
 import 'pages/profile_page.dart';
 import 'screens/groups_screen.dart';
+import 'services/language_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -145,6 +146,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void toggleLanguage() {
     setState(() {
       isEnglish = !isEnglish;
+      // Actualizar el servicio global de idioma
+      LanguageService().setLanguage(isEnglish);
     });
   }
 
@@ -160,6 +163,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void signUserOut() {
     FirebaseAuth.instance.signOut();
+  }
+
+  void _navigateToAddRecipe() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddRecipeScreen(isEnglish: isEnglish),
+      ),
+    );
   }
 
   @override
@@ -302,14 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddRecipeScreen(),
-                  ),
-                );
-              },
+              onPressed: _navigateToAddRecipe,
               backgroundColor: primaryColor,
               child: const Icon(
                 Icons.add,
