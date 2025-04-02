@@ -23,6 +23,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   final List<Map<String, String>> _ingredients = [];
   bool _isLoading = false;
   int _servings = 1;
+  bool isEnglish = false;
 
   void _addIngredient() {
     setState(() {
@@ -136,15 +137,19 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
       // Mensaje de error si los ingredientes no son válidos
       if (!hasValidIngredients) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Todos los ingredientes deben tener una cantidad mayor que 0'),
+          SnackBar(
+            content: Text(isEnglish 
+              ? 'All ingredients must have a quantity greater than 0'
+              : 'Todos los ingredientes deben tener una cantidad mayor que 0'),
             backgroundColor: Colors.red,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Por favor, indica para cuántas personas rinde la receta'),
+          SnackBar(
+            content: Text(isEnglish 
+              ? 'Please indicate how many servings the recipe yields'
+              : 'Por favor, indica para cuántas personas rinde la receta'),
             backgroundColor: Colors.red,
           ),
         );
@@ -166,7 +171,9 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Crear Receta en ${widget.group.name}'),
+        title: Text(isEnglish 
+          ? 'Create Recipe in ${widget.group.name}'
+          : 'Crear Receta en ${widget.group.name}'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -176,12 +183,12 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Título de la receta',
+                decoration: InputDecoration(
+                  labelText: isEnglish ? 'Recipe Title' : 'Título de la receta',
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'El título es obligatorio';
+                    return isEnglish ? 'Title is required' : 'El título es obligatorio';
                   }
                   return null;
                 },
@@ -191,13 +198,13 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
               // Campo de tiempo de preparación
               TextFormField(
                 controller: _preparationTimeController,
-                decoration: const InputDecoration(
-                  labelText: 'Tiempo de preparación',
-                  hintText: 'Ej: 30 minutos',
+                decoration: InputDecoration(
+                  labelText: isEnglish ? 'Preparation Time' : 'Tiempo de preparación',
+                  hintText: isEnglish ? 'Ex: 30 minutes' : 'Ej: 30 minutos',
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Tiempo requerido';
+                    return isEnglish ? 'Time is required' : 'Tiempo requerido';
                   }
                   return null;
                 },
@@ -207,12 +214,14 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.restaurant),
-                  title: const Text('Personas'),
+                  title: Text(isEnglish ? 'People' : 'Personas'),
                   subtitle: Text(
-                      'Esta receta rinde para $_servings ${_servings <= 1 ? 'persona' : 'personas'}'),
+                      isEnglish 
+                        ? 'This recipe yields $_servings ${_servings <= 1 ? 'person' : 'people'}'
+                        : 'Esta receta rinde para $_servings ${_servings <= 1 ? 'persona' : 'personas'}'),
                   trailing: ElevatedButton(
                     onPressed: _showServingsDialog,
-                    child: const Text('Cambiar'),
+                    child: Text(isEnglish ? 'Change' : 'Cambiar'),
                   ),
                 ),
               ),
@@ -228,8 +237,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                       children: [
                         Expanded(
                           child: TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Ingrediente',
+                            decoration: InputDecoration(
+                              labelText: isEnglish ? 'Ingredient' : 'Ingrediente',
                             ),
                             onChanged: (value) {
                               _ingredients[idx]['name'] = value;
@@ -242,8 +251,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                             controller: TextEditingController(text: '0,0'),
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
-                            decoration: const InputDecoration(
-                              labelText: 'Cantidad',
+                            decoration: InputDecoration(
+                              labelText: isEnglish ? 'Amount' : 'Cantidad',
                               border: OutlineInputBorder(),
                             ),
                             onTap: () {
@@ -258,7 +267,9 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Por favor ingrese una cantidad';
+                                return isEnglish 
+                                  ? 'Please enter an amount'
+                                  : 'Por favor ingrese una cantidad';
                               }
                               return null;
                             },
@@ -293,19 +304,21 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
               const SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: _addIngredient,
-                child: const Text('Agregar Ingrediente'),
+                child: Text(isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente'),
               ),
 
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _instructionsController,
-                decoration: const InputDecoration(
-                  labelText: 'Instrucciones de preparación',
+                decoration: InputDecoration(
+                  labelText: isEnglish ? 'Preparation Instructions' : 'Instrucciones de preparación',
                 ),
                 maxLines: null,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Las instrucciones son obligatorias';
+                    return isEnglish 
+                      ? 'Instructions are required'
+                      : 'Las instrucciones son obligatorias';
                   }
                   return null;
                 },
@@ -315,7 +328,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
                       onPressed: _createRecipe,
-                      child: const Text('Crear Receta'),
+                      child: Text(isEnglish ? 'Create Recipe' : 'Crear Receta'),
                     ),
             ],
           ),
