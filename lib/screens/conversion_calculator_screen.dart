@@ -122,6 +122,15 @@ class _ConversionCalculatorScreenState
       'Mililitros': 1.0,  // Asumiendo densidad de agua (1g = 1ml)
       'Litro': 0.001,     // 1g = 0.001L
       'Porción': 0.004,   // 1g = 0.004 porciones (250g = 1 porción)
+      'Miligramos': 1000.0, // 1g = 1000mg
+      'Centilitros': 0.1,   // 1g = 0.1cl (asumiendo agua)
+      'Cucharada': 0.0666667, // 1g = 0.067 cdas (15g = 1 cda)
+      'Cucharadita': 0.2,     // 1g = 0.2 cdtas (5g = 1 cdta)
+      'Taza': 0.00416667,     // 1g = 0.004167 tazas (240g = 1 taza)
+      'Onza liquida': 0.033814, // 1g = 0.033814 oz líq
+      'Pinta': 0.00211338,      // 1g = 0.00211338 pintas
+      'Cuarto galon': 0.00105669, // 1g = 0.00105669 cuartos
+      'Galon': 0.000264172,       // 1g = 0.000264172 galones
     },
     'Kilogramo': {
       'Gramo': 1000,
@@ -130,16 +139,66 @@ class _ConversionCalculatorScreenState
       'Mililitros': 1000.0, // 1kg = 1L = 1000ml
       'Litro': 1.0,        // 1kg = 1L (aproximado)
       'Porción': 4.0,      // 1kg = 4 porciones (250g = 1 porción)
+      'Miligramos': 1000000.0, // 1kg = 1,000,000mg
+      'Centilitros': 100.0,    // 1kg = 100cl (asumiendo agua)
+      'Cucharada': 66.6667,    // 1kg = 66.67 cdas
+      'Cucharadita': 200.0,    // 1kg = 200 cdtas
+      'Taza': 4.16667,         // 1kg = 4.17 tazas
+      'Onza liquida': 33.814,  // 1kg = 33.814 oz líq
+      'Pinta': 2.11338,        // 1kg = 2.11338 pintas
+      'Cuarto galon': 1.05669, // 1kg = 1.05669 cuartos
+      'Galon': 0.264172,       // 1kg = 0.264172 galones
     },
     'Onza': {
       'Gramo': 28.3495,
       'Kilogramo': 0.0283495,
       'Libra': 0.0625, // 1 onza = 1/16 libra
+      'Mililitros': 28.3495, // 1oz = 28.35ml (asumiendo agua)
+      'Litro': 0.0283495,   // 1oz = 0.028L
+      'Porción': 0.113398,  // 1oz = 0.113 porciones
+      'Miligramos': 28349.5, // 1oz = 28349.5mg
+      'Centilitros': 2.83495, // 1oz = 2.83cl
+      'Cucharada': 1.89,     // 1oz = 1.89 cdas
+      'Cucharadita': 5.67,   // 1oz = 5.67 cdtas
+      'Taza': 0.118123,      // 1oz = 0.118 tazas
+      'Onza liquida': 0.96,  // 1oz = 0.96 oz líq (aproximación)
+      'Pinta': 0.06,         // 1oz = 0.06 pintas
+      'Cuarto galon': 0.03,  // 1oz = 0.03 cuartos
+      'Galon': 0.0075,       // 1oz = 0.0075 galones
     },
     'Libra': {
       'Gramo': 453.592,
       'Kilogramo': 0.453592,
       'Onza': 16.0, // 1 libra = 16 onzas
+      'Mililitros': 453.592, // 1lb = 453.59ml (asumiendo agua)
+      'Litro': 0.453592,     // 1lb = 0.45L
+      'Porción': 1.81437,    // 1lb = 1.81 porciones
+      'Miligramos': 453592.0, // 1lb = 453,592mg
+      'Centilitros': 45.3592, // 1lb = 45.36cl
+      'Cucharada': 30.2395,  // 1lb = 30.24 cdas
+      'Cucharadita': 90.7184, // 1lb = 90.72 cdtas
+      'Taza': 1.88997,        // 1lb = 1.89 tazas
+      'Onza liquida': 15.34,  // 1lb = 15.34 oz líq (aproximación)
+      'Pinta': 0.959,         // 1lb = 0.959 pintas
+      'Cuarto galon': 0.4795, // 1lb = 0.48 cuartos
+      'Galon': 0.119875,      // 1lb = 0.12 galones
+    },
+    'Miligramos': {
+      'Gramo': 0.001,
+      'Kilogramo': 0.000001,
+      'Onza': 0.000035274,
+      'Libra': 0.00000220462,
+      'Mililitros': 0.001, // 1mg = 0.001ml (asumiendo agua)
+      'Litro': 0.000001,   // 1mg = 0.000001L
+      'Porción': 0.000004, // 1mg = 0.000004 porciones
+      'Centilitros': 0.0001, // 1mg = 0.0001cl
+      'Cucharada': 0.0000666667, // 1mg = 0.000067 cdas
+      'Cucharadita': 0.0002,     // 1mg = 0.0002 cdtas
+      'Taza': 0.00000416667,     // 1mg = 0.0000042 tazas
+      'Onza liquida': 0.000033814, // 1mg = 0.000034 oz líq
+      'Pinta': 0.00000211338,     // 1mg = 0.0000021 pintas
+      'Cuarto galon': 0.00000105669, // 1mg = 0.0000011 cuartos
+      'Galon': 0.000000264172,      // 1mg = 0.00000026 galones
     },
     'Mililitros': {
       'Gramo': 1.0,
@@ -154,6 +213,9 @@ class _ConversionCalculatorScreenState
       'Pinta': 0.00211338,
       'Cuarto galon': 0.00105669,
       'Galon': 0.000264172,
+      'Onza': 0.035274, // 1ml = 0.035274 oz (asumiendo agua)
+      'Libra': 0.00220462, // 1ml = 0.00220462 lb (asumiendo agua)
+      'Miligramos': 1000.0, // 1ml = 1000mg (asumiendo agua)
     },
     'Litro': {
       'Mililitros': 1000,
@@ -168,6 +230,9 @@ class _ConversionCalculatorScreenState
       'Pinta': 2.11338,
       'Cuarto galon': 1.05669,
       'Galon': 0.264172,
+      'Onza': 35.274, // 1L = 35.274 oz (asumiendo agua)
+      'Libra': 2.20462, // 1L = 2.20462 lb (asumiendo agua)
+      'Miligramos': 1000000.0, // 1L = 1,000,000mg (asumiendo agua)
     },
     'Centilitros': {
       'Mililitros': 10,
@@ -175,6 +240,16 @@ class _ConversionCalculatorScreenState
       'Cucharada': 0.666667,
       'Cucharadita': 2,
       'Taza': 0.0416667,
+      'Gramo': 10.0, // 1cl = 10g (asumiendo agua)
+      'Kilogramo': 0.01, // 1cl = 0.01kg (asumiendo agua)
+      'Onza': 0.35274, // 1cl = 0.35274 oz (asumiendo agua)
+      'Libra': 0.0220462, // 1cl = 0.022 lb (asumiendo agua)
+      'Porción': 0.04, // 1cl = 0.04 porciones
+      'Onza liquida': 0.33814, // 1cl = 0.338 oz líq
+      'Pinta': 0.0211338, // 1cl = 0.021 pintas
+      'Cuarto galon': 0.0105669, // 1cl = 0.011 cuartos
+      'Galon': 0.00264172, // 1cl = 0.0026 galones
+      'Miligramos': 10000.0, // 1cl = 10,000mg (asumiendo agua)
     },
     'Cucharada': {
       'Mililitros': 15,
@@ -182,6 +257,16 @@ class _ConversionCalculatorScreenState
       'Centilitros': 1.5,
       'Cucharadita': 3,
       'Taza': 0.0625,
+      'Gramo': 15.0, // 1cda = 15g (asumiendo agua)
+      'Kilogramo': 0.015, // 1cda = 0.015kg (asumiendo agua)
+      'Onza': 0.5291, // 1cda = 0.5291 oz (asumiendo agua)
+      'Libra': 0.0330693, // 1cda = 0.033 lb (asumiendo agua)
+      'Porción': 0.06, // 1cda = 0.06 porciones
+      'Onza liquida': 0.507211, // 1cda = 0.51 oz líq
+      'Pinta': 0.0317007, // 1cda = 0.032 pintas
+      'Cuarto galon': 0.0158503, // 1cda = 0.016 cuartos
+      'Galon': 0.00396258, // 1cda = 0.004 galones
+      'Miligramos': 15000.0, // 1cda = 15,000mg (asumiendo agua)
     },
     'Cucharadita': {
       'Mililitros': 5,
@@ -189,6 +274,16 @@ class _ConversionCalculatorScreenState
       'Centilitros': 0.5,
       'Cucharada': 0.333333,
       'Taza': 0.0208333,
+      'Gramo': 5.0, // 1cdta = 5g (asumiendo agua)
+      'Kilogramo': 0.005, // 1cdta = 0.005kg (asumiendo agua)
+      'Onza': 0.176367, // 1cdta = 0.176 oz (asumiendo agua)
+      'Libra': 0.0110231, // 1cdta = 0.011 lb (asumiendo agua)
+      'Porción': 0.02, // 1cdta = 0.02 porciones
+      'Onza liquida': 0.16907, // 1cdta = 0.169 oz líq
+      'Pinta': 0.0105669, // 1cdta = 0.011 pintas
+      'Cuarto galon': 0.00528345, // 1cdta = 0.005 cuartos
+      'Galon': 0.00132086, // 1cdta = 0.001 galones
+      'Miligramos': 5000.0, // 1cdta = 5,000mg (asumiendo agua)
     },
     'Taza': {
       'Mililitros': 240,
@@ -196,6 +291,16 @@ class _ConversionCalculatorScreenState
       'Centilitros': 24,
       'Cucharada': 16,
       'Cucharadita': 48,
+      'Gramo': 240.0, // 1tz = 240g (asumiendo agua)
+      'Kilogramo': 0.24, // 1tz = 0.24kg (asumiendo agua)
+      'Onza': 8.46575, // 1tz = 8.466 oz (asumiendo agua)
+      'Libra': 0.529109, // 1tz = 0.529 lb (asumiendo agua)
+      'Porción': 0.96, // 1tz = 0.96 porciones
+      'Onza liquida': 8.11537, // 1tz = 8.115 oz líq
+      'Pinta': 0.507211, // 1tz = 0.507 pintas
+      'Cuarto galon': 0.253605, // 1tz = 0.254 cuartos
+      'Galon': 0.0634013, // 1tz = 0.063 galones
+      'Miligramos': 240000.0, // 1tz = 240,000mg (asumiendo agua)
     },
     'Onza liquida': {
       'Mililitros': 29.5735,
@@ -203,6 +308,16 @@ class _ConversionCalculatorScreenState
       'Pinta': 0.0625,
       'Cuarto galon': 0.03125,
       'Galon': 0.0078125,
+      'Gramo': 29.5735, // 1 oz líq = 29.57g (asumiendo agua)
+      'Kilogramo': 0.0295735, // 1 oz líq = 0.0296kg (asumiendo agua)
+      'Onza': 1.043176, // 1 oz líq = 1.04 oz (asumiendo agua)
+      'Libra': 0.0651985, // 1 oz líq = 0.065 lb (asumiendo agua)
+      'Porción': 0.118294, // 1 oz líq = 0.118 porciones
+      'Centilitros': 2.95735, // 1 oz líq = 2.96cl
+      'Cucharada': 1.97157, // 1 oz líq = 1.97 cdas
+      'Cucharadita': 5.91471, // 1 oz líq = 5.91 cdtas
+      'Taza': 0.123223, // 1 oz líq = 0.123 tazas
+      'Miligramos': 29573.5, // 1 oz líq = 29,573.5mg (asumiendo agua)
     },
     'Pinta': {
       'Mililitros': 473.176,
@@ -210,6 +325,16 @@ class _ConversionCalculatorScreenState
       'Onza liquida': 16,
       'Cuarto galon': 0.5,
       'Galon': 0.125,
+      'Gramo': 473.176, // 1 pinta = 473.18g (asumiendo agua)
+      'Kilogramo': 0.473176, // 1 pinta = 0.473kg (asumiendo agua)
+      'Onza': 16.6908, // 1 pinta = 16.69 oz (asumiendo agua)
+      'Libra': 1.04317, // 1 pinta = 1.04 lb (asumiendo agua)
+      'Porción': 1.89271, // 1 pinta = 1.89 porciones
+      'Centilitros': 47.3176, // 1 pinta = 47.32cl
+      'Cucharada': 31.5451, // 1 pinta = 31.55 cdas
+      'Cucharadita': 94.6352, // 1 pinta = 94.64 cdtas
+      'Taza': 1.97157, // 1 pinta = 1.97 tazas
+      'Miligramos': 473176.0, // 1 pinta = 473,176mg (asumiendo agua)
     },
     'Cuarto galon': {
       'Mililitros': 946.353,
@@ -217,6 +342,16 @@ class _ConversionCalculatorScreenState
       'Onza liquida': 32,
       'Pinta': 2,
       'Galon': 0.25,
+      'Gramo': 946.353, // 1 cuarto = 946.35g (asumiendo agua)
+      'Kilogramo': 0.946353, // 1 cuarto = 0.946kg (asumiendo agua)
+      'Onza': 33.3815, // 1 cuarto = 33.38 oz (asumiendo agua)
+      'Libra': 2.08635, // 1 cuarto = 2.09 lb (asumiendo agua)
+      'Porción': 3.78541, // 1 cuarto = 3.79 porciones
+      'Centilitros': 94.6353, // 1 cuarto = 94.64cl
+      'Cucharada': 63.0902, // 1 cuarto = 63.09 cdas
+      'Cucharadita': 189.271, // 1 cuarto = 189.27 cdtas
+      'Taza': 3.94314, // 1 cuarto = 3.94 tazas
+      'Miligramos': 946353.0, // 1 cuarto = 946,353mg (asumiendo agua)
     },
     'Galon': {
       'Mililitros': 3785.41,
@@ -224,16 +359,33 @@ class _ConversionCalculatorScreenState
       'Onza liquida': 128,
       'Pinta': 8,
       'Cuarto galon': 4,
+      'Gramo': 3785.41, // 1 galón = 3785.41g (asumiendo agua)
+      'Kilogramo': 3.78541, // 1 galón = 3.79kg (asumiendo agua)
+      'Onza': 133.526, // 1 galón = 133.53 oz (asumiendo agua)
+      'Libra': 8.34538, // 1 galón = 8.35 lb (asumiendo agua)
+      'Porción': 15.1416, // 1 galón = 15.14 porciones
+      'Centilitros': 378.541, // 1 galón = 378.54cl
+      'Cucharada': 252.361, // 1 galón = 252.36 cdas
+      'Cucharadita': 757.082, // 1 galón = 757.08 cdtas
+      'Taza': 15.7726, // 1 galón = 15.77 tazas
+      'Miligramos': 3785410.0, // 1 galón = 3,785,410mg (asumiendo agua)
     },
     'Porción': {
       'Gramo': 250.0,      // 1 porción = 250g
       'Kilogramo': 0.25,   // 1 porción = 0.25kg
       'Mililitros': 250.0, // 1 porción = 250ml
       'Litro': 0.25,      // 1 porción = 0.25L
-    },
-    'Miligramos': {
-      'Gramo': 0.001,
-      'Kilogramo': 0.000001,
+      'Onza': 8.81849,    // 1 porción = 8.82 oz
+      'Libra': 0.551156,  // 1 porción = 0.55 lb
+      'Centilitros': 25.0, // 1 porción = 25cl
+      'Cucharada': 16.6667, // 1 porción = 16.67 cdas
+      'Cucharadita': 50.0,   // 1 porción = 50 cdtas
+      'Taza': 1.04167,       // 1 porción = 1.04 tazas
+      'Onza liquida': 8.4535, // 1 porción = 8.45 oz líq
+      'Pinta': 0.528345,      // 1 porción = 0.53 pintas
+      'Cuarto galon': 0.264172, // 1 porción = 0.26 cuartos
+      'Galon': 0.066043,        // 1 porción = 0.066 galones
+      'Miligramos': 250000.0,   // 1 porción = 250,000mg
     },
   };
 
@@ -494,20 +646,234 @@ class _ConversionCalculatorScreenState
     if (ingrediente.unidad == nuevaUnidad) return;
 
     try {
-      // Comprobemos primero si la conversión es válida
-      if (!_esConversionValida(ingrediente.unidad, nuevaUnidad)) {
-        print("ADVERTENCIA: No hay una conversión válida de ${ingrediente.unidad} a $nuevaUnidad");
-        // Podríamos mostrar un diálogo al usuario aquí
-        return;
-      }
-
       setState(() {
-        // Convertir la cantidad ACTUAL a la nueva unidad (no la cantidad base)
-        double nuevaCantidad = _convertirRendimiento(
-          ingrediente.cantidad, 
-          ingrediente.unidad, 
-          nuevaUnidad
-        );
+        // Convertir la cantidad ACTUAL a la nueva unidad usando conversiones directas
+        double nuevaCantidad;
+        
+        // CONVERSIONES DIRECTAS PARA INGREDIENTES
+        // DE PESO A PESO
+        if (ingrediente.unidad == "Gramo" && nuevaUnidad == "Kilogramo") {
+          nuevaCantidad = ingrediente.cantidad / 1000.0;
+        } 
+        else if (ingrediente.unidad == "Kilogramo" && nuevaUnidad == "Gramo") {
+          nuevaCantidad = ingrediente.cantidad * 1000.0;
+        }
+        else if (ingrediente.unidad == "Gramo" && nuevaUnidad == "Onza") {
+          nuevaCantidad = ingrediente.cantidad / 28.3495;
+        }
+        else if (ingrediente.unidad == "Onza" && nuevaUnidad == "Gramo") {
+          nuevaCantidad = ingrediente.cantidad * 28.3495;
+        }
+        else if (ingrediente.unidad == "Kilogramo" && nuevaUnidad == "Onza") {
+          nuevaCantidad = ingrediente.cantidad * 35.274;
+        }
+        else if (ingrediente.unidad == "Onza" && nuevaUnidad == "Kilogramo") {
+          nuevaCantidad = ingrediente.cantidad / 35.274;
+        }
+        else if (ingrediente.unidad == "Kilogramo" && nuevaUnidad == "Libra") {
+          nuevaCantidad = ingrediente.cantidad * 2.20462;
+        }
+        else if (ingrediente.unidad == "Libra" && nuevaUnidad == "Kilogramo") {
+          nuevaCantidad = ingrediente.cantidad / 2.20462;
+        }
+        else if (ingrediente.unidad == "Gramo" && nuevaUnidad == "Libra") {
+          nuevaCantidad = ingrediente.cantidad / 453.592;
+        }
+        else if (ingrediente.unidad == "Libra" && nuevaUnidad == "Gramo") {
+          nuevaCantidad = ingrediente.cantidad * 453.592;
+        }
+        else if (ingrediente.unidad == "Onza" && nuevaUnidad == "Libra") {
+          nuevaCantidad = ingrediente.cantidad / 16.0;
+        }
+        else if (ingrediente.unidad == "Libra" && nuevaUnidad == "Onza") {
+          nuevaCantidad = ingrediente.cantidad * 16.0;
+        }
+        else if (ingrediente.unidad == "Miligramos" && nuevaUnidad == "Gramo") {
+          nuevaCantidad = ingrediente.cantidad / 1000.0;
+        }
+        else if (ingrediente.unidad == "Gramo" && nuevaUnidad == "Miligramos") {
+          nuevaCantidad = ingrediente.cantidad * 1000.0;
+        }
+        else if (ingrediente.unidad == "Miligramos" && nuevaUnidad == "Kilogramo") {
+          nuevaCantidad = ingrediente.cantidad / 1000000.0;
+        }
+        else if (ingrediente.unidad == "Kilogramo" && nuevaUnidad == "Miligramos") {
+          nuevaCantidad = ingrediente.cantidad * 1000000.0;
+        }
+        else if (ingrediente.unidad == "Miligramos" && nuevaUnidad == "Onza") {
+          nuevaCantidad = ingrediente.cantidad / 28349.5;
+        }
+        else if (ingrediente.unidad == "Onza" && nuevaUnidad == "Miligramos") {
+          nuevaCantidad = ingrediente.cantidad * 28349.5;
+        }
+        else if (ingrediente.unidad == "Miligramos" && nuevaUnidad == "Libra") {
+          nuevaCantidad = ingrediente.cantidad / 453592.0;
+        }
+        else if (ingrediente.unidad == "Libra" && nuevaUnidad == "Miligramos") {
+          nuevaCantidad = ingrediente.cantidad * 453592.0;
+        }
+        
+        // DE VOLUMEN A VOLUMEN
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Litro") {
+          nuevaCantidad = ingrediente.cantidad / 1000.0;
+        }
+        else if (ingrediente.unidad == "Litro" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 1000.0;
+        }
+        else if (ingrediente.unidad == "Centilitros" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 10.0;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Centilitros") {
+          nuevaCantidad = ingrediente.cantidad / 10.0;
+        }
+        else if (ingrediente.unidad == "Centilitros" && nuevaUnidad == "Litro") {
+          nuevaCantidad = ingrediente.cantidad / 100.0;
+        }
+        else if (ingrediente.unidad == "Litro" && nuevaUnidad == "Centilitros") {
+          nuevaCantidad = ingrediente.cantidad * 100.0;
+        }
+        else if (ingrediente.unidad == "Cucharada" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 15.0;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Cucharada") {
+          nuevaCantidad = ingrediente.cantidad / 15.0;
+        }
+        else if (ingrediente.unidad == "Cucharadita" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 5.0;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Cucharadita") {
+          nuevaCantidad = ingrediente.cantidad / 5.0;
+        }
+        else if (ingrediente.unidad == "Taza" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 240.0;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Taza") {
+          nuevaCantidad = ingrediente.cantidad / 240.0;
+        }
+        else if (ingrediente.unidad == "Onza liquida" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 29.5735;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Onza liquida") {
+          nuevaCantidad = ingrediente.cantidad / 29.5735;
+        }
+        else if (ingrediente.unidad == "Onza liquida" && nuevaUnidad == "Litro") {
+          nuevaCantidad = ingrediente.cantidad * 0.0295735;
+        }
+        else if (ingrediente.unidad == "Litro" && nuevaUnidad == "Onza liquida") {
+          nuevaCantidad = ingrediente.cantidad * 33.814;
+        }
+        else if (ingrediente.unidad == "Pinta" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 473.176;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Pinta") {
+          nuevaCantidad = ingrediente.cantidad / 473.176;
+        }
+        else if (ingrediente.unidad == "Pinta" && nuevaUnidad == "Litro") {
+          nuevaCantidad = ingrediente.cantidad * 0.473176;
+        }
+        else if (ingrediente.unidad == "Litro" && nuevaUnidad == "Pinta") {
+          nuevaCantidad = ingrediente.cantidad * 2.11338;
+        }
+        else if (ingrediente.unidad == "Cuarto galon" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 946.353;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Cuarto galon") {
+          nuevaCantidad = ingrediente.cantidad / 946.353;
+        }
+        else if (ingrediente.unidad == "Cuarto galon" && nuevaUnidad == "Litro") {
+          nuevaCantidad = ingrediente.cantidad * 0.946353;
+        }
+        else if (ingrediente.unidad == "Litro" && nuevaUnidad == "Cuarto galon") {
+          nuevaCantidad = ingrediente.cantidad * 1.05669;
+        }
+        else if (ingrediente.unidad == "Galon" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 3785.41;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Galon") {
+          nuevaCantidad = ingrediente.cantidad / 3785.41;
+        }
+        else if (ingrediente.unidad == "Galon" && nuevaUnidad == "Litro") {
+          nuevaCantidad = ingrediente.cantidad * 3.78541;
+        }
+        else if (ingrediente.unidad == "Litro" && nuevaUnidad == "Galon") {
+          nuevaCantidad = ingrediente.cantidad * 0.264172;
+        }
+        
+        // CONVERSIONES ENTRE TAZAS, CUCHARADAS Y CUCHARADITAS
+        else if (ingrediente.unidad == "Taza" && nuevaUnidad == "Cucharada") {
+          nuevaCantidad = ingrediente.cantidad * 16.0;
+        }
+        else if (ingrediente.unidad == "Cucharada" && nuevaUnidad == "Taza") {
+          nuevaCantidad = ingrediente.cantidad / 16.0;
+        }
+        else if (ingrediente.unidad == "Taza" && nuevaUnidad == "Cucharadita") {
+          nuevaCantidad = ingrediente.cantidad * 48.0;
+        }
+        else if (ingrediente.unidad == "Cucharadita" && nuevaUnidad == "Taza") {
+          nuevaCantidad = ingrediente.cantidad / 48.0;
+        }
+        else if (ingrediente.unidad == "Cucharada" && nuevaUnidad == "Cucharadita") {
+          nuevaCantidad = ingrediente.cantidad * 3.0;
+        }
+        else if (ingrediente.unidad == "Cucharadita" && nuevaUnidad == "Cucharada") {
+          nuevaCantidad = ingrediente.cantidad / 3.0;
+        }
+        
+        // CONVERSIONES ENTRE PESO Y VOLUMEN (aproximadas)
+        else if ((ingrediente.unidad == "Gramo" && nuevaUnidad == "Mililitros") ||
+                 (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Gramo")) {
+          nuevaCantidad = ingrediente.cantidad; // 1g = 1ml aproximadamente
+        }
+        else if (ingrediente.unidad == "Kilogramo" && nuevaUnidad == "Mililitros") {
+          nuevaCantidad = ingrediente.cantidad * 1000.0;
+        }
+        else if (ingrediente.unidad == "Mililitros" && nuevaUnidad == "Kilogramo") {
+          nuevaCantidad = ingrediente.cantidad / 1000.0;
+        }
+        else if (ingrediente.unidad == "Kilogramo" && nuevaUnidad == "Litro") {
+          nuevaCantidad = ingrediente.cantidad; // 1kg = 1L aproximadamente
+        }
+        else if (ingrediente.unidad == "Litro" && nuevaUnidad == "Kilogramo") {
+          nuevaCantidad = ingrediente.cantidad; // 1L = 1kg aproximadamente
+        }
+        else if (ingrediente.unidad == "Gramo" && nuevaUnidad == "Litro") {
+          nuevaCantidad = ingrediente.cantidad / 1000.0;
+        }
+        else if (ingrediente.unidad == "Litro" && nuevaUnidad == "Gramo") {
+          nuevaCantidad = ingrediente.cantidad * 1000.0;
+        }
+        
+        // OTROS VOLÚMENES
+        else if (ingrediente.unidad == "Cucharada" && nuevaUnidad == "Onza liquida") {
+          nuevaCantidad = ingrediente.cantidad / 2.0; // 1 oz líquida = 2 cdas aprox
+        }
+        else if (ingrediente.unidad == "Onza liquida" && nuevaUnidad == "Cucharada") {
+          nuevaCantidad = ingrediente.cantidad * 2.0;
+        }
+        else if (ingrediente.unidad == "Onza liquida" && nuevaUnidad == "Pinta") {
+          nuevaCantidad = ingrediente.cantidad / 16.0;
+        }
+        else if (ingrediente.unidad == "Pinta" && nuevaUnidad == "Onza liquida") {
+          nuevaCantidad = ingrediente.cantidad * 16.0;
+        }
+        else if (ingrediente.unidad == "Pinta" && nuevaUnidad == "Cuarto galon") {
+          nuevaCantidad = ingrediente.cantidad / 2.0;
+        }
+        else if (ingrediente.unidad == "Cuarto galon" && nuevaUnidad == "Pinta") {
+          nuevaCantidad = ingrediente.cantidad * 2.0;
+        }
+        else if (ingrediente.unidad == "Cuarto galon" && nuevaUnidad == "Galon") {
+          nuevaCantidad = ingrediente.cantidad / 4.0;
+        }
+        else if (ingrediente.unidad == "Galon" && nuevaUnidad == "Cuarto galon") {
+          nuevaCantidad = ingrediente.cantidad * 4.0;
+        }
+        
+        // Si no hay una conversión directa definida, intentamos usar el método _convertirRendimiento
+        else {
+          print("Intentando conversión a través de factores para ${ingrediente.nombre}: ${ingrediente.cantidad} ${ingrediente.unidad} a $nuevaUnidad");
+          nuevaCantidad = _convertirRendimiento(ingrediente.cantidad, ingrediente.unidad, nuevaUnidad);
+        }
         
         print("DIAGNÓSTICO: Cambio de unidad en ingrediente ${ingrediente.nombre}");
         print("  - Unidad anterior: ${ingrediente.unidad}");
@@ -1035,6 +1401,30 @@ class _ConversionCalculatorScreenState
                                             else if (unidadAnterior == "Libra" && value == "Onza") {
                                               nuevaCantidad = cantidadActual * 16.0;
                                             }
+                                            else if (unidadAnterior == "Miligramos" && value == "Gramo") {
+                                              nuevaCantidad = cantidadActual / 1000.0;
+                                            }
+                                            else if (unidadAnterior == "Gramo" && value == "Miligramos") {
+                                              nuevaCantidad = cantidadActual * 1000.0;
+                                            }
+                                            else if (unidadAnterior == "Miligramos" && value == "Kilogramo") {
+                                              nuevaCantidad = cantidadActual / 1000000.0;
+                                            }
+                                            else if (unidadAnterior == "Kilogramo" && value == "Miligramos") {
+                                              nuevaCantidad = cantidadActual * 1000000.0;
+                                            }
+                                            else if (unidadAnterior == "Miligramos" && value == "Onza") {
+                                              nuevaCantidad = cantidadActual / 28349.5;
+                                            }
+                                            else if (unidadAnterior == "Onza" && value == "Miligramos") {
+                                              nuevaCantidad = cantidadActual * 28349.5;
+                                            }
+                                            else if (unidadAnterior == "Miligramos" && value == "Libra") {
+                                              nuevaCantidad = cantidadActual / 453592.0;
+                                            }
+                                            else if (unidadAnterior == "Libra" && value == "Miligramos") {
+                                              nuevaCantidad = cantidadActual * 453592.0;
+                                            }
                                             
                                             // DE VOLUMEN A VOLUMEN
                                             else if (unidadAnterior == "Mililitros" && value == "Litro") {
@@ -1163,6 +1553,19 @@ class _ConversionCalculatorScreenState
                                             else if (unidadAnterior == "Kilogramo" && value == "Miligramos") {
                                               nuevaCantidad = cantidadActual * 1000000.0;
                                             }
+                                            else if (unidadAnterior == "Miligramos" && value == "Onza") {
+                                              nuevaCantidad = cantidadActual / 28349.5;
+                                            }
+                                            else if (unidadAnterior == "Onza" && value == "Miligramos") {
+                                              nuevaCantidad = cantidadActual * 28349.5;
+                                            }
+                                            else if (unidadAnterior == "Miligramos" && value == "Libra") {
+                                              nuevaCantidad = cantidadActual / 453592.0;
+                                            }
+                                            else if (unidadAnterior == "Libra" && value == "Miligramos") {
+                                              nuevaCantidad = cantidadActual * 453592.0;
+                                            }
+                                            
                                             // Caso por defecto: mantenemos la cantidad si no tenemos una conversión específica
                                             else {
                                               print("⚠️ No se encontró conversión directa de $unidadAnterior a $value, manteniendo valor");
