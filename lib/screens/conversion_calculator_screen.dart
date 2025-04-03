@@ -1964,7 +1964,7 @@ class _ConversionCalculatorScreenState
         ...equivalencias.map((e) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           child: Text(e, style: const TextStyle(fontSize: 14)),
-        )).toList(),
+        )),
       ],
     );
   }

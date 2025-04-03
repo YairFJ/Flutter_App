@@ -5,7 +5,6 @@ import '../models/ingrediente_tabla.dart';
 import '../constants/categories.dart';
 import '../main.dart';
 import '../models/ingredient.dart';
-import '../widgets/ingredient_table_widget.dart';
 import '../widgets/add_ingredient_dialog.dart';
 
 class EditRecipeScreen extends StatefulWidget {

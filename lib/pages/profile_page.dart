@@ -11,10 +11,7 @@ class ProfilePage extends StatelessWidget {
 
   Future<void> _createUserDocument() async {
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'name': user.displayName ?? 'Usuario',
         'email': user.email,
         'createdAt': FieldValue.serverTimestamp(),
@@ -26,17 +23,19 @@ class ProfilePage extends StatelessWidget {
 
   Future<void> _updateUserName(BuildContext context) async {
     if (!context.mounted) return;
-    
+
     final TextEditingController nameController = TextEditingController();
-    
+
     // Obtener el nombre actual del usuario desde Firestore
     final userDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .get();
-    
-    if (!context.mounted) return;  // Agregar verificación después de operación async
-    
+
+    if (!context.mounted) {
+      return; // Agregar verificación después de operación async
+    }
+
     final currentName = userDoc.data()?['name'] ?? '';
     nameController.text = currentName;
 
@@ -68,10 +67,10 @@ class ProfilePage extends StatelessWidget {
                       .collection('users')
                       .doc(user.uid)
                       .update({'name': newName});
-                  
+
                   // Actualizar en Firebase Auth
                   await user.updateDisplayName(newName);
-                  
+
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -103,6 +102,10 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isTablet = size.width > 600;
+    final padding = size.width * 0.05;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mi Perfil'),
@@ -114,16 +117,10 @@ class ProfilePage extends StatelessWidget {
             .doc(user.uid)
             .snapshots(),
         builder: (context, snapshot) {
-          print('Estado de la conexión: ${snapshot.connectionState}');
-          print('Tiene datos: ${snapshot.hasData}');
-          print('Existe el documento: ${snapshot.data?.exists}');
-          print('ID del usuario: ${user.uid}');
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Si el documento no existe, lo creamos
           if (!snapshot.hasData || !snapshot.data!.exists) {
             _createUserDocument();
             return const Center(child: CircularProgressIndicator());
@@ -131,41 +128,46 @@ class ProfilePage extends StatelessWidget {
 
           final userData = snapshot.data!.data() as Map<String, dynamic>;
           final userName = userData['name'] as String? ?? 'Usuario';
-          
+
           return SingleChildScrollView(
             child: Column(
               children: [
                 Container(
                   color: const Color(0xFF96B4D8),
-                  padding: const EdgeInsets.only(bottom: 24),
+                  padding: EdgeInsets.symmetric(
+                    vertical: size.height * 0.03,
+                    horizontal: padding,
+                  ),
                   child: Center(
                     child: Column(
                       children: [
-                        const SizedBox(height: 20),
+                        SizedBox(height: size.height * 0.02),
                         CircleAvatar(
-                          radius: 50,
+                          radius: isTablet ? 70 : 50,
                           backgroundColor: const Color(0xFFD6E3BB),
                           child: Text(
-                            userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                            style: const TextStyle(
-                              fontSize: 40,
-                              color: Color(0xFF96B4D8),
+                            userName.isNotEmpty
+                                ? userName[0].toUpperCase()
+                                : 'U',
+                            style: TextStyle(
+                              fontSize: isTablet ? 56 : 40,
+                              color: const Color(0xFF96B4D8),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: size.height * 0.02),
                         Text(
                           userName,
-                          style: const TextStyle(
-                            fontSize: 20,
+                          style: TextStyle(
+                            fontSize: isTablet ? 24 : 20,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
                           user.email ?? 'Usuario',
-                          style: const TextStyle(
-                            fontSize: 16,
+                          style: TextStyle(
+                            fontSize: isTablet ? 20 : 16,
                             color: Colors.white,
                           ),
                         ),
@@ -173,38 +175,52 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                _buildProfileSection(
-                  icon: Icons.restaurant_menu,
-                  title: 'Mis Recetas',
-                  subtitle: 'Gestiona tus recetas creadas',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MyRecipesScreen(),
+                SizedBox(height: size.height * 0.02),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: padding),
+                  constraints: BoxConstraints(
+                    maxWidth: isTablet ? 700 : double.infinity,
+                  ),
+                  child: Column(
+                    children: [
+                      _buildProfileSection(
+                        icon: Icons.restaurant_menu,
+                        title: 'Mis Recetas',
+                        subtitle: 'Gestiona tus recetas creadas',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyRecipesScreen(),
+                            ),
+                          );
+                        },
+                        isTablet: isTablet,
                       ),
-                    );
-                  },
-                ),
-                _buildProfileSection(
-                  icon: Icons.favorite,
-                  title: 'Recetas Favoritas',
-                  subtitle: 'Recetas guardadas como favoritas',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const FavoriteRecipesScreen(),
+                      _buildProfileSection(
+                        icon: Icons.favorite,
+                        title: 'Recetas Favoritas',
+                        subtitle: 'Recetas guardadas como favoritas',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const FavoriteRecipesScreen(),
+                            ),
+                          );
+                        },
+                        isTablet: isTablet,
                       ),
-                    );
-                  },
-                ),
-                _buildProfileSection(
-                  icon: Icons.settings,
-                  title: 'Configuración',
-                  subtitle: 'Cambiar nombre de usuario',
-                  onTap: () => _updateUserName(context),
+                      _buildProfileSection(
+                        icon: Icons.settings,
+                        title: 'Configuración',
+                        subtitle: 'Cambiar nombre de usuario',
+                        onTap: () => _updateUserName(context),
+                        isTablet: isTablet,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -219,21 +235,35 @@ class ProfilePage extends StatelessWidget {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    required bool isTablet,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Card(
         elevation: 2,
         child: ListTile(
-          leading: Icon(icon, color: const Color(0xFF96B4D8), size: 30),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 24 : 16,
+            vertical: isTablet ? 16 : 8,
+          ),
+          leading: Icon(
+            icon,
+            color: const Color(0xFF96B4D8),
+            size: isTablet ? 36 : 30,
+          ),
           title: Text(
             title,
-            style: const TextStyle(
-              fontSize: 18,
+            style: TextStyle(
+              fontSize: isTablet ? 20 : 18,
               fontWeight: FontWeight.w500,
             ),
           ),
-          subtitle: Text(subtitle),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: isTablet ? 16 : 14,
+            ),
+          ),
           trailing: const Icon(Icons.chevron_right),
           onTap: onTap,
         ),
