@@ -180,10 +180,10 @@ class _HomeScreenState extends State<HomeScreen> {
     
     // Lista de páginas/widgets para cada elemento del menú
     final List<Widget> _pages = [
-      const RecipesPage(),
+      RecipesPage(isEnglish: isEnglish),
       ConversionTablePage(isEnglish: isEnglish),
       const TimerPage(),
-      const StopwatchPage(),
+      StopwatchPage(isEnglish: isEnglish),
     ];
     
     return Scaffold(
@@ -246,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.home),
-              title: const Text('Inicio'),
+              title: Text(isEnglish ? 'Home' : 'Inicio'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, '/');
@@ -254,15 +254,23 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.person),
-              title: const Text('Mi Perfil'),
+              title: Text(isEnglish ? 'My Profile' : 'Mi Perfil'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/profile');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(
+                      user: FirebaseAuth.instance.currentUser!,
+                      isEnglish: isEnglish,
+                    ),
+                  ),
+                );
               },
             ),
             ListTile(
               leading: const Icon(Icons.group),
-              title: const Text('Comunidades'),
+              title: Text(isEnglish ? 'Communities' : 'Comunidades'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/groups');
@@ -272,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.exit_to_app),
-                title: const Text('Cerrar Sesión'),
+                title: Text(isEnglish ? 'Log Out' : 'Cerrar Sesión'),
                 onTap: () async {
                   await FirebaseAuth.instance.signOut();
                   if (context.mounted) {
@@ -329,8 +337,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
+  final bool isEnglish;
 
-  const RecipeCard({super.key, required this.recipe});
+  const RecipeCard({super.key, required this.recipe, this.isEnglish = false});
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +367,10 @@ class RecipeCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => RecipeDetailScreen(recipe: recipe),
+              builder: (context) => RecipeDetailScreen(
+                recipe: recipe,
+                isEnglish: isEnglish,
+              ),
             ),
           );
         },
@@ -407,7 +419,7 @@ class RecipeCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Creado por: ${recipe.creatorName}',
+                            isEnglish ? 'Created by: ${recipe.creatorName}' : 'Creado por: ${recipe.creatorName}',/// posible error
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.white,
@@ -455,7 +467,7 @@ class RecipeCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            '${recipe.ingredients.length} ing.',
+                            '${recipe.ingredients.length} ${isEnglish ? 'ingr.' : 'ing.'}',
                             style: TextStyle(
                               fontSize: 10,
                               color: HomeScreen.primaryColor,

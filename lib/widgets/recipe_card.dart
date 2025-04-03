@@ -7,11 +7,13 @@ import '../models/recipe.dart';
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final VoidCallback? onTap;
+  final bool isEnglish;
 
   const RecipeCard({
     super.key,
     required this.recipe,
     this.onTap,
+    required this.isEnglish,
   });
 
   Future<void> _deleteRecipe(BuildContext context) async {
@@ -253,7 +255,10 @@ class RecipeCard extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                EditRecipeScreen(recipe: recipe),
+                                EditRecipeScreen(
+                                  recipe: recipe,
+                                  isEnglish: isEnglish,
+                                ),
                           ),
                         );
                       },

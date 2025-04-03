@@ -6,8 +6,9 @@ import '../screens/recipe_detail_screen.dart';
 import '../widgets/recipe_card.dart';
 
 class UserRecipesScreen extends StatelessWidget {
-  const UserRecipesScreen({super.key});
+  final bool isEnglish;
 
+  const UserRecipesScreen({super.key, this.isEnglish = false});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +16,7 @@ class UserRecipesScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Recetas'),
+        title: Text(isEnglish ? 'My Recipes' : 'Mis Recetas'),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -24,7 +25,7 @@ class UserRecipesScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(child: Text('Error al cargar las recetas'));
+            return Center(child: Text(isEnglish ? 'Error loading recipes' : 'Error al cargar las recetas'));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -39,8 +40,8 @@ class UserRecipesScreen extends StatelessWidget {
           }).toList() ?? [];
 
           if (recipes.isEmpty) {
-            return const Center(
-              child: Text('No has creado ninguna receta aún'),
+            return Center(
+              child: Text(isEnglish ? 'You haven\'t created any recipes yet' : 'No has creado ninguna receta aún'),
             );
           }
 
@@ -49,12 +50,14 @@ class UserRecipesScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               return RecipeCard(
                 recipe: recipes[index],
+                isEnglish: isEnglish,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => RecipeDetailScreen(
                         recipe: recipes[index],
+                        isEnglish: isEnglish,
                       ),
                     ),
                   );

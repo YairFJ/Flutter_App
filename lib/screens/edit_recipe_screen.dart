@@ -9,9 +9,14 @@ import '../widgets/ingredient_table_widget.dart';
 import '../widgets/add_ingredient_dialog.dart';
 
 class EditRecipeScreen extends StatefulWidget {
-  final Recipe recipe;
+  final Recipe? recipe;
+  final bool isEnglish;
 
-  const EditRecipeScreen({super.key, required this.recipe});
+  const EditRecipeScreen({
+    Key? key,
+    this.recipe,
+    this.isEnglish = false,
+  }) : super(key: key);
 
   @override
   State<EditRecipeScreen> createState() => _EditRecipeScreenState();
@@ -30,6 +35,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   bool _isPrivate = false;
   List<Ingredient> _ingredients = [];
   String _servingUnit = 'gr';
+  bool isEnglish = false;
 
   // Unidades disponibles para el rendimiento
   final List<String> _todasLasUnidades = [
@@ -48,33 +54,45 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.recipe.title);
+    _titleController = TextEditingController(text: widget.recipe?.title);
     _descriptionController =
-        TextEditingController(text: widget.recipe.description);
+        TextEditingController(text: widget.recipe?.description);
     _cookingTimeController = TextEditingController(
-        text: widget.recipe.cookingTime.inMinutes.toString());
+        text: widget.recipe?.cookingTime.inMinutes.toString());
 
     // Extraer el número y la unidad del servingSize
-    final servingSizeParts = widget.recipe.servingSize.split(' ');
+    final servingSizeParts = widget.recipe?.servingSize.split(' ') ?? [];
     if (servingSizeParts.length > 1) {
       _servingSizeController = TextEditingController(text: servingSizeParts[0]);
       _servingUnit = servingSizeParts[1];
     } else {
       _servingSizeController =
-          TextEditingController(text: widget.recipe.servingSize);
+          TextEditingController(text: widget.recipe?.servingSize);
     }
 
-    _selectedCategory = widget.recipe.category;
-    _isPrivate = widget.recipe.isPrivate;
-    _ingredients = List.from(widget.recipe.ingredients);
-    _imageUrl = widget.recipe.imageUrl;
+    _selectedCategory = widget.recipe?.category ?? '';
+    _isPrivate = widget.recipe?.isPrivate ?? false;
+    _ingredients = List.from(widget.recipe?.ingredients ?? []);
+    _imageUrl = widget.recipe?.imageUrl;
 
     // Inicializar los controladores de pasos
-    for (var step in widget.recipe.steps) {
+    for (var step in widget.recipe?.steps ?? []) {
       _stepControllers.add(TextEditingController(text: step));
     }
     if (_stepControllers.isEmpty) {
       _stepControllers.add(TextEditingController());
+    }
+
+    isEnglish = widget.isEnglish;
+  }
+
+  @override
+  void didUpdateWidget(EditRecipeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
     }
   }
 
@@ -92,57 +110,57 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
   String? _validateTitle(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Por favor ingresa un título';
+      return isEnglish ? 'Please enter a title' : 'Por favor ingresa un título';
     }
     if (value.trim().length < 3) {
-      return 'El título debe tener al menos 3 caracteres';
+      return isEnglish ? 'Title must have at least 3 characters' : 'El título debe tener al menos 3 caracteres';
     }
     if (value.trim().length > 100) {
-      return 'El título no puede exceder los 100 caracteres';
+      return isEnglish ? 'Title cannot exceed 100 characters' : 'El título no puede exceder los 100 caracteres';
     }
     return null;
   }
 
   String? _validateDescription(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Por favor ingresa una descripción';
+      return isEnglish ? 'Please enter a description' : 'Por favor ingresa una descripción';
     }
     if (value.trim().length > 500) {
-      return 'La descripción no puede exceder los 500 caracteres';
+      return isEnglish ? 'Description cannot exceed 500 characters' : 'La descripción no puede exceder los 500 caracteres';
     }
     return null;
   }
 
   String? _validateCookingTime(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Por favor ingresa el tiempo de cocción';
+      return isEnglish ? 'Please enter the cooking time' : 'Por favor ingresa el tiempo de cocción';
     }
     if (!_numberRegExp.hasMatch(value)) {
-      return 'Ingresa un número válido';
+      return isEnglish ? 'Enter only positive integers' : 'Ingresa solo números enteros positivos';
     }
     final minutes = int.parse(value);
     if (minutes <= 0) {
-      return 'El tiempo debe ser mayor a 0';
+      return isEnglish ? 'Time must be greater than 0' : 'El tiempo debe ser mayor a 0';
     }
     if (minutes > 1440) {
-      return 'El tiempo no puede exceder las 24 horas (1440 minutos)';
+      return isEnglish ? 'Time cannot exceed 24 hours (1440 minutes)' : 'El tiempo no puede exceder las 24 horas (1440 minutos)';
     }
     return null;
   }
 
   String? _validateServingSize(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Por favor ingresa el rendimiento';
+      return isEnglish ? 'Please enter the serving size' : 'Por favor ingresa el rendimiento';
     }
     if (!_numberRegExp.hasMatch(value)) {
-      return 'Ingresa un número válido';
+      return isEnglish ? 'Enter a valid number' : 'Ingresa un número válido';
     }
     double? servings = double.tryParse(value);
     if (servings == null || servings <= 0) {
-      return 'El rendimiento debe ser mayor a 0';
+      return isEnglish ? 'Serving size must be greater than 0' : 'El rendimiento debe ser mayor a 0';
     }
     if (servings > 10000) {
-      return 'El rendimiento es demasiado grande';
+      return isEnglish ? 'Serving size is too large' : 'El rendimiento es demasiado grande';
     }
     return null;
   }
@@ -197,7 +215,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Editar Receta'),
+        title: Text(isEnglish ? 'Edit Recipe' : 'Editar Receta'),
         backgroundColor: const Color(0xFF96B4D8),
       ),
       body: SingleChildScrollView(
@@ -213,10 +231,10 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   style: TextStyle(
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
-                  decoration: const InputDecoration(
-                    labelText: 'Título',
+                  decoration: InputDecoration(
+                    labelText: isEnglish ? 'Title' : 'Título',
                     border: OutlineInputBorder(),
-                    helperText: 'Entre 3 y 100 caracteres',
+                    helperText: isEnglish ? 'Between 3 and 100 characters' : 'Entre 3 y 100 caracteres',
                   ),
                   validator: _validateTitle,
                   textCapitalization: TextCapitalization.sentences,
@@ -227,10 +245,10 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   style: TextStyle(
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
-                  decoration: const InputDecoration(
-                    labelText: 'Descripción',
+                  decoration: InputDecoration(
+                    labelText: isEnglish ? 'Description' : 'Descripción',
                     border: OutlineInputBorder(),
-                    helperText: 'Máximo 500 caracteres',
+                    helperText: isEnglish ? 'Maximum 500 characters' : 'Máximo 500 caracteres',
                   ),
                   maxLines: 3,
                   validator: _validateDescription,
@@ -242,8 +260,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   style: TextStyle(
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
-                  decoration: const InputDecoration(
-                    labelText: 'Tiempo de preparación (minutos)',
+                  decoration: InputDecoration(
+                    labelText: isEnglish ? 'Preparation time (minutes)' : 'Tiempo de preparación (minutos)',
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
@@ -257,8 +275,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                       flex: 2,
                       child: TextFormField(
                         controller: _servingSizeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Rendimiento',
+                        decoration: InputDecoration(
+                          labelText: isEnglish ? 'Serving Size' : 'Rendimiento',
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
@@ -271,8 +289,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                       flex: 1,
                       child: DropdownButtonFormField<String>(
                         value: _servingUnit,
-                        decoration: const InputDecoration(
-                          labelText: 'Unidad',
+                        decoration: InputDecoration(
+                          labelText: isEnglish ? 'Unit' : 'Unidad',
                           border: OutlineInputBorder(),
                         ),
                         items: _todasLasUnidades.map((String unidad) {
@@ -314,7 +332,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
                       hint: Text(
-                        'Selecciona una categoría',
+                        isEnglish ? 'Select a category' : 'Selecciona una categoría',
                         style: TextStyle(
                           color: isDarkMode ? Colors.white70 : Colors.grey[700],
                         ),
@@ -359,15 +377,15 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 const SizedBox(height: 24),
                 SwitchListTile(
                   title: Text(
-                    'Receta Privada',
+                    isEnglish ? 'Private Recipe' : 'Receta Privada',
                     style: TextStyle(
                       color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                   subtitle: Text(
                     _isPrivate
-                        ? 'Solo tú podrás ver esta receta'
-                        : 'Todos podrán ver esta receta',
+                        ? isEnglish ? 'Only you can see this recipe' : 'Solo tú podrás ver esta receta'
+                        : isEnglish ? 'Everyone can see this recipe' : 'Todos podrán ver esta receta',
                     style: TextStyle(
                       color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 12,
@@ -389,8 +407,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                         vertical: 15, horizontal: 30),
                     backgroundColor: Theme.of(context).primaryColor,
                   ),
-                  child: const Text(
-                    'Guardar Cambios',
+                  child: Text(
+                    isEnglish ? 'Save Changes' : 'Guardar Cambios',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -411,7 +429,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ingredientes',
+          isEnglish ? 'Ingredients' : 'Ingredientes',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -444,7 +462,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _addIngredient,
-          child: const Text('Agregar Ingrediente'),
+          child: Text(isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente'),
         ),
       ],
     );
@@ -455,7 +473,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Pasos',
+          isEnglish ? 'Steps' : 'Pasos',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -476,7 +494,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   child: TextFormField(
                     controller: _stepControllers[index],
                     decoration: InputDecoration(
-                      labelText: 'Paso ${index + 1}',
+                      labelText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
                     ),
                     maxLines: 2,
                   ),
@@ -511,8 +529,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     if (_formKey.currentState!.validate()) {
       if (_ingredients.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Debes agregar al menos un ingrediente'),
+          SnackBar(
+            content: Text(isEnglish ? 'You must add at least one ingredient' : 'Debes agregar al menos un ingrediente'),
             backgroundColor: Colors.red,
           ),
         );
@@ -521,8 +539,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
       if (!_validateSteps()) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Todos los pasos deben estar completos'),
+          SnackBar(
+            content: Text(isEnglish ? 'All steps must be completed' : 'Todos los pasos deben estar completos'),
             backgroundColor: Colors.red,
           ),
         );
@@ -546,7 +564,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
         // Actualizamos la receta en Firestore
         await FirebaseFirestore.instance
             .collection('recipes')
-            .doc(widget.recipe.id)
+            .doc(widget.recipe?.id)
             .update({
           'title': _titleController.text.trim(),
           'description': _descriptionController.text.trim(),
@@ -564,7 +582,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           // Obtenemos la receta actualizada
           final updatedRecipeDoc = await FirebaseFirestore.instance
               .collection('recipes')
-              .doc(widget.recipe.id)
+              .doc(widget.recipe?.id)
               .get();
 
           if (updatedRecipeDoc.exists) {
@@ -579,8 +597,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 updatedRecipe); // Vuelve a la pantalla anterior con la receta actualizada
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Receta actualizada con éxito'),
+              SnackBar(
+                content: Text(isEnglish ? 'Recipe updated successfully' : 'Receta actualizada con éxito'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -591,7 +609,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           Navigator.pop(context); // Cierra el diálogo de carga
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al actualizar la receta: ${e.toString()}'),
+              content: Text(isEnglish 
+                ? 'Error updating recipe: ${e.toString()}'
+                : 'Error al actualizar la receta: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );

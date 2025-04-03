@@ -25,6 +25,18 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
     'Volumen': ['ml', 'l', 'tz', 'cda', 'cdta'],
     'Temperatura': ['°C', '°F', 'K'],
   };
+  
+  // Mapeo de nombres de categorías en inglés
+  final Map<String, String> _categoryTranslations = {
+    'Peso': 'Weight',
+    'Volumen': 'Volume',
+    'Temperatura': 'Temperature',
+  };
+  
+  // Obtener nombre de categoría según el idioma seleccionado
+  String _getCategoryName(String categoria) {
+    return isEnglish ? _categoryTranslations[categoria] ?? categoria : categoria;
+  }
 
   final Map<String, Map<String, double>> _factoresConversion = {
     'g': {
@@ -356,6 +368,9 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
   Widget _buildCategoryButton(String categoria, IconData icono) {
     bool isSelected = _categoriaSeleccionada == categoria;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    // Usar el nombre traducido según idioma
+    final displayName = _getCategoryName(categoria);
 
     return ElevatedButton.icon(
       icon: Icon(
@@ -365,7 +380,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
             : (isDarkMode ? Colors.grey.shade300 : Colors.grey),
       ),
       label: Text(
-        categoria,
+        displayName,
         style: TextStyle(
           color: isSelected 
               ? Colors.white 

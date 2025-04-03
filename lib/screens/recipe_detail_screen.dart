@@ -11,32 +11,51 @@ import '../utils/pdf_generator.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
+  final bool isEnglish;
 
-  const RecipeDetailScreen({super.key, required this.recipe});
+  const RecipeDetailScreen({super.key, required this.recipe, this.isEnglish = false});
 
   @override
   State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
 }
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+  bool isEnglish = false;
+
+  @override
+  void initState() {
+    super.initState();
+    isEnglish = widget.isEnglish;
+  }
+
+  @override
+  void didUpdateWidget(RecipeDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
+    }
+  }
+
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar Receta'),
+        title: Text(isEnglish ? 'Delete Recipe' : 'Eliminar Receta'),
         content:
-            const Text('¿Estás seguro de que deseas eliminar esta receta?'),
+            Text(isEnglish ? 'Are you sure you want to delete this recipe?' : '¿Estás seguro de que deseas eliminar esta receta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(isEnglish ? 'Cancel' : 'Cancelar'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: const Color.fromARGB(255, 255, 1, 1),
             ),
-            child: const Text('Eliminar'),
+            child: Text(isEnglish ? 'Delete' : 'Eliminar'),
           ),
         ],
       ),
@@ -52,8 +71,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta eliminada con éxito'),
+            SnackBar(
+              content: Text(isEnglish ? 'Recipe deleted successfully' : 'Receta eliminada con éxito'),
               backgroundColor: Colors.green,
             ),
           );
@@ -61,8 +80,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al eliminar la receta'),
+            SnackBar(
+              content: Text(isEnglish ? 'Error deleting recipe' : 'Error al eliminar la receta'),
               backgroundColor: Colors.red,
             ),
           );
@@ -104,7 +123,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
-                        EditRecipeScreen(recipe: widget.recipe),
+                        EditRecipeScreen(
+                          recipe: widget.recipe,
+                          isEnglish: isEnglish,
+                        ),
                   ),
                 );
                 if (updatedRecipe != null && mounted) {
@@ -112,7 +134,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          RecipeDetailScreen(recipe: updatedRecipe),
+                          RecipeDetailScreen(
+                            recipe: updatedRecipe,
+                            isEnglish: isEnglish,
+                          ),
                     ),
                   );
                 }
@@ -194,7 +219,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Rendimiento: ${widget.recipe.servingSize}',
+                    isEnglish ? 'Yield: ${widget.recipe.servingSize}' : 'Rendimiento: ${widget.recipe.servingSize}',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w400,
@@ -203,7 +228,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Ingredientes:',
+                    isEnglish ? 'Ingredients:' : 'Ingredientes:',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -217,7 +242,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       columns: [
                         DataColumn(
                           label: Text(
-                            'Ingrediente',
+                            isEnglish ? 'Ingredient' : 'Ingrediente',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: isDarkMode ? Colors.white : Colors.black,
@@ -226,7 +251,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         ),
                         DataColumn(
                           label: Text(
-                            'Cantidad',
+                            isEnglish ? 'Amount' : 'Cantidad',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: isDarkMode ? Colors.white : Colors.black,
@@ -235,7 +260,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         ),
                         DataColumn(
                           label: Text(
-                            'Unidad',
+                            isEnglish ? 'Unit' : 'Unidad',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: isDarkMode ? Colors.white : Colors.black,
@@ -276,7 +301,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Pasos:',
+                    isEnglish ? 'Steps:' : 'Pasos:',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

@@ -6,8 +6,9 @@ import '../screens/my_recipes_screen.dart';
 
 class ProfilePage extends StatelessWidget {
   final User user;
+  final bool isEnglish;
 
-  const ProfilePage({super.key, required this.user});
+  const ProfilePage({super.key, required this.user, this.isEnglish = false});
 
   Future<void> _createUserDocument() async {
     try {
@@ -43,12 +44,12 @@ class ProfilePage extends StatelessWidget {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cambiar Nombre de Usuario'),
+        title: Text(isEnglish ? 'Change Username' : 'Cambiar Nombre de Usuario'),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Nombre',
-            hintText: 'Ingresa tu nombre',
+          decoration: InputDecoration(
+            labelText: isEnglish ? 'Name' : 'Nombre',
+            hintText: isEnglish ? 'Enter your name' : 'Ingresa tu nombre',
             border: OutlineInputBorder(),
           ),
           autofocus: true,
@@ -56,7 +57,7 @@ class ProfilePage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(isEnglish ? 'Cancel' : 'Cancelar'),
           ),
           TextButton(
             onPressed: () async {
@@ -75,8 +76,8 @@ class ProfilePage extends StatelessWidget {
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Nombre actualizado con éxito'),
+                      SnackBar(
+                        content: Text(isEnglish ? 'Name updated successfully' : 'Nombre actualizado con éxito'),
                         backgroundColor: Colors.green,
                       ),
                     );
@@ -85,8 +86,8 @@ class ProfilePage extends StatelessWidget {
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Error al actualizar el nombre'),
+                      SnackBar(
+                        content: Text(isEnglish ? 'Error updating name' : 'Error al actualizar el nombre'),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -94,7 +95,7 @@ class ProfilePage extends StatelessWidget {
                 }
               }
             },
-            child: const Text('Guardar'),
+            child: Text(isEnglish ? 'Save' : 'Guardar'),
           ),
         ],
       ),
@@ -105,7 +106,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi Perfil'),
+        title: Text(isEnglish ? 'My Profile' : 'Mi Perfil'),
         backgroundColor: const Color(0xFF96B4D8),
       ),
       body: StreamBuilder<DocumentSnapshot>(
@@ -176,26 +177,26 @@ class ProfilePage extends StatelessWidget {
                 const SizedBox(height: 20),
                 _buildProfileSection(
                   icon: Icons.restaurant_menu,
-                  title: 'Mis Recetas',
-                  subtitle: 'Gestiona tus recetas creadas',
+                  title: isEnglish ? 'My Recipes' : 'Mis Recetas',
+                  subtitle: isEnglish ? 'Manage your created recipes' : 'Gestiona tus recetas creadas',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const MyRecipesScreen(),
+                        builder: (context) => MyRecipesScreen(isEnglish: isEnglish),
                       ),
                     );
                   },
                 ),
                 _buildProfileSection(
                   icon: Icons.favorite,
-                  title: 'Recetas Favoritas',
-                  subtitle: 'Recetas guardadas como favoritas',
+                  title: isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas',
+                  subtitle: isEnglish ? 'Recipes saved as favorites' : 'Recetas guardadas como favoritas',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const FavoriteRecipesScreen(),
+                        builder: (context) => FavoriteRecipesScreen(isEnglish: isEnglish),
                       ),
                     );
                   },

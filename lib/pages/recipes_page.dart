@@ -6,7 +6,9 @@ import '../constants/categories.dart';
 import '../screens/recipe_detail_screen.dart';
 
 class RecipesPage extends StatefulWidget {
-  const RecipesPage({super.key});
+  final bool isEnglish;
+  
+  const RecipesPage({super.key, this.isEnglish = false});
 
   @override
   State<RecipesPage> createState() => _RecipesPageState();
@@ -15,6 +17,7 @@ class RecipesPage extends StatefulWidget {
 class _RecipesPageState extends State<RecipesPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool get isEnglish => widget.isEnglish;
 
   @override
   void dispose() {
@@ -31,7 +34,7 @@ class _RecipesPageState extends State<RecipesPage> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Buscar recetas...',
+              hintText: isEnglish ? 'Search recipes...' : 'Buscar recetas...',
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -96,7 +99,7 @@ class _RecipesPageState extends State<RecipesPage> {
                           size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
-                        'No hay recetas disponibles',
+                        isEnglish ? 'No recipes available' : 'No hay recetas disponibles',
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.grey[600],
@@ -157,7 +160,7 @@ class _RecipesPageState extends State<RecipesPage> {
                 ],
               ),
               Text(
-                '${categoryRecipes.length} recetas',
+                '${categoryRecipes.length} ${isEnglish ? 'recipes' : 'recetas'}',
                 style: TextStyle(
                   color: Colors.grey[600],
                 ),
@@ -191,7 +194,10 @@ class _RecipesPageState extends State<RecipesPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              RecipeDetailScreen(recipe: recipe),
+                              RecipeDetailScreen(
+                                recipe: recipe,
+                                isEnglish: isEnglish,
+                              ),
                         ),
                       );
                     },
@@ -318,8 +324,8 @@ class _RecipesPageState extends State<RecipesPage> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Debes iniciar sesión para guardar favoritos'),
+        SnackBar(
+          content: Text(isEnglish ? 'You must log in to save favorites' : 'Debes iniciar sesión para guardar favoritos'),
           backgroundColor: Colors.red,
         ),
       );
@@ -336,8 +342,8 @@ class _RecipesPageState extends State<RecipesPage> {
         });
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta eliminada de favoritos'),
+            SnackBar(
+              content: Text(isEnglish ? 'Recipe removed from favorites' : 'Receta eliminada de favoritos'),
               backgroundColor: Colors.grey,
             ),
           );
@@ -348,8 +354,8 @@ class _RecipesPageState extends State<RecipesPage> {
         });
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta guardada en favoritos'),
+            SnackBar(
+              content: Text(isEnglish ? 'Recipe saved to favorites' : 'Receta guardada en favoritos'),
               backgroundColor: Colors.green,
             ),
           );
@@ -358,8 +364,8 @@ class _RecipesPageState extends State<RecipesPage> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al actualizar favoritos'),
+          SnackBar(
+            content: Text(isEnglish ? 'Error updating favorites' : 'Error al actualizar favoritos'),
             backgroundColor: Colors.red,
           ),
         );
