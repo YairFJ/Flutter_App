@@ -15,11 +15,12 @@ import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
 import 'pages/profile_page.dart';
 import 'screens/groups_screen.dart';
-
+import 'services/language_service.dart';
+import 'services/theme_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DefaultFirebaseOptions.loadEnv(); // Cargar variables de entorno
+  await DefaultFirebaseOptions.loadEnv();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -34,54 +35,55 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.light;
- 
-
-  void toggleTheme() {
-    setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
-  }
+  final _languageService = LanguageService();
+  final _themeService = ThemeService();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Restaurante App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        primaryColor: const Color(0xFF96B4D8),
-        scaffoldBackgroundColor: Colors.white,
-        cardColor: Colors.white,
-        brightness: Brightness.light,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _languageService),
+        ChangeNotifierProvider.value(value: _themeService),
+      ],
+      child: Consumer<ThemeService>(
+        builder: (context, themeService, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Restaurante App',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              primaryColor: const Color(0xFF96B4D8),
+              scaffoldBackgroundColor: Colors.white,
+              cardColor: Colors.white,
+              brightness: Brightness.light,
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+            ),
+            darkTheme: ThemeData(
+              primarySwatch: Colors.blue,
+              primaryColor: const Color(0xFF96B4D8),
+              scaffoldBackgroundColor: const Color(0xFF121212),
+              cardColor: const Color(0xFF1E1E1E),
+              brightness: Brightness.dark,
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+            ),
+            themeMode: themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const AuthWrapper(),
+            routes: {
+              '/profile': (context) =>
+                  ProfilePage(user: FirebaseAuth.instance.currentUser!),
+              '/login': (context) => const LoginPage(),
+              '/register': (context) => const SignUpScreen(),
+              '/groups': (context) => const GroupsScreen(),
+            },
+          );
+        },
       ),
-      darkTheme: ThemeData(
-        primarySwatch: Colors.blue,
-        primaryColor: const Color(0xFF96B4D8),
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        cardColor: const Color(0xFF1E1E1E),
-        brightness: Brightness.dark,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      themeMode: _themeMode,
-      home: AuthWrapper(toggleTheme: toggleTheme),
-      routes: {
-        '/profile': (context) =>
-            ProfilePage(user: FirebaseAuth.instance.currentUser!),
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const SignUpScreen(),
-        '/groups': (context) => const GroupsScreen(),
-      },
     );
   }
 }
 
 class AuthWrapper extends StatelessWidget {
-  final Function toggleTheme;
-
-  const AuthWrapper({super.key, required this.toggleTheme});
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +105,6 @@ class AuthWrapper extends StatelessWidget {
 
         return HomeScreen(
           userData: PigeonUserDetail.fromUser(user),
-          toggleTheme: toggleTheme,
         );
       },
     );
@@ -112,10 +113,8 @@ class AuthWrapper extends StatelessWidget {
 
 class HomeScreen extends StatefulWidget {
   final PigeonUserDetail userData;
-  final Function toggleTheme;
 
-  const HomeScreen(
-      {super.key, required this.userData, required this.toggleTheme});
+  const HomeScreen({super.key, required this.userData});
 
   // Definimos los colores como constantes estáticas
   static const Color primaryColor = Color(0xFF96B4D8);
@@ -127,30 +126,44 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  bool isDarkMode = false;
-  bool isEnglish = false; // Variable para controlar el idioma
+  late bool isDarkMode;
+  late bool isEnglish;
 
   @override
   void initState() {
     super.initState();
     print('HomeScreen initState llamado');
-    // Inicializar el tema inmediatamente
-    isDarkMode = WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+    final themeService = Provider.of<ThemeService>(context, listen: false);
+    final languageService = Provider.of<LanguageService>(context, listen: false);
+    isDarkMode = themeService.isDarkMode;
+    isEnglish = languageService.isEnglish;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final themeService = Provider.of<ThemeService>(context);
+    final languageService = Provider.of<LanguageService>(context);
+    if (isDarkMode != themeService.isDarkMode) {
+      setState(() {
+        isDarkMode = themeService.isDarkMode;
+      });
+    }
+    if (isEnglish != languageService.isEnglish) {
+      setState(() {
+        isEnglish = languageService.isEnglish;
+      });
+    }
   }
 
   void toggleTheme() {
-    setState(() {
-      isDarkMode = !isDarkMode;
-      widget.toggleTheme();
-    });
+    final themeService = Provider.of<ThemeService>(context, listen: false);
+    themeService.toggleTheme();
   }
 
   void toggleLanguage() {
-    setState(() {
-      isEnglish = !isEnglish;
-      // Actualizar el servicio global de idioma
-      
-    });
+    final languageService = Provider.of<LanguageService>(context, listen: false);
+    languageService.toggleLanguage();
   }
 
   void _onItemTapped(int index) {
@@ -216,6 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white,
             ),
             onPressed: toggleTheme,
+            tooltip: isDarkMode ? 'Cambiar a modo claro' : 'Switch to dark mode',
           ),
         ],
       ),

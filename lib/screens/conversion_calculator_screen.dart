@@ -5,6 +5,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
+import 'package:provider/provider.dart';
+import '../services/language_service.dart';
 
 class ConversionCalculatorScreen extends StatefulWidget {
   final Recipe recipe;
@@ -405,14 +407,11 @@ class _ConversionCalculatorScreenState
   final Map<String, String> _unidadesEnIngles = {
     'Gramo': 'Gram',
     'Kilogramo': 'Kilogram',
+    'Miligramos': 'Milligrams',
     'Onza': 'Ounce',
     'Libra': 'Pound',
     'Mililitros': 'Milliliters',
     'Litro': 'Liter',
-    'Porción': 'Serving',
-    'Persona': 'Person',
-    'Personas': 'People',
-    'Miligramos': 'Milligrams',
     'Centilitros': 'Centiliters',
     'Cucharada': 'Tablespoon',
     'Cucharadita': 'Teaspoon',
@@ -421,20 +420,42 @@ class _ConversionCalculatorScreenState
     'Pinta': 'Pint',
     'Cuarto galon': 'Quart',
     'Galon': 'Gallon',
+    'Persona': 'Person',
+    'Personas': 'People',
+    'Porción': 'Serving',
+    'Porciones': 'Servings',
+    'Ración': 'Portion',
+    'Raciones': 'Portions',
+    'Plato': 'Plate',
+    'Platos': 'Plates',
+    'Unidad': 'Unit',
+    'Unidades': 'Units'
   };
 
-  // Método para obtener la unidad traducida
-  String _getUnidadTraducida(String unidad) {
+  // Método para obtener la unidad traducida y formateada
+  String _getUnidadFormateada(String unidad, {bool abreviada = false}) {
+    String unidadTraducida = isEnglish ? (_unidadesEnIngles[unidad] ?? unidad) : unidad;
+    return abreviada ? (_unidadesAbreviadas[unidadTraducida] ?? unidadTraducida) : unidadTraducida;
+  }
+
+  // Método para obtener la unidad en plural
+  String _getUnidadPlural(String unidad, double cantidad) {
+    if (cantidad <= 1) return _getUnidadFormateada(unidad);
+    
     if (isEnglish) {
-      return _unidadesEnIngles[unidad] ?? unidad;
+      // En inglés, generalmente se agrega 's' al final
+      String unidadTraducida = _unidadesEnIngles[unidad] ?? unidad;
+      return '${unidadTraducida}s';
+    } else {
+      // En español, usamos el mapa de plurales
+      return _unidadesPlural[unidad] ?? '${unidad}s';
     }
-    return unidad;
   }
 
   @override
   void initState() {
     super.initState();
-    isEnglish = widget.isEnglish;
+    isEnglish = Provider.of<LanguageService>(context, listen: false).isEnglish;
     
     // Obtener el valor y unidad de servingSize
     String servingSize = widget.recipe.servingSize;
@@ -444,7 +465,7 @@ class _ConversionCalculatorScreenState
     double cantidad = 1.0;
     String unidad = "Porción";
     
-      if (parts.length >= 2) {
+    if (parts.length >= 2) {
       cantidad = double.tryParse(parts[0].replaceAll(',', '.')) ?? 1.0;
       unidad = parts[1].toLowerCase();
     }
@@ -460,40 +481,40 @@ class _ConversionCalculatorScreenState
       _valorBaseGramos = _convertirAUnidadBase(_platosOrigen, _unidadOriginal, 'peso');
     } else if (_esTipoUnidadVolumen(_unidadOriginal)) {
       _valorBaseMililitros = _convertirAUnidadBase(_platosOrigen, _unidadOriginal, 'volumen');
-      }
+    }
 
-      // Inicialización segura de controladores
+    // Inicialización segura de controladores
     _cantidadController = TextEditingController(text: _formatearNumero(_platosOrigen));
     _destinoController = TextEditingController(text: _formatearNumero(_platosOrigen));
-      _platosDestino = _platosOrigen;
+    _platosDestino = _platosOrigen;
 
-      // Inicialización segura de ingredientes
-      if (widget.recipe.ingredients.isNotEmpty) {
-        _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
-          try {
+    // Inicialización segura de ingredientes
+    if (widget.recipe.ingredients.isNotEmpty) {
+      _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
+        try {
           String unidadOriginal = ingrediente.unit.toLowerCase() ?? 'gr';
           String unidadConvertida = _convertirUnidadAntigua[unidadOriginal] ?? 'Gramo';
           print("Unidad original: $unidadOriginal, Unidad convertida: $unidadConvertida");
 
-            return IngredienteTabla(
-              nombre: ingrediente.name ?? '',
-            cantidad: (ingrediente.quantity ?? 0).toDouble(), // Asegurarnos de que sea double
-              unidad: unidadConvertida,
-            );
-          } catch (e) {
-            print("Error al convertir ingrediente: $e");
-            return IngredienteTabla(
-              nombre: '',
-            cantidad: 0.0, // Asegurarnos de que sea double
+          return IngredienteTabla(
+            nombre: ingrediente.name ?? '',
+            cantidad: (ingrediente.quantity ?? 0).toDouble(),
+            unidad: unidadConvertida,
+          );
+        } catch (e) {
+          print("Error al convertir ingrediente: $e");
+          return IngredienteTabla(
+            nombre: '',
+            cantidad: 0.0,
             unidad: 'Gramo',
-            );
-          }
-        }).toList();
-      } else {
-        _ingredientesTabla = [];
-      }
+          );
+        }
+      }).toList();
+    } else {
+      _ingredientesTabla = [];
+    }
 
-      _calcularConversion();
+    _calcularConversion();
   }
 
   @override
@@ -1278,17 +1299,17 @@ class _ConversionCalculatorScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEnglish ? 'Conversion Calculator' : 'Calculadora de Conversión'),
+        title: Text(_getTextoTraducido('Calculadora de Conversión', 'Conversion Calculator')),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: _mostrarTablaEquivalencias,
-            tooltip: isEnglish ? 'View conversion table' : 'Ver tabla de equivalencias',
+            tooltip: _getTextoTraducido('Ver tabla de equivalencias', 'View conversion table'),
           ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: _generarPDF,
-            tooltip: isEnglish ? 'Generate PDF' : 'Generar PDF',
+            tooltip: _getTextoTraducido('Generar PDF', 'Generate PDF'),
           ),
         ],
       ),
@@ -1296,7 +1317,7 @@ class _ConversionCalculatorScreenState
         padding: const EdgeInsets.all(16.0),
         children: [
           Text(
-            isEnglish ? 'CONVERSION CALCULATOR' : 'CALCULADORA DE CONVERSIÓN',
+            _getTextoTraducido('CALCULADORA DE CONVERSIÓN', 'CONVERSION CALCULATOR'),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
@@ -1309,7 +1330,7 @@ class _ConversionCalculatorScreenState
             child: Column(
               children: [
                 Text(
-                  isEnglish ? 'YIELD' : 'RENDIMIENTO',
+                  _getTextoTraducido('RENDIMIENTO', 'YIELD'),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -1333,7 +1354,7 @@ class _ConversionCalculatorScreenState
                           padding: const EdgeInsets.symmetric(
                               vertical: 16.0, horizontal: 8.0),
                           child: Text(
-                            isEnglish ? 'ORIGINAL' : 'ORIGINAL',
+                            _getTextoTraducido('ORIGINAL', 'ORIGINAL'),
                             style: TextStyle(fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
@@ -1342,7 +1363,7 @@ class _ConversionCalculatorScreenState
                           padding: const EdgeInsets.symmetric(
                               vertical: 16.0, horizontal: 8.0),
                           child: Text(
-                            isEnglish ? 'UNIT' : 'UNIDAD',
+                            _getTextoTraducido('UNIDAD', 'UNIT'),
                             style: TextStyle(fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
@@ -1351,7 +1372,7 @@ class _ConversionCalculatorScreenState
                           padding: const EdgeInsets.symmetric(
                               vertical: 16.0, horizontal: 8.0),
                           child: Text(
-                            isEnglish ? 'NEW' : 'NUEVO',
+                            _getTextoTraducido('NUEVO', 'NEW'),
                             style: TextStyle(fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
@@ -1771,7 +1792,7 @@ class _ConversionCalculatorScreenState
           ),
           const SizedBox(height: 32),
           Text(
-            isEnglish ? 'INGREDIENTS TABLE' : 'TABLA DE INGREDIENTES',
+            _getTextoTraducido('TABLA DE INGREDIENTES', 'INGREDIENTS TABLE'),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
@@ -1793,11 +1814,8 @@ class _ConversionCalculatorScreenState
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'INGREDIENTE',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
+                      _getTextoTraducido('INGREDIENTE', 'INGREDIENT'),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -1806,11 +1824,8 @@ class _ConversionCalculatorScreenState
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'CANTIDAD',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
+                      _getTextoTraducido('CANTIDAD', 'QUANTITY'),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -1819,11 +1834,8 @@ class _ConversionCalculatorScreenState
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'UNIDAD',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
+                      _getTextoTraducido('UNIDAD', 'UNIT'),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -1945,7 +1957,7 @@ class _ConversionCalculatorScreenState
                                 style: TextStyle(
                                   fontSize: 14,
                                   color:
-                                      isDarkMode ? Colors.white : Colors.black,
+                                      isDarkMode ? Colors.white : const Color.fromARGB(255, 26, 22, 22),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -1974,11 +1986,6 @@ class _ConversionCalculatorScreenState
         backgroundColor: Theme.of(context).primaryColor,
       ),
     );
-  }
-
-  String _getUnidadPlural(String unidad, double cantidad) {
-    if (cantidad <= 1) return unidad;
-    return _unidadesPlural[unidad] ?? '${unidad}s';
   }
 
   // Nuevos métodos para simplificar la comprobación de tipo de unidad
@@ -2161,6 +2168,27 @@ class _ConversionCalculatorScreenState
     if (oldWidget.isEnglish != widget.isEnglish) {
       setState(() {
         isEnglish = widget.isEnglish;
+      });
+    }
+  }
+
+  // Método para obtener el texto traducido
+  String _getTextoTraducido(String textoEspanol, String textoIngles) {
+    return isEnglish ? textoIngles : textoEspanol;
+  }
+
+  // Método para obtener la unidad traducida
+  String _getUnidadTraducida(String unidad) {
+    return _getUnidadFormateada(unidad);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final languageService = Provider.of<LanguageService>(context);
+    if (isEnglish != languageService.isEnglish) {
+      setState(() {
+        isEnglish = languageService.isEnglish;
       });
     }
   }
