@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../constants/categories.dart';
 import '../screens/recipe_detail_screen.dart';
@@ -61,20 +60,24 @@ class _RecipesPageState extends State<RecipesPage> {
           ),
         ),
         Expanded(
-          child:   StreamBuilder<QuerySnapshot>(
-     stream: FirebaseFirestore.instance.collection('recipes').orderBy('createdAt', descending: true).snapshots(),
-     builder: (context, snapshot) {
-       if (snapshot.connectionState == ConnectionState.waiting) {
-         return const Center(child: CircularProgressIndicator());
-       }
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('recipes')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-       if (snapshot.hasError) {
-         return Center(child: Text('Error: ${snapshot.error}'));
-       }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
 
-       final recipes = snapshot.data!.docs.map((doc) {
-         return Recipe.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-       }).toList();
+              final recipes = snapshot.data!.docs.map((doc) {
+                return Recipe.fromMap(
+                    doc.data() as Map<String, dynamic>, doc.id);
+              }).toList();
 
               // Filtrar las recetas según la búsqueda
               var filteredRecipes = recipes;
@@ -173,9 +176,7 @@ class _RecipesPageState extends State<RecipesPage> {
             itemCount: categoryRecipes.length,
             itemBuilder: (context, index) {
               final recipe = categoryRecipes[index];
-              final currentUser = FirebaseAuth.instance.currentUser;
-              final isFavorite = currentUser != null &&
-                  recipe.favoritedBy.contains(currentUser.uid);
+              final isFavorite = false; // Sin autenticación, no hay favoritos
 
               return SizedBox(
                 width: 180,
@@ -248,7 +249,10 @@ class _RecipesPageState extends State<RecipesPage> {
                                       ? Icons.favorite
                                       : Icons.favorite_border,
                                   size: 18,
-                                  color: isFavorite ? Colors.red : const Color.fromARGB(255, 158, 158, 158),
+                                  color: isFavorite
+                                      ? Colors.red
+                                      : const Color.fromARGB(
+                                          255, 158, 158, 158),
                                 ),
                                 onPressed: () =>
                                     _toggleFavorite(context, recipe),
@@ -276,7 +280,8 @@ class _RecipesPageState extends State<RecipesPage> {
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.white
                                               : Colors.black87,
                                         ),
@@ -288,7 +293,8 @@ class _RecipesPageState extends State<RecipesPage> {
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: Theme.of(context).brightness == Brightness.dark
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
                                               ? Colors.white
                                               : Colors.black87,
                                         ),
@@ -315,55 +321,6 @@ class _RecipesPageState extends State<RecipesPage> {
   }
 
   Future<void> _toggleFavorite(BuildContext context, Recipe recipe) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Debes iniciar sesión para guardar favoritos'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final recipeRef =
-        FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
-
-    try {
-      if (recipe.favoritedBy.contains(currentUser.uid)) {
-        await recipeRef.update({
-          'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
-        });
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta eliminada de favoritos'),
-              backgroundColor: Colors.grey,
-            ),
-          );
-        }
-      } else {
-        await recipeRef.update({
-          'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
-        });
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta guardada en favoritos'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al actualizar favoritos'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    // No se puede cambiar favoritos sin autenticación
   }
 }

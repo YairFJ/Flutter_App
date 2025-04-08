@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
-import 'models/pigeon_user_detail.dart';
 import 'screens/signup_screen.dart';
 import 'screens/add_recipe_screen.dart';
 import 'screens/recipe_detail_screen.dart';
@@ -65,8 +64,9 @@ class _MyAppState extends State<MyApp> {
       themeMode: _themeMode,
       home: AuthWrapper(toggleTheme: toggleTheme),
       routes: {
-        '/profile': (context) =>
-            ProfilePage(user: FirebaseAuth.instance.currentUser!),
+        '/profile': (context) => ProfilePage(
+              user: FirebaseAuth.instance.currentUser!,
+            ),
         '/login': (context) => const LoginPage(),
         '/register': (context) => const SignUpScreen(),
         '/groups': (context) => const GroupsScreen(),
@@ -94,12 +94,40 @@ class AuthWrapper extends StatelessWidget {
         }
 
         final user = snapshot.data;
+
+        // Si no hay usuario, redirigir siempre al login
         if (user == null) {
+          print('AuthWrapper: Usuario no autenticado, redirigiendo a login');
           return const LoginPage();
         }
 
+        // Verificar si el email está verificado para usuarios de email/password
+        // Los usuarios de Google ya vienen verificados
+        if (!user.emailVerified &&
+            !user.providerData
+                .any((provider) => provider.providerId == 'google.com')) {
+          print('AuthWrapper: Email no verificado, cerrando sesión');
+          // Cerrar sesión y redirigir al login con mensaje
+          FirebaseAuth.instance.signOut();
+          // Mostrar mensaje después de que la página se construya
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Por favor, verifica tu email antes de iniciar sesión'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          });
+          return const LoginPage();
+        }
+
+        print(
+            'AuthWrapper: Usuario autenticado y verificado, accediendo a HomeScreen');
         return HomeScreen(
-          userData: PigeonUserDetail.fromUser(user),
+          userId: user.uid,
+          userEmail: user.email ?? 'No disponible',
+          userName: user.displayName ?? 'Usuario',
           toggleTheme: toggleTheme,
         );
       },
@@ -108,11 +136,18 @@ class AuthWrapper extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
-  final PigeonUserDetail userData;
+  final String userId;
+  final String userEmail;
+  final String userName;
   final Function toggleTheme;
 
-  const HomeScreen(
-      {super.key, required this.userData, required this.toggleTheme});
+  const HomeScreen({
+    super.key,
+    required this.userId,
+    required this.userEmail,
+    required this.userName,
+    required this.toggleTheme,
+  });
 
   // Definimos los colores como constantes estáticas
   static const Color primaryColor = Color(0xFF96B4D8);
@@ -146,7 +181,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     print('HomeScreen initState llamado');
     // Inicializar el tema inmediatamente
-    isDarkMode = WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+    isDarkMode =
+        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
   }
 
   void toggleTheme() {
@@ -214,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    FirebaseAuth.instance.currentUser?.email ?? 'Usuario',
+                    widget.userEmail,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -247,34 +283,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pushNamed(context, '/groups');
               },
             ),
-            if (FirebaseAuth.instance.currentUser != null) ...[
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.exit_to_app),
-                title: const Text('Cerrar Sesión'),
-                onTap: () async {
-                  await FirebaseAuth.instance.signOut();
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    Navigator.pushReplacementNamed(context, '/');
-                  }
-                },
-              ),
-            ],
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Cerrar Sesión'),
+              onTap: () async {
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  Navigator.pushReplacementNamed(context, '/');
+                }
+              },
+            ),
           ],
         ),
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Theme.of(context).cardColor,
-        selectedItemColor: primaryColor,
-        unselectedItemColor: Colors.grey,
+        backgroundColor: Theme.of(context).primaryColor,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white.withOpacity(0.6),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant_menu),
+            icon: Icon(Icons.menu_book),
             label: 'Recetas',
           ),
           BottomNavigationBarItem(
@@ -286,13 +320,15 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Temporizador',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.timer_outlined),
+            icon: Icon(Icons.timelapse),
             label: 'Cronómetro',
           ),
         ],
       ),
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
+              backgroundColor: secondaryColor,
+              child: const Icon(Icons.add, color: Colors.white),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -301,12 +337,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
               },
-              backgroundColor: primaryColor,
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 30,
-              ),
             )
           : null,
     );
@@ -321,10 +351,14 @@ class RecipeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = theme.brightness == Brightness.dark ? Colors.white : Colors.black;
-    final secondaryTextColor = theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87;
-    final backgroundColor = theme.brightness == Brightness.dark ? Colors.black : Colors.white;
-    final userInfoBackgroundColor = theme.brightness == Brightness.dark ? Colors.black : Colors.grey[200];
+    final textColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
+    final secondaryTextColor =
+        theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87;
+    final backgroundColor =
+        theme.brightness == Brightness.dark ? Colors.black : Colors.white;
+    final userInfoBackgroundColor =
+        theme.brightness == Brightness.dark ? Colors.black : Colors.grey[200];
 
     return Container(
       decoration: BoxDecoration(

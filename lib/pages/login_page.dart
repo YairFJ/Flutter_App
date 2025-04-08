@@ -14,179 +14,227 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final AuthService _authService = AuthService();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
     super.initState();
-    verificarEstadoLogin();
-  }
-
-  void verificarEstadoLogin() {
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user == null) {
-        print('Usuario NO está logueado');
-      } else {
-        print('Usuario está logueado');
-        print('Email: ${user.email}');
-        print('UID: ${user.uid}');
-      }
+    // Verificar el estado de login de forma segura
+    Future.delayed(Duration.zero, () {
+      verificarEstadoLogin();
     });
   }
 
-  // Text editing controllers
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
-
-  // Sign user in method
-  Future<void> signUserIn(BuildContext context) async {
+  void verificarEstadoLogin() {
     try {
-      // Mostrar indicador de carga
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        },
-      );
-
-      final email = usernameController.text.trim();
-      final password = passwordController.text.trim();
-
-      // Reiniciar la instancia de Firebase Auth
-      await FirebaseAuth.instance.signOut();
-      
-      // Esperar un momento antes de intentar el login
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Intentar iniciar sesión
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      if (context.mounted) {
-        Navigator.pop(context); // Cerrar el indicador de carga
-        
-        if (userCredential.user != null) {
-          Navigator.of(context).pushReplacementNamed('/');
+      FirebaseAuth.instance.authStateChanges().listen((User? user) {
+        if (user == null) {
+          print('Usuario NO está logueado');
+        } else {
+          print('Usuario está logueado');
+          print('Email: ${user.email}');
+          print('UID: ${user.uid}');
+          print('Email verificado: ${user.emailVerified}');
+          print(
+              'Proveedores: ${user.providerData.map((e) => e.providerId).join(', ')}');
         }
-      }
-
-    } on FirebaseAuthException catch (e) {
-      if (context.mounted) Navigator.pop(context);
-      
-      String errorMessage = switch (e.code) {
-        'user-not-found' => 'No existe una cuenta con este correo',
-        'wrong-password' => 'Contraseña incorrecta',
-        'invalid-email' => 'El formato del correo no es válido',
-        'network-request-failed' => 'Error de conexión. Verifica tu internet',
-        _ => 'Error de autenticación: ${e.message}',
-      };
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      });
     } catch (e) {
-      if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error inesperado: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      print('Error al verificar estado de login: $e');
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    if (_isLoading) return; // Evitar múltiples clicks
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    // Validar formulario
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showError('Por favor, completa todos los campos');
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    print('Intentando iniciar sesión con: $email');
+
+    setState(() => _isLoading = true);
 
     try {
-      setState(() => _isLoading = true);
-      
-      final userCredential = await _authService.signInWithGoogle();
-      
-      if (userCredential != null && mounted) {
-        print('Usuario logueado: ${userCredential.user?.email}');
-        setState(() => _isLoading = false); // Asegurarnos de detener la carga antes de navegar
-        // Navegar a la pantalla principal después del login exitoso
-        Navigator.of(context).pushReplacementNamed('/');
+      print('Llamando a loginWithEmailAndPassword');
+      final error = await _authService.loginWithEmailAndPassword(
+        email,
+        password,
+      );
+
+      if (error != null) {
+        print('Error en inicio de sesión: $error');
+        _showError(error);
       } else {
-        // Si no hay userCredential, también detenemos la carga
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No se pudo iniciar sesión')),
-          );
-        }
+        print('Inicio de sesión exitoso');
+        _showSuccess('INICIO DE SESIÓN CORRECTO');
       }
     } catch (e) {
-      print('Error al iniciar sesión con Google: $e');
+      print('Excepción durante inicio de sesión: $e');
+      _showError('INICIO DE SESIÓN INCORRECTO: $e');
+    } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al iniciar sesión con Google')),
-        );
       }
     }
   }
 
   Future<void> _handleForgotPassword() async {
-    if (usernameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please, enter your email'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (_emailController.text.isEmpty) {
+      _showError('Por favor, ingresa tu correo electrónico');
       return;
     }
 
+    setState(() => _isLoading = true);
+
     try {
-      // Mostrar indicador de carga
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+      final error = await _authService.sendPasswordResetEmail(
+        _emailController.text.trim(),
       );
 
-      await FirebaseAuth.instance.sendPasswordResetEmail(
-        email: usernameController.text.trim(),
-      );
+      if (error != null) {
+        _showError(error);
+      } else {
+        _showSuccess('Se ha enviado un enlace de recuperación a tu correo');
+      }
+    } catch (e) {
+      _showError('Error inesperado: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
-      if (context.mounted) {
-        Navigator.pop(context); // Cerrar el indicador de carga
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+    print('Iniciando autenticación con Google desde login');
+
+    try {
+      final user = await _authService.signInWithGoogle();
+
+      if (user == null) {
+        print('Google SignIn cancelado por el usuario');
+        if (mounted) {
+          setState(() => _isLoading = false);
+          // No mostrar error si el usuario canceló voluntariamente
+        }
+        return;
+      }
+
+      print('Google SignIn exitoso: ${user.email}');
+
+      if (mounted) {
+        // Mostrar mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Se ha enviado un enlace de recuperación a tu correo'),
+            content: Text('INICIO DE SESIÓN CORRECTO'),
             backgroundColor: Colors.green,
           ),
         );
+
+        // Esperar un momento para mostrar el mensaje
+        await Future.delayed(const Duration(seconds: 1));
+
+        // Navegar a la pantalla principal y eliminar todas las rutas anteriores
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
-    } on FirebaseAuthException catch (e) {
-      if (context.mounted) {
-        Navigator.pop(context);
-        String errorMessage = switch (e.code) {
-          'invalid-email' => 'El correo electrónico no es válido',
-          'user-not-found' => 'No existe una cuenta con este correo',
-          _ => 'Error al enviar el correo de recuperación',
-        };
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
+    } catch (e) {
+      print('Error en Google SignIn: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (e is FirebaseAuthException) {
+          String mensaje = 'Error de inicio de sesión';
+
+          // Personalizar mensaje según el código de error
+          switch (e.code) {
+            case 'invalid-credential':
+              mensaje =
+                  'Credenciales inválidas. Verifica la configuración de tu app.';
+              break;
+            case 'user-not-found':
+              mensaje = 'No se encontró usuario con estas credenciales.';
+              break;
+            case 'unknown-error':
+              mensaje = 'Error desconocido. Por favor, intenta más tarde.';
+              break;
+            default:
+              mensaje = e.message ?? 'Error al iniciar sesión con Google';
+          }
+
+          _showError('INICIO DE SESIÓN INCORRECTO: $mensaje');
+        } else {
+          _showError('INICIO DE SESIÓN INCORRECTO: $e');
+        }
       }
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userCredential = await _authService.signInWithApple();
+
+      if (userCredential != null && userCredential.user != null) {
+        _showSuccess('INICIO DE SESIÓN CORRECTO');
+
+        // Esperar un momento para mostrar el mensaje
+        await Future.delayed(const Duration(seconds: 1));
+
+        // Navegar a la pantalla principal
+        if (mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        }
+      } else {
+        _showError(
+            'INICIO DE SESIÓN INCORRECTO: El inicio de sesión con Apple no está disponible');
+      }
+    } catch (e) {
+      _showError('INICIO DE SESIÓN INCORRECTO: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showSuccess(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
   }
 
@@ -206,35 +254,61 @@ class _LoginPageState extends State<LoginPage> {
                 const Icon(
                   Icons.person_sharp,
                   size: 100,
+                  color: Colors.white,
                 ),
 
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
 
                 // welcome back, you've been missed!
-                Text(
-                  'Welcome back you\'ve been missed!',
+                const Text(
+                  '¡Bienvenido!',
                   style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 17,
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
 
                 const SizedBox(height: 25),
 
-                // username textfield
-                MyTextField(
-                  controller: usernameController,
-                  hintText: 'Username',
-                  obscureText: false,
+                // email textfield
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: MyTextField(
+                    controller: _emailController,
+                    hintText: 'Correo electrónico',
+                    obscureText: false,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (val) =>
+                        val!.isEmpty ? 'Ingresa tu correo' : null,
+                  ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 15),
 
                 // password textfield
-                MyTextField(
-                  controller: passwordController,
-                  hintText: 'Password',
-                  obscureText: true,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: MyTextField(
+                    controller: _passwordController,
+                    hintText: 'Contraseña',
+                    obscureText: !_isPasswordVisible,
+                    suffix: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                    validator: (val) =>
+                        val!.isEmpty ? 'Ingresa tu contraseña' : null,
+                  ),
                 ),
 
                 const SizedBox(height: 10),
@@ -248,10 +322,10 @@ class _LoginPageState extends State<LoginPage> {
                       GestureDetector(
                         onTap: _handleForgotPassword,
                         child: const Text(
-                          '¿Forgot your password?',
+                          '¿Olvidaste tu contraseña?',
                           style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -262,11 +336,19 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 25),
 
                 // sign in button
-                MyButton(
-                  onTap: () => signUserIn(context),
-                ),
+                _isLoading
+                    ? const CircularProgressIndicator(
+                        color: Colors.white,
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                        child: MyButton(
+                          onTap: _login,
+                          text: 'Iniciar sesión',
+                        ),
+                      ),
 
-                const SizedBox(height: 50),
+                const SizedBox(height: 30),
 
                 // or continue with
                 Padding(
@@ -276,62 +358,67 @@ class _LoginPageState extends State<LoginPage> {
                       Expanded(
                         child: Divider(
                           thickness: 0.5,
-                          color: Colors.grey[400],
+                          color: Colors.white,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
-                          'Or continue with',
-                          style: TextStyle(color: Colors.black),
+                          'O continuar con',
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                       Expanded(
                         child: Divider(
                           thickness: 0.5,
-                          color: Colors.grey[400],
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 50),
+                const SizedBox(height: 30),
 
                 // google + apple sign in buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // google button
-                    _isLoading 
-                      ? const CircularProgressIndicator()
-                      : GestureDetector(
-                          onTap: _handleGoogleSignIn,
-                          child: const SquareTile(imagePath: 'lib/images/google.png'),
-                        ),
+                    GestureDetector(
+                      onTap: _isLoading ? null : _handleGoogleSignIn,
+                      child: const SquareTile(
+                        imagePath: 'lib/images/google.png',
+                      ),
+                    ),
                     const SizedBox(width: 25),
                     // apple button
-                    const SquareTile(imagePath: 'lib/images/apple.png')
+                    GestureDetector(
+                      onTap: _isLoading ? null : _handleAppleSignIn,
+                      child: const SquareTile(
+                        imagePath: 'lib/images/apple.png',
+                      ),
+                    ),
                   ],
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
 
                 // not a member? register now
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Not a member?',
-                      style: TextStyle(color: Colors.black),
+                    const Text(
+                      '¿No tienes una cuenta?',
+                      style: TextStyle(color: Colors.white),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/register'); // Navegar a la página de registro
+                        Navigator.pushNamed(context, '/register');
                       },
                       child: const Text(
-                        'Register now',
+                        'REGISTRARTE',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -341,7 +428,7 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
 
-                const SizedBox(height: 20), // Añado un pequeño espacio al final
+                const SizedBox(height: 20),
               ],
             ),
           ),
