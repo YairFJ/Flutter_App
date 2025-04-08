@@ -84,9 +84,10 @@ class _RecipesPageState extends State<RecipesPage> {
               if (_searchQuery.isNotEmpty) {
                 filteredRecipes = recipes.where((recipe) {
                   final description = recipe.description?.toLowerCase() ?? '';
+                  final translatedCategory = RecipeCategories.getTranslatedCategory(recipe.category, isEnglish).toLowerCase();
                   return recipe.title.toLowerCase().contains(_searchQuery) ||
                       description.contains(_searchQuery) ||
-                      recipe.category.toLowerCase().contains(_searchQuery);
+                      translatedCategory.contains(_searchQuery);
                 }).toList();
               }
 
@@ -135,6 +136,8 @@ class _RecipesPageState extends State<RecipesPage> {
 
     if (categoryRecipes.isEmpty) return const SizedBox.shrink();
 
+    final translatedCategory = RecipeCategories.getTranslatedCategory(category, isEnglish);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -151,7 +154,7 @@ class _RecipesPageState extends State<RecipesPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    category,
+                    translatedCategory,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

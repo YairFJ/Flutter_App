@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
 import 'models/pigeon_user_detail.dart';
@@ -14,7 +15,7 @@ import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
 import 'pages/profile_page.dart';
 import 'screens/groups_screen.dart';
-import 'services/language_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.light;
+ 
 
   void toggleTheme() {
     setState(() {
@@ -147,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       isEnglish = !isEnglish;
       // Actualizar el servicio global de idioma
-      LanguageService().setLanguage(isEnglish);
+      
     });
   }
 
@@ -273,7 +275,12 @@ class _HomeScreenState extends State<HomeScreen> {
               title: Text(isEnglish ? 'Communities' : 'Comunidades'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/groups');
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(
+                    builder: (context) => GroupsScreen(isEnglish: isEnglish),
+                  ),
+                );
               },
             ),
             if (FirebaseAuth.instance.currentUser != null) ...[

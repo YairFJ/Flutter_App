@@ -104,8 +104,8 @@ class FavoriteRecipesScreen extends StatelessWidget {
                     InkWell(
                       onTap: () {
                         Navigator.push(
-                          context,
-                          MaterialPageRoute(
+                  context,
+                  MaterialPageRoute(
                             builder: (context) => RecipeDetailScreen(
                               recipe: recipe,
                               isEnglish: isEnglish,

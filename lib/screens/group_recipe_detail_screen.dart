@@ -11,11 +11,13 @@ import '../utils/pdf_generator.dart';
 class GroupRecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
   final Group group;
+  final bool isEnglish;
 
   const GroupRecipeDetailScreen({
     super.key, 
     required this.recipe,
     required this.group,
+    this.isEnglish = false,
   });
 
   @override
@@ -23,23 +25,25 @@ class GroupRecipeDetailScreen extends StatefulWidget {
 }
 
 class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
+  bool get isEnglish => widget.isEnglish;
+
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar Receta'),
-        content: const Text('¿Estás seguro de que deseas eliminar esta receta?'),
+        title: Text(isEnglish ? 'Delete Recipe' : 'Eliminar Receta'),
+        content: Text(isEnglish ? 'Are you sure you want to delete this recipe?' : '¿Estás seguro de que deseas eliminar esta receta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(isEnglish ? 'Cancel' : 'Cancelar'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: const Color.fromARGB(255, 235, 6, 6),
             ),
-            child: const Text('Eliminar'),
+            child: Text(isEnglish ? 'Delete' : 'Eliminar'),
           ),
         ],
       ),
@@ -57,8 +61,8 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta eliminada con éxito'),
+            SnackBar(
+              content: Text(isEnglish ? 'Recipe deleted successfully' : 'Receta eliminada con éxito'),
               backgroundColor: Colors.green,
             ),
           );
@@ -66,8 +70,8 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al eliminar la receta'),
+            SnackBar(
+              content: Text(isEnglish ? 'Error deleting recipe' : 'Error al eliminar la receta'),
               backgroundColor: Colors.red,
             ),
           );
@@ -104,7 +108,10 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      ConversionCalculatorScreen(recipe: widget.recipe),
+                      ConversionCalculatorScreen(
+                        recipe: widget.recipe,
+                        isEnglish: isEnglish,
+                      ),
                 ),
               );
             },
@@ -119,6 +126,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                     builder: (context) => EditGroupRecipeScreen(
                       recipe: widget.recipe,
                       group: widget.group,
+                      isEnglish: isEnglish,
                     ),
                   ),
                 );
@@ -129,6 +137,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                       builder: (context) => GroupRecipeDetailScreen(
                         recipe: updatedRecipe,
                         group: widget.group,
+                        isEnglish: isEnglish,
                       ),
                     ),
                   );

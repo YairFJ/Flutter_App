@@ -18,6 +18,13 @@ class RecipeCategories {
     'Vegetariano': 'Vegetarian',
     'Verduras': 'Vegetables',
     'Sin Categoría': 'No Category',
+    'Desayunos': 'Breakfast',
+    'Almuerzos': 'Lunch',
+    'Cenas': 'Dinner',
+    'Bebidas': 'Beverages',
+    'Postres': 'Desserts',
+    'Snacks': 'Snacks',
+    'Ensaladas': 'Salads',
   };
 
   static List<String> categories = [
@@ -51,68 +58,65 @@ class RecipeCategories {
 
   // Puedes agregar íconos para cada categoría
   static IconData getIconForCategory(String category) {
-    switch (category.toLowerCase()) {
-      case 'desayunos':
-        return Icons.breakfast_dining;
-      case 'almuerzos':
-        return Icons.lunch_dining;
-      case 'cenas':
-        return Icons.dinner_dining;
-      case 'entradas':
-        return Icons.tapas;
-      case 'sopas':
-        return Icons.soup_kitchen;
-      case 'ensaladas':
-        return Icons.eco;
-      case 'platos principales':
-        return Icons.restaurant_menu;
-      case 'postres':
-        return Icons.cake;
-      case 'bebidas':
+    switch (category) {
+      case 'Aderezos':
         return Icons.local_drink;
-      case 'saludable':
-        return Icons.favorite;
-      case 'snacks':
-        return Icons.cookie;
-      case 'sin categoría':
-        return Icons.category_outlined;
-      default:
+      case 'Arroz y cereales':
+        return Icons.grain;
+      case 'Carne':
         return Icons.restaurant;
+      case 'Mariscos':
+        return Icons.set_meal;
+      case 'Panadería':
+        return Icons.bakery_dining;
+      case 'Pastas':
+        return Icons.dinner_dining;
+      case 'Pastelería':
+        return Icons.cake;
+      case 'Salsas':
+        return Icons.soup_kitchen;
+      case 'Sopas':
+        return Icons.ramen_dining;
+      case 'Vegano':
+        return Icons.eco;
+      case 'Vegetariano':
+        return Icons.grass;
+      case 'Verduras':
+        return Icons.local_florist;
+      default:
+        return Icons.category;
     }
   }
 
   // Colores para las categorías
   static Color getColorForCategory(String category) {
-    switch (category.toLowerCase()) {
+    switch (category) {
       case 'Aderezos':
-        return Colors.orange[200]!;
+        return Colors.orange;
       case 'Arroz y cereales':
-        return Colors.red[200]!;
+        return Colors.amber;
       case 'Carne':
-        return Colors.green[200]!;
+        return Colors.red;
       case 'Mariscos':
-        return Colors.pink[200]!;
+        return Colors.blue;
       case 'Panadería':
-        return Colors.blue[200]!;
+        return Colors.brown;
       case 'Pastas':
-        return Colors.teal[200]!;
+        return Colors.yellow;
       case 'Pastelería':
-        return Colors.yellow[200]!;
+        return Colors.pink;
       case 'Salsas':
-        return Colors.purple[200]!;
+        return Colors.deepOrange;
       case 'Sopas':
-        return Colors.lightBlue[200]!;
+        return Colors.green;
       case 'Vegano':
-        return Colors.blueGrey[200]!;
+        return Colors.lightGreen;
       case 'Vegetariano':
-        return Colors.lightGreenAccent[200]!;
+        return Colors.teal;
       case 'Verduras':
-        return const Color.fromARGB(255, 234, 74, 197);
-
-      case 'sin categoría':
-        return Colors.grey[300]!;
+        return Colors.lime;
       default:
-        return Colors.grey[200]!;
+        return Colors.grey;
     }
   }
 }

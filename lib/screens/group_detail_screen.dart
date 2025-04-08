@@ -9,7 +9,13 @@ import 'group_admin_screen.dart';
 
 class GroupDetailScreen extends StatelessWidget {
   final Group group;
-  const GroupDetailScreen({super.key, required this.group});
+  final bool isEnglish;
+  
+  const GroupDetailScreen({
+    super.key, 
+    required this.group,
+    this.isEnglish = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -124,8 +130,64 @@ class GroupDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(group.name),
+        title: Text(
+          group.name,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(isEnglish ? 'Community Information' : 'Información de la Comunidad'),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListTile(
+                          title: Text(isEnglish ? 'Name' : 'Nombre'),
+                          subtitle: Text(group.name),
+                          leading: const Icon(Icons.group),
+                        ),
+                        ListTile(
+                          title: Text(isEnglish ? 'Description' : 'Descripción'),
+                          subtitle: Text(group.description),
+                          leading: const Icon(Icons.description),
+                        ),
+                        ListTile(
+                          title: Text(isEnglish ? 'Created by' : 'Creado por'),
+                          subtitle: Text(group.creatorId),
+                          leading: const Icon(Icons.person),
+                        ),
+                        ListTile(
+                          title: Text(isEnglish ? 'Members' : 'Miembros'),
+                          subtitle: Text('${group.members.length}'),
+                          leading: const Icon(Icons.people),
+                        ),
+                        ListTile(
+                          title: Text(isEnglish ? 'Private' : 'Privado'),
+                          subtitle: Text(group.isPrivate ? (isEnglish ? 'Yes' : 'Sí') : (isEnglish ? 'No' : 'No')),
+                          leading: const Icon(Icons.lock),
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(isEnglish ? 'Close' : 'Cerrar'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           if (isCreator)
             IconButton(
               icon: const Icon(Icons.admin_panel_settings),
@@ -149,8 +211,37 @@ class GroupDetailScreen extends StatelessWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(group.description),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEnglish ? 'Description' : 'Descripción',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  group.description,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEnglish ? 'Community Recipes' : 'Recetas de la Comunidad',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           if (!isMember && !group.isPendingMember(currentUser))
             ElevatedButton(
@@ -208,6 +299,7 @@ class GroupDetailScreen extends StatelessWidget {
                                 builder: (context) => GroupRecipeDetailScreen(
                                   recipe: recipe,
                                   group: group,
+                                  isEnglish: isEnglish,
                                 ),
                               ),
                             ),

@@ -306,12 +306,10 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.recipe == null
-            ? isEnglish 
-              ? 'New Recipe in ${widget.group.name}' 
-              : 'Nueva Receta en ${widget.group.name}'
-            : isEnglish 
-              ? 'Edit Recipe' 
-              : 'Editar Receta'),
+          ? (isEnglish ? 'Edit Recipe' : 'Editar Receta') 
+          : 'Recipe Details',  // Asegúrate de que este valor tenga sentido para tu caso
+        ),
+            
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

@@ -32,10 +32,31 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
     'Volumen': 'Volume',
     'Temperatura': 'Temperature',
   };
+
+  // Mapeo de unidades en inglés
+  final Map<String, String> _unitTranslations = {
+    'g': 'g',
+    'kg': 'kg',
+    'oz': 'oz',
+    'lb': 'lb',
+    'ml': 'ml',
+    'l': 'l',
+    'tz': 'cup',
+    'cda': 'tbsp',
+    'cdta': 'tsp',
+    '°C': '°C',
+    '°F': '°F',
+    'K': 'K',
+  };
   
   // Obtener nombre de categoría según el idioma seleccionado
   String _getCategoryName(String categoria) {
     return isEnglish ? _categoryTranslations[categoria] ?? categoria : categoria;
+  }
+
+  // Obtener nombre de unidad según el idioma seleccionado
+  String _getUnitName(String unidad) {
+    return isEnglish ? _unitTranslations[unidad] ?? unidad : unidad;
   }
 
   final Map<String, Map<String, double>> _factoresConversion = {
@@ -175,21 +196,25 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
       child: Column(
         children: [
-          const Spacer(flex: 3),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          const Spacer(flex: 2),
+          Wrap(
+            spacing: isSmallScreen ? 8.0 : 16.0,
+            runSpacing: isSmallScreen ? 8.0 : 16.0,
+            alignment: WrapAlignment.center,
             children: [
               _buildCategoryButton('Peso', Icons.scale),
               _buildCategoryButton('Volumen', Icons.water_drop),
               _buildCategoryButton('Temperatura', Icons.thermostat),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: isSmallScreen ? 16.0 : 24.0),
           Table(
             border: TableBorder.all(
               color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
@@ -201,60 +226,24 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
             },
             children: [
               TableRow(
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
-                ),
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      isEnglish ? 'AMOUNT' : 'CANTIDAD',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      isEnglish ? 'FROM' : 'DE',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      isEnglish ? 'TO' : 'A',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
-              TableRow(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
                     child: TextField(
                       controller: _cantidadController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: isSmallScreen ? 14 : 16,
                       ),
                       decoration: InputDecoration(
                         labelText: isEnglish ? 'Amount' : 'Cantidad',
                         border: const OutlineInputBorder(),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 4 : 8,
+                          vertical: isSmallScreen ? 8 : 12,
+                        ),
                         fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                         filled: true,
                       ),
@@ -262,18 +251,22 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
                     child: DropdownButtonFormField<String>(
                       value: _unidadOrigen,
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 4 : 8,
+                          vertical: isSmallScreen ? 8 : 12,
+                        ),
                         fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                         filled: true,
                       ),
                       dropdownColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                       style: TextStyle(
                         color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: isSmallScreen ? 14 : 16,
                       ),
                       items: _unidadesPorCategoria[_categoriaSeleccionada]!
                           .map((String unidad) {
@@ -293,18 +286,22 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
                     child: DropdownButtonFormField<String>(
                       value: _unidadDestino,
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 4 : 8,
+                          vertical: isSmallScreen ? 8 : 12,
+                        ),
                         fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                         filled: true,
                       ),
                       dropdownColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                       style: TextStyle(
                         color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: isSmallScreen ? 14 : 16,
                       ),
                       items: _unidadesPorCategoria[_categoriaSeleccionada]!
                           .map((String unidad) {
@@ -327,9 +324,9 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: isSmallScreen ? 16.0 : 24.0),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
             decoration: BoxDecoration(
               color: isDarkMode ? Colors.blue.shade900 : Colors.blue.shade50,
               borderRadius: BorderRadius.circular(8),
@@ -343,7 +340,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                 Text(
                   isEnglish ? 'Result: ' : 'Resultado: ',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: isSmallScreen ? 16 : 18,
                     fontWeight: FontWeight.bold,
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
@@ -351,7 +348,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                 Text(
                   '${_formatearResultado(_resultado)} $_unidadDestino',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: isSmallScreen ? 16 : 18,
                     fontWeight: FontWeight.bold,
                     color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
                   ),
@@ -368,13 +365,15 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
   Widget _buildCategoryButton(String categoria, IconData icono) {
     bool isSelected = _categoriaSeleccionada == categoria;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
     
-    // Usar el nombre traducido según idioma
     final displayName = _getCategoryName(categoria);
 
     return ElevatedButton.icon(
       icon: Icon(
         icono,
+        size: isSmallScreen ? 20 : 24,
         color: isSelected 
             ? Colors.white 
             : (isDarkMode ? Colors.grey.shade300 : Colors.grey),
@@ -382,6 +381,7 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
       label: Text(
         displayName,
         style: TextStyle(
+          fontSize: isSmallScreen ? 12 : 14,
           color: isSelected 
               ? Colors.white 
               : (isDarkMode ? Colors.grey.shade300 : Colors.grey),
@@ -391,7 +391,10 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
         backgroundColor: isSelected 
             ? Colors.blue 
             : (isDarkMode ? Colors.grey.shade800 : Colors.white),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 12 : 16,
+          vertical: isSmallScreen ? 8 : 12,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(25),
           side: BorderSide(
