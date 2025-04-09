@@ -203,8 +203,8 @@ class ProfilePage extends StatelessWidget {
                 ),
                 _buildProfileSection(
                   icon: Icons.settings,
-                  title: 'Configuración',
-                  subtitle: 'Cambiar nombre de usuario',
+                  title: isEnglish ? 'Settings' : 'Configuración',
+                  subtitle: isEnglish ? 'Change username' : 'Cambiar nombre de usuario',
                   onTap: () => _updateUserName(context),
                 ),
               ],

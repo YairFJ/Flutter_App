@@ -188,6 +188,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 ))
             .toList(),
         unidades: _todasLasUnidades,
+        isEnglish: isEnglish,
       ),
     );
 

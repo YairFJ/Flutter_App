@@ -37,11 +37,13 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Cantidad de Personas'),
+          title: Text(isEnglish ? 'Number of People' : 'Cantidad de Personas'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Selecciona para cuántas personas rinde esta receta:'),
+              Text(isEnglish 
+                ? 'Select how many people this recipe serves:'
+                : 'Selecciona para cuántas personas rinde esta receta:'),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -81,7 +83,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Aceptar'),
+              child: Text(isEnglish ? 'Accept' : 'Aceptar'),
             ),
           ],
         );

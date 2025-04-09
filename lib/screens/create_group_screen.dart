@@ -86,7 +86,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Crear Comunidad'),
+        title: Text(isEnglish ? 'Create Community' : 'Crear Comunidad'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

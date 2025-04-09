@@ -78,7 +78,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   unidad: ing.unit,
                 ))
             .toList(),
-        unidades: _todasLasUnidades, // Usar la lista de unidades de medida
+        unidades: _todasLasUnidades,
+        isEnglish: isEnglish,
       ),
     );
 

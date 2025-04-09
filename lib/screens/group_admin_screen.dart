@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../models/group.dart';
+import '../services/language_service.dart';
 
 class GroupAdminScreen extends StatefulWidget {
   final Group group;
@@ -18,6 +20,7 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
   late TextEditingController _descriptionController;
   bool _isPrivate = false;
   bool _isLoading = false;
+  late bool isEnglish;
 
   @override
   void initState() {
@@ -25,6 +28,22 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
     _nameController = TextEditingController(text: widget.group.name);
     _descriptionController = TextEditingController(text: widget.group.description);
     _isPrivate = widget.group.isPrivate;
+    isEnglish = Provider.of<LanguageService>(context, listen: false).isEnglish;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newIsEnglish = Provider.of<LanguageService>(context).isEnglish;
+    if (isEnglish != newIsEnglish) {
+      setState(() {
+        isEnglish = newIsEnglish;
+      });
+    }
+  }
+
+  String getText(String spanish, String english) {
+    return isEnglish ? english : spanish;
   }
 
   @override
@@ -51,8 +70,8 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Comunidad actualizada exitosamente'),
+          SnackBar(
+            content: Text(getText('Comunidad actualizada exitosamente', 'Community updated successfully')),
             backgroundColor: Colors.green,
           ),
         );
@@ -61,7 +80,7 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al actualizar la comunidad: $e'),
+            content: Text(getText('Error al actualizar la comunidad: ', 'Error updating community: ') + e.toString()),
             backgroundColor: Colors.red,
           ),
         );
@@ -77,19 +96,22 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar Comunidad'),
-        content: const Text(
-          '¿Estás seguro de que deseas eliminar esta comunidad? Esta acción no se puede deshacer.',
+        title: Text(getText('Eliminar Comunidad', 'Delete Community')),
+        content: Text(
+          getText(
+            '¿Estás seguro de que deseas eliminar esta comunidad? Esta acción no se puede deshacer.',
+            'Are you sure you want to delete this community? This action cannot be undone.'
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(getText('Cancelar', 'Cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Eliminar'),
+            child: Text(getText('Eliminar', 'Delete')),
           ),
         ],
       ),
@@ -100,7 +122,6 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Primero eliminamos todas las recetas de la comunidad
       final recipesSnapshot = await FirebaseFirestore.instance
           .collection('groups')
           .doc(widget.group.id)
@@ -111,18 +132,16 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
         await doc.reference.delete();
       }
 
-      // Luego eliminamos la comunidad
       await FirebaseFirestore.instance
           .collection('groups')
           .doc(widget.group.id)
           .delete();
 
       if (mounted) {
-        // Volvemos a la pantalla de comunidades
         Navigator.of(context).pushNamedAndRemoveUntil('/groups', (route) => false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Comunidad eliminada exitosamente'),
+          SnackBar(
+            content: Text(getText('Comunidad eliminada exitosamente', 'Community deleted successfully')),
             backgroundColor: Colors.green,
           ),
         );
@@ -131,7 +150,7 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al eliminar la comunidad: $e'),
+            content: Text(getText('Error al eliminar la comunidad: ', 'Error deleting community: ') + e.toString()),
             backgroundColor: Colors.red,
           ),
         );
@@ -154,8 +173,8 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Usuario removido exitosamente'),
+          SnackBar(
+            content: Text(getText('Usuario removido exitosamente', 'User removed successfully')),
             backgroundColor: Colors.green,
           ),
         );
@@ -164,7 +183,7 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al remover al usuario: $e'),
+            content: Text(getText('Error al remover al usuario: ', 'Error removing user: ') + e.toString()),
             backgroundColor: Colors.red,
           ),
         );
@@ -184,8 +203,8 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Usuario aceptado exitosamente'),
+          SnackBar(
+            content: Text(getText('Usuario aceptado exitosamente', 'User accepted successfully')),
             backgroundColor: Colors.green,
           ),
         );
@@ -194,7 +213,7 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al aceptar al usuario: $e'),
+            content: Text(getText('Error al aceptar al usuario: ', 'Error accepting user: ') + e.toString()),
             backgroundColor: Colors.red,
           ),
         );
@@ -213,8 +232,8 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Solicitud rechazada'),
+          SnackBar(
+            content: Text(getText('Solicitud rechazada', 'Request rejected')),
             backgroundColor: Colors.green,
           ),
         );
@@ -223,7 +242,7 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al rechazar la solicitud: $e'),
+            content: Text(getText('Error al rechazar la solicitud: ', 'Error rejecting request: ') + e.toString()),
             backgroundColor: Colors.red,
           ),
         );
@@ -235,7 +254,7 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Administrar Comunidad'),
+        title: Text(getText('Administrar Comunidad', 'Manage Community')),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -256,13 +275,13 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                       children: [
                         TextFormField(
                           controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Nombre de la comunidad',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: getText('Nombre de la comunidad', 'Community Name'),
+                            border: const OutlineInputBorder(),
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Por favor ingresa un nombre';
+                              return getText('Por favor ingresa un nombre', 'Please enter a name');
                             }
                             return null;
                           },
@@ -270,25 +289,25 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _descriptionController,
-                          decoration: const InputDecoration(
-                            labelText: 'Descripción',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: getText('Descripción', 'Description'),
+                            border: const OutlineInputBorder(),
                           ),
                           maxLines: 3,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Por favor ingresa una descripción';
+                              return getText('Por favor ingresa una descripción', 'Please enter a description');
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
                         SwitchListTile(
-                          title: const Text('Comunidad Privada'),
+                          title: Text(getText('Comunidad Privada', 'Private Community')),
                           subtitle: Text(
                             _isPrivate
-                                ? 'Los usuarios deben solicitar unirse'
-                                : 'Cualquiera puede unirse',
+                                ? getText('Los usuarios deben solicitar unirse', 'Users must request to join')
+                                : getText('Cualquiera puede unirse', 'Anyone can join'),
                           ),
                           value: _isPrivate,
                           onChanged: (value) {
@@ -298,7 +317,7 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _isLoading ? null : _updateGroup,
-                          child: const Text('Guardar Cambios'),
+                          child: Text(getText('Guardar Cambios', 'Save Changes')),
                         ),
                       ],
                     ),
@@ -312,9 +331,9 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Código de la Comunidad',
-                              style: TextStyle(
+                            Text(
+                              getText('Código de la Comunidad', 'Community Code'),
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -337,8 +356,8 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                                     await Clipboard.setData(ClipboardData(text: widget.group.id));
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Código copiado al portapapeles'),
+                                        SnackBar(
+                                          content: Text(getText('Código copiado al portapapeles', 'Code copied to clipboard')),
                                           backgroundColor: Colors.green,
                                         ),
                                       );
@@ -348,9 +367,12 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Comparte este código con otros usuarios para que puedan unirse a la comunidad.',
-                              style: TextStyle(
+                            Text(
+                              getText(
+                                'Comparte este código con otros usuarios para que puedan unirse a la comunidad.',
+                                'Share this code with other users so they can join the community.'
+                              ),
+                              style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 14,
                               ),
@@ -361,9 +383,9 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                     ),
                     const Divider(height: 32),
                   ],
-                  const Text(
-                    'Solicitudes Pendientes',
-                    style: TextStyle(
+                  Text(
+                    getText('Solicitudes Pendientes', 'Pending Requests'),
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -381,9 +403,9 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
 
                       final group = Group.fromDocument(snapshot.data!);
                       if (group.pendingMembers.isEmpty) {
-                        return const Card(
+                        return Card(
                           child: ListTile(
-                            title: Text('No hay solicitudes pendientes'),
+                            title: Text(getText('No hay solicitudes pendientes', 'No pending requests')),
                           ),
                         );
                       }
@@ -401,15 +423,15 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                                 .get(),
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
-                                return const ListTile(
-                                  title: Text('Cargando...'),
+                                return ListTile(
+                                  title: Text(getText('Cargando...', 'Loading...')),
                                 );
                               }
 
                               final userData =
                                   snapshot.data!.data() as Map<String, dynamic>?;
-                              final userName = userData?['name'] ?? 'Usuario';
-                              final userEmail = userData?['email'] ?? 'No disponible';
+                              final userName = userData?['name'] ?? getText('Usuario', 'User');
+                              final userEmail = userData?['email'] ?? getText('No disponible', 'Not available');
 
                               return Card(
                                 child: ListTile(
@@ -422,11 +444,13 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                                         icon: const Icon(Icons.check),
                                         color: Colors.green,
                                         onPressed: () => _acceptMember(userId),
+                                        tooltip: getText('Aceptar', 'Accept'),
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.close),
                                         color: Colors.red,
                                         onPressed: () => _rejectMember(userId),
+                                        tooltip: getText('Rechazar', 'Reject'),
                                       ),
                                     ],
                                   ),
@@ -439,9 +463,9 @@ class _GroupAdminScreenState extends State<GroupAdminScreen> {
                     },
                   ),
                   const Divider(height: 32),
-                  const Text(
-                    'Miembros',
-                    style: TextStyle(
+                  Text(
+                    getText('Miembros', 'Members'),
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),

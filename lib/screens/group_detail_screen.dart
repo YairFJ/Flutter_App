@@ -34,9 +34,10 @@ class GroupDetailScreen extends StatelessWidget {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Solicitud enviada. Espera la aprobación del administrador.'),
+            SnackBar(
+              content: Text(isEnglish 
+                ? 'Request sent. Waiting for admin approval.'
+                : 'Solicitud enviada. Espera la aprobación del administrador.'),
               backgroundColor: Colors.green,
             ),
           );
@@ -45,7 +46,9 @@ class GroupDetailScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al enviar la solicitud: $e'),
+              content: Text(isEnglish 
+                ? 'Error sending request: $e'
+                : 'Error al enviar la solicitud: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -64,8 +67,10 @@ class GroupDetailScreen extends StatelessWidget {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Te has unido a la comunidad'),
+            SnackBar(
+              content: Text(isEnglish 
+                ? 'You have joined the community'
+                : 'Te has unido a la comunidad'),
               backgroundColor: Colors.green,
             ),
           );
@@ -76,7 +81,9 @@ class GroupDetailScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al unirse a la comunidad: $e'),
+              content: Text(isEnglish 
+                ? 'Error joining the community: $e'
+                : 'Error al unirse a la comunidad: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -90,8 +97,10 @@ class GroupDetailScreen extends StatelessWidget {
       // Verificar si el usuario es el creador del grupo
       if (group.creatorId == currentUser) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No puedes salir de un grupo que has creado.'),
+          SnackBar(
+            content: Text(isEnglish 
+              ? 'You cannot leave a group you created.'
+              : 'No puedes salir de un grupo que has creado.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -108,8 +117,10 @@ class GroupDetailScreen extends StatelessWidget {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Has salido del grupo.'),
+            SnackBar(
+              content: Text(isEnglish 
+                ? 'You have left the group.'
+                : 'Has salido del grupo.'),
               backgroundColor: Colors.green,
             ),
           );
@@ -120,7 +131,9 @@ class GroupDetailScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al salir del grupo: $e'),
+              content: Text(isEnglish 
+                ? 'Error leaving the group: $e'
+                : 'Error al salir del grupo: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -248,16 +261,16 @@ class GroupDetailScreen extends StatelessWidget {
               onPressed: group.isPrivate ? requestJoin : joinGroup,
               child: Text(
                 group.isPrivate
-                    ? 'Solicitar Unirme al Grupo'
-                    : 'Unirme al Grupo',
+                    ? (isEnglish ? 'Request to Join Group' : 'Solicitar Unirme al Grupo')
+                    : (isEnglish ? 'Join Group' : 'Unirme al Grupo'),
               ),
             )
           else if (group.isPendingMember(currentUser))
-            const Padding(
-              padding: EdgeInsets.all(8.0),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Text(
-                'Solicitud pendiente de aprobación',
-                style: TextStyle(
+                isEnglish ? 'Request pending approval' : 'Solicitud pendiente de aprobación',
+                style: const TextStyle(
                   color: Colors.orange,
                   fontWeight: FontWeight.bold,
                 ),
@@ -282,8 +295,10 @@ class GroupDetailScreen extends StatelessWidget {
                           .toList();
 
                       if (recipes.isEmpty) {
-                        return const Center(
-                            child: Text('No hay recetas en este grupo.'));
+                        return Center(
+                            child: Text(isEnglish 
+                              ? 'There are no recipes in this group.'
+                              : 'No hay recetas en este grupo.'));
                       }
 
                       return ListView.builder(
@@ -308,8 +323,10 @@ class GroupDetailScreen extends StatelessWidget {
                       );
                     },
                   )
-                : const Center(
-                    child: Text('Únete al grupo para ver las recetas.'),
+                : Center(
+                    child: Text(isEnglish 
+                      ? 'Join the group to see recipes.'
+                      : 'Únete al grupo para ver las recetas.'),
                   ),
           ),
         ],
@@ -321,7 +338,10 @@ class GroupDetailScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => GroupRecipeFormScreen(group: group),
+                    builder: (context) => GroupRecipeFormScreen(
+                      group: group,
+                      isEnglish: isEnglish,
+                    ),
                   ),
                 );
               },

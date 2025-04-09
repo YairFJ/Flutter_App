@@ -239,8 +239,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         Navigator.pop(context);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Receta guardada con éxito!'),
+          SnackBar(
+            content: Text(isEnglish ? 'Recipe saved successfully!' : '¡Receta guardada con éxito!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -252,7 +252,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar la receta: ${e.toString()}'),
+            content: Text(isEnglish ? 'Error saving recipe: ' : 'Error al guardar la receta: ' + e.toString()),
             backgroundColor: Colors.red,
           ),
         );
@@ -272,6 +272,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 ))
             .toList(),
         unidades: _todasLasUnidades,
+        isEnglish: isEnglish,
       ),
     );
 

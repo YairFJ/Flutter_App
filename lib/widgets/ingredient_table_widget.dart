@@ -5,12 +5,14 @@ class IngredientTableWidget extends StatefulWidget {
   final List<IngredienteTabla> ingredientes;
   final Function(List<IngredienteTabla>) onIngredientsChanged;
   final bool showAddButton;
+  final bool isEnglish;
 
   const IngredientTableWidget({
     super.key,
     required this.ingredientes,
     required this.onIngredientsChanged,
     this.showAddButton = true,
+    this.isEnglish = false,
   });
 
   @override
@@ -33,17 +35,17 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
     'lb', // libras
   ];
 
-  final Map<String, String> _unidadesCompletas = {
-    'g': 'gramos',
-    'kg': 'kilogramos',
-    'ml': 'mililitros',
-    'l': 'litros',
-    'tz': 'taza',
-    'cda': 'cucharada',
-    'cdta': 'cucharadita',
-    'u': 'unidad',
-    'oz': 'onzas',
-    'lb': 'libras',
+  final Map<String, Map<String, String>> _unidadesCompletas = {
+    'g': {'es': 'gramos', 'en': 'grams'},
+    'kg': {'es': 'kilogramos', 'en': 'kilograms'},
+    'ml': {'es': 'mililitros', 'en': 'milliliters'},
+    'l': {'es': 'litros', 'en': 'liters'},
+    'tz': {'es': 'taza', 'en': 'cup'},
+    'cda': {'es': 'cucharada', 'en': 'tablespoon'},
+    'cdta': {'es': 'cucharadita', 'en': 'teaspoon'},
+    'u': {'es': 'unidad', 'en': 'unit'},
+    'oz': {'es': 'onzas', 'en': 'ounces'},
+    'lb': {'es': 'libras', 'en': 'pounds'},
   };
 
   @override
@@ -53,21 +55,20 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
   }
 
   void _actualizarIngredientes() {
-    // Recorremos la lista de ingredientes y comprobamos que el nombre no esté vacío.
     bool hayIngredienteVacio =
         _ingredientes.any((ing) => ing.nombre.trim().isEmpty);
     if (hayIngredienteVacio) {
-      // Si existe al menos uno con nombre vacío, se muestra un mensaje de error y no se llama al callback.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'No se pueden guardar ingredientes vacíos. Complete o elimine los campos vacíos.',
+            widget.isEnglish
+                ? 'Cannot save empty ingredients. Complete or remove empty fields.'
+                : 'No se pueden guardar ingredientes vacíos. Complete o elimine los campos vacíos.',
           ),
         ),
       );
       return;
     }
-    // Si todos tienen nombre, se actualiza la lista.
     widget.onIngredientsChanged(_ingredientes);
   }
 
@@ -75,16 +76,15 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Encabezados
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey[800] // Fondo oscuro para modo oscuro
-                : Colors.grey[200], // Fondo claro para modo claro
+                ? Colors.grey[800]
+                : Colors.grey[200],
             border: Border.all(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.grey.shade600 // Borde más oscuro para modo oscuro
-                  : Colors.grey.shade300, // Borde claro para modo claro
+                  ? Colors.grey.shade600
+                  : Colors.grey.shade300,
             ),
           ),
           child: Row(
@@ -94,13 +94,13 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 child: Padding(
                   padding: const EdgeInsets.all(4.0),
                   child: Text(
-                    'INGREDIENTE',
+                    widget.isEnglish ? 'INGREDIENT' : 'INGREDIENTE',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white // Texto claro para modo oscuro
-                          : Colors.black, // Texto oscuro para modo claro
+                          ? Colors.white
+                          : Colors.black,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -110,13 +110,13 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 child: Padding(
                   padding: const EdgeInsets.all(4.0),
                   child: Text(
-                    'CANTIDAD',
+                    widget.isEnglish ? 'AMOUNT' : 'CANTIDAD',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white // Texto claro para modo oscuro
-                          : Colors.black, // Texto oscuro para modo claro
+                          ? Colors.white
+                          : Colors.black,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -126,13 +126,13 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 child: Padding(
                   padding: const EdgeInsets.all(4.0),
                   child: Text(
-                    'UNIDAD',
+                    widget.isEnglish ? 'UNIT' : 'UNIDAD',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white // Texto claro para modo oscuro
-                          : Colors.black, // Texto oscuro para modo claro
+                          ? Colors.white
+                          : Colors.black,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -142,10 +142,8 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
           ),
         ),
 
-        // Filas de ingredientes
         ..._ingredientes.map((ingrediente) => _buildIngredientRow(ingrediente)),
 
-        // Botón para agregar ingrediente
         if (widget.showAddButton)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
@@ -161,7 +159,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 });
               },
               icon: const Icon(Icons.add),
-              label: const Text('Agregar ingrediente'),
+              label: Text(widget.isEnglish ? 'Add ingredient' : 'Agregar ingrediente'),
             ),
           ),
       ],
@@ -185,10 +183,11 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
               padding: const EdgeInsets.all(4.0),
               child: TextField(
                 controller: ingrediente.nombreController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   isDense: true,
+                  hintText: widget.isEnglish ? 'Enter ingredient' : 'Ingrese ingrediente',
                 ),
                 onChanged: (value) {
                   ingrediente.nombre = value;
@@ -202,12 +201,12 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
               padding: const EdgeInsets.all(4.0),
               child: TextField(
                 controller: ingrediente.cantidadController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   isDense: true,
+                  hintText: widget.isEnglish ? 'Amount' : 'Cantidad',
                 ),
                 onTap: () {
                   if (ingrediente.cantidadController.text == '0,0') {
@@ -219,8 +218,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 onChanged: (value) {
                   if (value.isNotEmpty) {
                     try {
-                      ingrediente.cantidad =
-                          double.parse(value.replaceAll(',', '.'));
+                      ingrediente.cantidad = double.parse(value.replaceAll(',', '.'));
                       _actualizarIngredientes();
                     } catch (e) {
                       // Manejar error de conversión si es necesario
@@ -244,7 +242,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                   return DropdownMenuItem<String>(
                     value: unidad,
                     child: Tooltip(
-                      message: _unidadesCompletas[unidad] ?? unidad,
+                      message: _unidadesCompletas[unidad]?[widget.isEnglish ? 'en' : 'es'] ?? unidad,
                       child: Text(unidad),
                     ),
                   );

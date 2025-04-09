@@ -38,7 +38,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
   bool _isPrivate = false;
   List<Ingredient> _ingredients = [];
   String _servingUnit = 'gr';
-  bool get isEnglish => widget.isEnglish;
+  bool isEnglish = false;
 
   // Unidades disponibles para el rendimiento
   final List<String> _todasLasUnidades = [
@@ -57,6 +57,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
   @override
   void initState() {
     super.initState();
+    isEnglish = widget.isEnglish;
     _titleController = TextEditingController(text: widget.recipe?.title ?? '');
     _descriptionController =
         TextEditingController(text: widget.recipe?.description ?? '');
@@ -87,6 +88,16 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     }
     if (_stepControllers.isEmpty) {
       _stepControllers.add(TextEditingController());
+    }
+  }
+
+  @override
+  void didUpdateWidget(GroupRecipeFormScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
     }
   }
 
@@ -182,6 +193,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                 ))
             .toList(),
         unidades: _todasLasUnidades,
+        isEnglish: isEnglish,
       ),
     );
 
@@ -306,10 +318,8 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.recipe == null
-          ? (isEnglish ? 'Edit Recipe' : 'Editar Receta') 
-          : 'Recipe Details',  // Asegúrate de que este valor tenga sentido para tu caso
-        ),
-            
+            ? (isEnglish ? 'Create Recipe' : 'Crear Receta')
+            : (isEnglish ? 'Edit Recipe' : 'Editar Receta')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

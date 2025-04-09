@@ -216,7 +216,9 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                         const Icon(Icons.restaurant, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Rendimiento: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}',
+                          isEnglish 
+                            ? 'Yield: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}'
+                            : 'Rendimiento: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}',
                           style: const TextStyle(
                             fontSize: 16,
                           ),
@@ -224,9 +226,9 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                       ],
                     ),
                   ),
-                  const Text(
-                    'Ingredientes:',
-                    style: TextStyle(
+                  Text(
+                    isEnglish ? 'Ingredients:' : 'Ingredientes:',
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -235,23 +237,23 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      columns: const [
+                      columns: [
                         DataColumn(
                           label: Text(
-                            'Ingrediente',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            isEnglish ? 'Ingredient' : 'Ingrediente',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                         DataColumn(
                           label: Text(
-                            'Cantidad',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            isEnglish ? 'Quantity' : 'Cantidad',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                         DataColumn(
                           label: Text(
-                            'Unidad',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            isEnglish ? 'Unit' : 'Unidad',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -272,9 +274,9 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Pasos:',
-                    style: TextStyle(
+                  Text(
+                    isEnglish ? 'Steps:' : 'Pasos:',
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
