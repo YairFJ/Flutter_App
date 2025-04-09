@@ -7,7 +7,7 @@ import '../screens/user_recipes_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  Future<void> _updateUserName(BuildContext context, String currentName) async{
+  Future<void> _updateUserName(BuildContext context, String currentName) async {
     final TextEditingController nameController = TextEditingController(text: currentName);
     
     return showDialog(
@@ -39,7 +39,10 @@ class ProfileScreen extends StatelessWidget {
                     await FirebaseFirestore.instance
                         .collection('users')
                         .doc(currentUser.uid)
-                        .update({'name': newName});
+                        .update({
+                          'name': newName,
+                          'updatedAt': FieldValue.serverTimestamp(),
+                        });
                     
                     // Actualizar en Firebase Auth
                     await currentUser.updateDisplayName(newName);
@@ -64,6 +67,15 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     );
                   }
+                }
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('El nombre no puede estar vacío'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               }
             },

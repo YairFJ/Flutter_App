@@ -149,16 +149,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
               onPressed: () => _deleteRecipe(context),
             ),
           ],
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: () async {
-              final pdfBytes = await generateRecipePdf(widget.recipe);
-              await Printing.sharePdf(
-                bytes: pdfBytes,
-                filename: '${widget.recipe.title}.pdf',
-              );
-            },
-          ),
+          
         ],
       ),
       body: SingleChildScrollView(
@@ -202,7 +193,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                         height: 1.5,
                         letterSpacing: 0.2,
                         wordSpacing: 1.2,
-                        color: Colors.black87,
+                        color: const Color.fromARGB(221, 255, 255, 255),
                         fontFamily:
                             Theme.of(context).textTheme.bodyLarge?.fontFamily,
                       ),
@@ -278,7 +269,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                     isEnglish ? 'Steps:' : 'Pasos:',
                     style: const TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.bold
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -294,9 +285,14 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                           children: [
                             CircleAvatar(
                               radius: 12,
+                              backgroundColor: Theme.of(context).primaryColor,
                               child: Text(
                                 '${index + 1}',
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -306,6 +302,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                                 style: const TextStyle(
                                   fontSize: 16,
                                   height: 1.5,
+                                  color: Color.fromARGB(255, 255, 255, 255),
                                 ),
                               ),
                             ),

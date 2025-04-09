@@ -535,89 +535,36 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                     label: Text(isEnglish ? 'Add step' : 'Agregar paso'),
                   );
                 }
-                return ListTile(
-                  leading: CircleAvatar(child: Text('${index + 1}')),
-                  title: TextFormField(
-                    initialValue: _steps[index],
-                    onChanged: (value) => _steps[index] = value,
-                    decoration: InputDecoration(
-                      hintText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
-                    ),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => setState(() => _steps.removeAt(index)),
-                  ),
-                );
+                
               },
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _updateRecipe,
-              child: Text(isEnglish ? 'Save Recipe' : 'Guardar Receta'),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: _deleteRecipe,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ElevatedButton(
+                onPressed: _updateRecipe,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF90CAF9), // Color azul claro
+                  minimumSize: const Size(200, 45),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25), // Bordes más redondeados
+                  ),
+                  elevation: 0, // Sin sombra
+                ),
+                child: Text(
+                  isEnglish ? 'Save Changes' : 'Guardar Cambios',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-              child: Text(isEnglish ? 'Delete Recipe' : 'Eliminar Receta'),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _deleteRecipe() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isEnglish ? 'Delete Recipe' : 'Eliminar Receta'),
-        content: Text(isEnglish 
-          ? 'Are you sure you want to delete this recipe? This action cannot be undone.'
-          : '¿Estás seguro de que deseas eliminar esta receta? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(isEnglish ? 'Cancel' : 'Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(isEnglish ? 'Delete' : 'Eliminar'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('groups')
-            .doc(widget.group.id)
-            .collection('recipes')
-            .doc(widget.recipe.id)
-            .delete();
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEnglish ? 'Recipe deleted successfully' : 'Receta eliminada exitosamente'),
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEnglish ? 'Error deleting recipe: $e' : 'Error al eliminar la receta: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
   }
 
   @override

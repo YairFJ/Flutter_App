@@ -333,6 +333,7 @@ class GroupDetailScreen extends StatelessWidget {
       ),
       floatingActionButton: isMember
           ? FloatingActionButton(
+            backgroundColor: Theme.of(context).primaryColor,
               child: const Icon(Icons.add),
               onPressed: () {
                 Navigator.push(
