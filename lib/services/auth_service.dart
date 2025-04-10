@@ -167,15 +167,13 @@ class AuthService {
   // Inicio de sesión con Google - Enfoque simplificado
   Future<User?> signInWithGoogle() async {
     try {
-      print(
-          'Auth Service: Comenzando proceso simplificado de inicio de sesión con Google');
+      print('Auth Service: Comenzando proceso de inicio de sesión con Google');
 
       // Cerrar sesión actual si existe
       await _auth.signOut();
 
-      // Crear una nueva instancia de GoogleSignIn cada vez para evitar estado residual
+      // Crear una nueva instancia de GoogleSignIn
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        // No especificar scopes usa los predeterminados (email, profile)
         signInOption: SignInOption.standard,
       );
 
@@ -184,7 +182,7 @@ class AuthService {
 
       print('Auth Service: Solicitando cuenta de Google');
 
-      // Solicitar cuenta de Google - paso principal de la autenticación
+      // Solicitar cuenta de Google
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
