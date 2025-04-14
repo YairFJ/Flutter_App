@@ -164,108 +164,79 @@ class AuthService {
     }
   }
 
-  // Inicio de sesión con Google - Enfoque simplificado
+  // Método simplificado para iniciar sesión con Google (compatible con emuladores)
   Future<User?> signInWithGoogle() async {
     try {
-      print('Auth Service: Comenzando proceso de inicio de sesión con Google');
+      print(
+          'Auth Service: Iniciando método simplificado de inicio de sesión con Google');
 
-      // Cerrar sesión actual si existe
+      // 1. Crear una instancia básica de GoogleSignIn sin opciones complejas
+      final googleSignIn = GoogleSignIn();
+
+      // 2. Cerrar cualquier sesión existente para evitar conflictos
+      await googleSignIn.signOut();
       await _auth.signOut();
 
-      // Crear una nueva instancia de GoogleSignIn
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        signInOption: SignInOption.standard,
-      );
-
-      // Asegurarse de que no hay sesión previa
-      await googleSignIn.signOut();
-
-      print('Auth Service: Solicitando cuenta de Google');
-
-      // Solicitar cuenta de Google
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      // 3. Intentar iniciar sesión sin parámetros adicionales
+      final googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
-        print('Auth Service: Usuario canceló la selección de cuenta');
+        print('Auth Service: Usuario canceló el inicio de sesión');
         return null;
       }
 
       print('Auth Service: Cuenta seleccionada: ${googleUser.email}');
 
-      try {
-        // Solicitar autenticación
-        print('Auth Service: Solicitando tokens de autenticación');
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
+      // 4. Obtener autenticación con manejo de errores específico
+      final googleAuth = await googleUser.authentication;
 
-        // Verificar tokens
-        if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-          print('Auth Service: Tokens nulos recibidos');
-          throw FirebaseAuthException(
-            code: 'invalid-credential',
-            message: 'No se pudieron obtener credenciales válidas de Google',
-          );
-        }
+      // 5. Crear credenciales
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-        print('Auth Service: Tokens recibidos correctamente');
+      // 6. Iniciar sesión en Firebase
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
 
-        // Crear credenciales para Firebase Auth
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken!,
-          idToken: googleAuth.idToken!,
-        );
-
-        // Iniciar sesión en Firebase
-        print('Auth Service: Iniciando sesión en Firebase');
-        final userCredential = await _auth.signInWithCredential(credential);
-
-        // Verificar usuario
-        final User? user = userCredential.user;
-        if (user == null) {
-          throw FirebaseAuthException(
-            code: 'user-not-found',
-            message: 'No se pudo obtener información del usuario',
-          );
-        }
-
+      if (user != null) {
         print('Auth Service: Inicio de sesión exitoso: ${user.email}');
 
-        // Actualizar información en Firestore
-        await _firestore.collection('users').doc(user.uid).set({
-          'name': user.displayName ?? 'Usuario de Google',
-          'email': user.email ?? '',
-          'lastLogin': FieldValue.serverTimestamp(),
-          'provider': 'google',
-        }, SetOptions(merge: true));
-
-        return user;
-      } catch (e) {
-        print('Auth Service: Error en proceso de autenticación: $e');
-
-        // Intentar cerrar sesión en Google para limpiar estado
-        await googleSignIn
-            .signOut()
-            .catchError((e) => print('Error al cerrar sesión de Google: $e'));
-
-        // Relanzar error para ser manejado arriba
-        rethrow;
+        // 7. Actualizar datos en Firestore
+        try {
+          await _firestore.collection('users').doc(user.uid).set({
+            'name': user.displayName ?? 'Usuario de Google',
+            'email': user.email ?? '',
+            'lastLogin': FieldValue.serverTimestamp(),
+            'provider': 'google',
+            'verified': true,
+          }, SetOptions(merge: true));
+        } catch (e) {
+          print('Auth Service: Error al actualizar Firestore: $e');
+        }
       }
+
+      return user;
     } catch (e) {
-      print('Auth Service: Error global en signInWithGoogle: $e');
+      print('Auth Service: Error durante la autenticación con Google: $e');
 
-      // Asegurarse de cerrar cualquier sesión parcial
-      await _auth
-          .signOut()
-          .catchError((e) => print('Error al cerrar sesión de Firebase: $e'));
-
-      if (e is FirebaseAuthException) {
-        rethrow;
-      } else {
+      // Si el error es específicamente PigeonUserDetails, manejarlo de forma especial
+      if (e.toString().contains('PigeonUserDetails')) {
+        print('Auth Service: Error con PigeonUserDetails detectado');
         throw FirebaseAuthException(
-          code: 'unknown-error',
-          message: 'Error inesperado al iniciar sesión con Google: $e',
+          code: 'emulator-google-sign-in',
+          message:
+              'Error al iniciar sesión con Google en el emulador. Intenta con un dispositivo físico.',
         );
       }
+
+      // Cerrar sesión para evitar estado inconsistente
+      try {
+        await _auth.signOut();
+      } catch (_) {}
+
+      rethrow;
     }
   }
 

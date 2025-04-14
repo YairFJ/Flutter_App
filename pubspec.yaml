@@ -31,13 +31,13 @@ dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
+  firebase_core: ^2.14.0
+  firebase_auth: ^4.16.0
+  cloud_firestore: ^4.9.3
   pdf: ^3.8.1
   printing: ^5.9.0
   soundpool: ^2.4.1
-  google_sign_in: ^6.1.6
+  google_sign_in: 6.1.4
   flutter_dotenv: ^5.1.0
   
 
