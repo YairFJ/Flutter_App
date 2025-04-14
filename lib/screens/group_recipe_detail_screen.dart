@@ -11,11 +11,13 @@ import '../utils/pdf_generator.dart';
 class GroupRecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
   final Group group;
+  final bool isEnglish;
 
   const GroupRecipeDetailScreen({
     super.key, 
     required this.recipe,
     required this.group,
+    this.isEnglish = false,
   });
 
   @override
@@ -23,23 +25,25 @@ class GroupRecipeDetailScreen extends StatefulWidget {
 }
 
 class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
+  bool get isEnglish => widget.isEnglish;
+
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar Receta'),
-        content: const Text('¿Estás seguro de que deseas eliminar esta receta?'),
+        title: Text(isEnglish ? 'Delete Recipe' : 'Eliminar Receta'),
+        content: Text(isEnglish ? 'Are you sure you want to delete this recipe?' : '¿Estás seguro de que deseas eliminar esta receta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(isEnglish ? 'Cancel' : 'Cancelar'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: const Color.fromARGB(255, 235, 6, 6),
             ),
-            child: const Text('Eliminar'),
+            child: Text(isEnglish ? 'Delete' : 'Eliminar'),
           ),
         ],
       ),
@@ -57,8 +61,8 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta eliminada con éxito'),
+            SnackBar(
+              content: Text(isEnglish ? 'Recipe deleted successfully' : 'Receta eliminada con éxito'),
               backgroundColor: Colors.green,
             ),
           );
@@ -66,8 +70,8 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al eliminar la receta'),
+            SnackBar(
+              content: Text(isEnglish ? 'Error deleting recipe' : 'Error al eliminar la receta'),
               backgroundColor: Colors.red,
             ),
           );
@@ -104,7 +108,10 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      ConversionCalculatorScreen(recipe: widget.recipe),
+                      ConversionCalculatorScreen(
+                        recipe: widget.recipe,
+                        isEnglish: isEnglish,
+                      ),
                 ),
               );
             },
@@ -119,6 +126,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                     builder: (context) => EditGroupRecipeScreen(
                       recipe: widget.recipe,
                       group: widget.group,
+                      isEnglish: isEnglish,
                     ),
                   ),
                 );
@@ -129,6 +137,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                       builder: (context) => GroupRecipeDetailScreen(
                         recipe: updatedRecipe,
                         group: widget.group,
+                        isEnglish: isEnglish,
                       ),
                     ),
                   );
@@ -140,16 +149,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
               onPressed: () => _deleteRecipe(context),
             ),
           ],
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: () async {
-              final pdfBytes = await generateRecipePdf(widget.recipe);
-              await Printing.sharePdf(
-                bytes: pdfBytes,
-                filename: '${widget.recipe.title}.pdf',
-              );
-            },
-          ),
+          
         ],
       ),
       body: SingleChildScrollView(
@@ -193,7 +193,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                         height: 1.5,
                         letterSpacing: 0.2,
                         wordSpacing: 1.2,
-                        color: Colors.black87,
+                        color: const Color.fromARGB(221, 255, 255, 255),
                         fontFamily:
                             Theme.of(context).textTheme.bodyLarge?.fontFamily,
                       ),
@@ -207,7 +207,9 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                         const Icon(Icons.restaurant, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Rendimiento: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}',
+                          isEnglish 
+                            ? 'Yield: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}'
+                            : 'Rendimiento: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}',
                           style: const TextStyle(
                             fontSize: 16,
                           ),
@@ -215,9 +217,9 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                       ],
                     ),
                   ),
-                  const Text(
-                    'Ingredientes:',
-                    style: TextStyle(
+                  Text(
+                    isEnglish ? 'Ingredients:' : 'Ingredientes:',
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -226,23 +228,23 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      columns: const [
+                      columns: [
                         DataColumn(
                           label: Text(
-                            'Ingrediente',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            isEnglish ? 'Ingredient' : 'Ingrediente',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                         DataColumn(
                           label: Text(
-                            'Cantidad',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            isEnglish ? 'Quantity' : 'Cantidad',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                         DataColumn(
                           label: Text(
-                            'Unidad',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            isEnglish ? 'Unit' : 'Unidad',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -263,11 +265,11 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Pasos:',
-                    style: TextStyle(
+                  Text(
+                    isEnglish ? 'Steps:' : 'Pasos:',
+                    style: const TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.bold
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -283,9 +285,14 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                           children: [
                             CircleAvatar(
                               radius: 12,
+                              backgroundColor: Theme.of(context).primaryColor,
                               child: Text(
                                 '${index + 1}',
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -295,6 +302,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                                 style: const TextStyle(
                                   fontSize: 16,
                                   height: 1.5,
+                                  color: Color.fromARGB(255, 255, 255, 255),
                                 ),
                               ),
                             ),

@@ -9,7 +9,13 @@ import 'group_admin_screen.dart';
 
 class GroupDetailScreen extends StatelessWidget {
   final Group group;
-  const GroupDetailScreen({super.key, required this.group});
+  final bool isEnglish;
+  
+  const GroupDetailScreen({
+    super.key, 
+    required this.group,
+    this.isEnglish = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +34,10 @@ class GroupDetailScreen extends StatelessWidget {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Solicitud enviada. Espera la aprobación del administrador.'),
+            SnackBar(
+              content: Text(isEnglish 
+                ? 'Request sent. Waiting for admin approval.'
+                : 'Solicitud enviada. Espera la aprobación del administrador.'),
               backgroundColor: Colors.green,
             ),
           );
@@ -39,7 +46,9 @@ class GroupDetailScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al enviar la solicitud: $e'),
+              content: Text(isEnglish 
+                ? 'Error sending request: $e'
+                : 'Error al enviar la solicitud: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -58,8 +67,10 @@ class GroupDetailScreen extends StatelessWidget {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Te has unido a la comunidad'),
+            SnackBar(
+              content: Text(isEnglish 
+                ? 'You have joined the community'
+                : 'Te has unido a la comunidad'),
               backgroundColor: Colors.green,
             ),
           );
@@ -70,7 +81,9 @@ class GroupDetailScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al unirse a la comunidad: $e'),
+              content: Text(isEnglish 
+                ? 'Error joining the community: $e'
+                : 'Error al unirse a la comunidad: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -84,8 +97,10 @@ class GroupDetailScreen extends StatelessWidget {
       // Verificar si el usuario es el creador del grupo
       if (group.creatorId == currentUser) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No puedes salir de un grupo que has creado.'),
+          SnackBar(
+            content: Text(isEnglish 
+              ? 'You cannot leave a group you created.'
+              : 'No puedes salir de un grupo que has creado.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -102,8 +117,10 @@ class GroupDetailScreen extends StatelessWidget {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Has salido del grupo.'),
+            SnackBar(
+              content: Text(isEnglish 
+                ? 'You have left the group.'
+                : 'Has salido del grupo.'),
               backgroundColor: Colors.green,
             ),
           );
@@ -114,7 +131,9 @@ class GroupDetailScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al salir del grupo: $e'),
+              content: Text(isEnglish 
+                ? 'Error leaving the group: $e'
+                : 'Error al salir del grupo: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -124,8 +143,64 @@ class GroupDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(group.name),
+        title: Text(
+          group.name,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(isEnglish ? 'Community Information' : 'Información de la Comunidad'),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListTile(
+                          title: Text(isEnglish ? 'Name' : 'Nombre'),
+                          subtitle: Text(group.name),
+                          leading: const Icon(Icons.group),
+                        ),
+                        ListTile(
+                          title: Text(isEnglish ? 'Description' : 'Descripción'),
+                          subtitle: Text(group.description),
+                          leading: const Icon(Icons.description),
+                        ),
+                        ListTile(
+                          title: Text(isEnglish ? 'Created by' : 'Creado por'),
+                          subtitle: Text(group.creatorId),
+                          leading: const Icon(Icons.person),
+                        ),
+                        ListTile(
+                          title: Text(isEnglish ? 'Members' : 'Miembros'),
+                          subtitle: Text('${group.members.length}'),
+                          leading: const Icon(Icons.people),
+                        ),
+                        ListTile(
+                          title: Text(isEnglish ? 'Private' : 'Privado'),
+                          subtitle: Text(group.isPrivate ? (isEnglish ? 'Yes' : 'Sí') : (isEnglish ? 'No' : 'No')),
+                          leading: const Icon(Icons.lock),
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(isEnglish ? 'Close' : 'Cerrar'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           if (isCreator)
             IconButton(
               icon: const Icon(Icons.admin_panel_settings),
@@ -149,24 +224,53 @@ class GroupDetailScreen extends StatelessWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(group.description),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEnglish ? 'Description' : 'Descripción',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  group.description,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEnglish ? 'Community Recipes' : 'Recetas de la Comunidad',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           if (!isMember && !group.isPendingMember(currentUser))
             ElevatedButton(
               onPressed: group.isPrivate ? requestJoin : joinGroup,
               child: Text(
                 group.isPrivate
-                    ? 'Solicitar Unirme al Grupo'
-                    : 'Unirme al Grupo',
+                    ? (isEnglish ? 'Request to Join Group' : 'Solicitar Unirme al Grupo')
+                    : (isEnglish ? 'Join Group' : 'Unirme al Grupo'),
               ),
             )
           else if (group.isPendingMember(currentUser))
-            const Padding(
-              padding: EdgeInsets.all(8.0),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Text(
-                'Solicitud pendiente de aprobación',
-                style: TextStyle(
+                isEnglish ? 'Request pending approval' : 'Solicitud pendiente de aprobación',
+                style: const TextStyle(
                   color: Colors.orange,
                   fontWeight: FontWeight.bold,
                 ),
@@ -191,8 +295,10 @@ class GroupDetailScreen extends StatelessWidget {
                           .toList();
 
                       if (recipes.isEmpty) {
-                        return const Center(
-                            child: Text('No hay recetas en este grupo.'));
+                        return Center(
+                            child: Text(isEnglish 
+                              ? 'There are no recipes in this group.'
+                              : 'No hay recetas en este grupo.'));
                       }
 
                       return ListView.builder(
@@ -208,6 +314,7 @@ class GroupDetailScreen extends StatelessWidget {
                                 builder: (context) => GroupRecipeDetailScreen(
                                   recipe: recipe,
                                   group: group,
+                                  isEnglish: isEnglish,
                                 ),
                               ),
                             ),
@@ -216,20 +323,26 @@ class GroupDetailScreen extends StatelessWidget {
                       );
                     },
                   )
-                : const Center(
-                    child: Text('Únete al grupo para ver las recetas.'),
+                : Center(
+                    child: Text(isEnglish 
+                      ? 'Join the group to see recipes.'
+                      : 'Únete al grupo para ver las recetas.'),
                   ),
           ),
         ],
       ),
       floatingActionButton: isMember
           ? FloatingActionButton(
+            backgroundColor: Theme.of(context).primaryColor,
               child: const Icon(Icons.add),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => GroupRecipeFormScreen(group: group),
+                    builder: (context) => GroupRecipeFormScreen(
+                      group: group,
+                      isEnglish: isEnglish,
+                    ),
                   ),
                 );
               },

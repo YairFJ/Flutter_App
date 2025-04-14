@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/ingredient.dart';
+import '../services/language_service.dart';
 import 'ingredient_table_widget.dart';
 import '../models/ingrediente_tabla.dart';
 
 class AddIngredientDialog extends StatefulWidget {
   final List<IngredienteTabla> ingredientes;
   final List<String> unidades;
+  final bool isEnglish;
 
   const AddIngredientDialog({
     super.key,
     required this.ingredientes,
     required this.unidades,
+    this.isEnglish = false,
   });
 
   @override
@@ -20,15 +24,24 @@ class AddIngredientDialog extends StatefulWidget {
 class _AddIngredientDialogState extends State<AddIngredientDialog> {
   final List<IngredienteTabla> _tempIngredients = [];
   final List<IngredienteTabla> _ingredients = [];
-  final bool _isAdding = false; // Variable para controlar el estado del botón
+  late bool isEnglish;
 
   @override
   void initState() {
     super.initState();
-    _tempIngredients
-        .addAll(widget.ingredientes); // Initialize with passed ingredients
-    _ingredients
-        .addAll(widget.ingredientes); // Initialize the main ingredients list
+    isEnglish = widget.isEnglish;
+    _tempIngredients.addAll(widget.ingredientes);
+    _ingredients.addAll(widget.ingredientes);
+  }
+
+  @override
+  void didUpdateWidget(AddIngredientDialog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
+    }
   }
 
   @override
@@ -48,9 +61,9 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Agregar Ingredientes',
-                    style: TextStyle(
+                  Text(
+                    isEnglish ? 'Add Ingredients' : 'Agregar Ingredientes',
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -77,6 +90,7 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                         ..addAll(ingredients);
                     });
                   },
+                  isEnglish: isEnglish,
                 ),
               ),
             ),
@@ -88,12 +102,11 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(<Ingredient>[]),
-                    child: const Text('Cancelar'),
+                    child: Text(isEnglish ? 'Cancel' : 'Cancelar'),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      // Check for duplicates before adding
                       final newIngredients = _tempIngredients.where((newIng) {
                         return !_ingredients.any((existingIng) =>
                             existingIng.nombre == newIng.nombre &&
@@ -101,7 +114,6 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                       }).toList();
 
                       if (newIngredients.isNotEmpty) {
-                        // Convert IngredienteTabla to Ingredient
                         final ingredientsToReturn = newIngredients.map((ing) {
                           return Ingredient(
                             name: ing.nombre,
@@ -111,18 +123,21 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                           );
                         }).toList();
 
-                        Navigator.of(context).pop(
-                            ingredientsToReturn); // Return the correct type
+                        Navigator.of(context).pop(ingredientsToReturn);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Este ingrediente ya existe.'),
+                          SnackBar(
+                            content: Text(
+                              isEnglish 
+                                ? 'This ingredient already exists.'
+                                : 'Este ingrediente ya existe.'
+                            ),
                             backgroundColor: Colors.red,
                           ),
                         );
                       }
                     },
-                    child: const Text('Agregar'),
+                    child: Text(isEnglish ? 'Add' : 'Agregar'),
                   ),
                 ],
               ),

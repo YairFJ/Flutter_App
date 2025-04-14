@@ -3,7 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateGroupScreen extends StatefulWidget {
-  const CreateGroupScreen({super.key});
+  final bool isEnglish;
+  
+  const CreateGroupScreen({
+    super.key,
+    required this.isEnglish,
+  });
 
   @override
   State<CreateGroupScreen> createState() => _CreateGroupScreenState();
@@ -15,6 +20,23 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   bool _isLoading = false;
   bool _isPrivate = false;
+  late bool isEnglish;
+
+  @override
+  void initState() {
+    super.initState();
+    isEnglish = widget.isEnglish;
+  }
+
+  @override
+  void didUpdateWidget(CreateGroupScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
+    }
+  }
 
   Future<void> _createGroup() async {
     if (_formKey.currentState!.validate()) {
@@ -34,12 +56,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           'createdAt': FieldValue.serverTimestamp(),
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Comunidad creada exitosamente')),
+          SnackBar(content: Text(isEnglish ? 'Community created successfully' : 'Comunidad creada exitosamente')),
         );
         Navigator.pop(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al crear la comunidad: $e')),
+          SnackBar(content: Text(isEnglish 
+            ? 'Error creating community: $e' 
+            : 'Error al crear la comunidad: $e')),
         );
       } finally {
         if (mounted) {
@@ -62,7 +86,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Crear Comunidad'),
+        title: Text(isEnglish ? 'Create Community' : 'Crear Comunidad'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -73,13 +97,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de la comunidad',
+                decoration: InputDecoration(
+                  labelText: isEnglish ? 'Community Name' : 'Nombre de la comunidad',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'El nombre es obligatorio';
+                    return isEnglish ? 'Name is required' : 'El nombre es obligatorio';
                   }
                   return null;
                 },
@@ -87,17 +111,19 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
+                decoration: InputDecoration(
+                  labelText: isEnglish ? 'Description' : 'Descripción',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
               ),
               const SizedBox(height: 16.0),
               SwitchListTile(
-                title: const Text('Comunidad Privada'),
-                subtitle: const Text(
-                  'Los usuarios deberán solicitar unirse y ser aprobados por el administrador',
+                title: Text(isEnglish ? 'Private Community' : 'Comunidad Privada'),
+                subtitle: Text(
+                  isEnglish 
+                    ? 'Users must request to join and be approved by the administrator'
+                    : 'Los usuarios deberán solicitar unirse y ser aprobados por el administrador',
                 ),
                 value: _isPrivate,
                 onChanged: (bool value) {
@@ -112,7 +138,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _createGroup,
-                        child: const Text('Crear Comunidad'),
+                        child: Text(isEnglish ? 'Create Community' : 'Crear Comunidad'),
                       ),
               ),
             ],

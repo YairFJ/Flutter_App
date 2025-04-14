@@ -7,19 +7,24 @@ import './add_recipe_screen.dart';
 import './edit_recipe_screen.dart';
 
 class MyRecipesScreen extends StatelessWidget {
-  const MyRecipesScreen({super.key});
+  final bool isEnglish;
+  
+  const MyRecipesScreen({
+    super.key,
+    this.isEnglish = false,
+  });
 
   Future<void> _deleteRecipe(BuildContext context, Recipe recipe) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar Receta'),
+        title: Text(isEnglish ? 'Delete Recipe' : 'Eliminar Receta'),
         content:
-            const Text('¿Estás seguro de que quieres eliminar esta receta?'),
+            Text(isEnglish ? 'Are you sure you want to delete this recipe?' : '¿Estás seguro de que quieres eliminar esta receta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(isEnglish ? 'Cancel' : 'Cancelar'),
           ),
           TextButton(
             style: TextButton.styleFrom(
@@ -28,9 +33,9 @@ class MyRecipesScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(
+            child: Text(
+              isEnglish ? 'Delete' : 'Eliminar',
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -48,8 +53,8 @@ class MyRecipesScreen extends StatelessWidget {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta eliminada con éxito'),
+            SnackBar(
+              content: Text(isEnglish ? 'Recipe deleted successfully' : 'Receta eliminada con éxito'),
               backgroundColor: Colors.green,
             ),
           );
@@ -57,8 +62,8 @@ class MyRecipesScreen extends StatelessWidget {
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al eliminar la receta'),
+            SnackBar(
+              content: Text(isEnglish ? 'Error deleting recipe' : 'Error al eliminar la receta'),
               backgroundColor: Colors.red,
             ),
           );
@@ -73,7 +78,7 @@ class MyRecipesScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Recetas'),
+        title: Text(isEnglish ? 'My Recipes' : 'Mis Recetas'),
         backgroundColor: const Color(0xFF96B4D8),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -123,12 +128,14 @@ class MyRecipesScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const AddRecipeScreen(),
+                          builder: (context) => AddRecipeScreen(
+                            isEnglish: isEnglish,
+                          ),
                         ),
                       );
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('Crear Nueva Receta'),
+                    label: Text(isEnglish ? 'Create New Recipe' : 'Crear Nueva Receta'),
                   ),
                 ],
               ),
@@ -154,7 +161,10 @@ class MyRecipesScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                RecipeDetailScreen(recipe: recipe),
+                                RecipeDetailScreen(
+                                  recipe: recipe,
+                                  isEnglish: isEnglish,
+                                ),
                           ),
                         );
                       },
@@ -293,7 +303,10 @@ class MyRecipesScreen extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        EditRecipeScreen(recipe: recipe),
+                                        EditRecipeScreen(
+                                          recipe: recipe,
+                                          isEnglish: isEnglish,
+                                        ),
                                   ),
                                 );
                               },
@@ -333,7 +346,9 @@ class MyRecipesScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const AddRecipeScreen(),
+              builder: (context) => AddRecipeScreen(
+                isEnglish: isEnglish,
+              ),
             ),
           );
         },

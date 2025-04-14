@@ -5,7 +5,9 @@ import '../models/recipe.dart';
 import '../screens/recipe_detail_screen.dart';
 
 class FavoriteRecipesScreen extends StatelessWidget {
-  const FavoriteRecipesScreen({super.key});
+  final bool isEnglish;
+  
+  const FavoriteRecipesScreen({super.key, this.isEnglish = false});
 
   Future<void> _toggleFavorite(BuildContext context, Recipe recipe) async {
     try {
@@ -29,8 +31,8 @@ class FavoriteRecipesScreen extends StatelessWidget {
         
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Receta eliminada de favoritos'),
+            SnackBar(
+              content: Text(isEnglish ? 'Recipe removed from favorites' : 'Receta eliminada de favoritos'),
               backgroundColor: Colors.grey,
             ),
           );
@@ -39,8 +41,8 @@ class FavoriteRecipesScreen extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al actualizar favoritos'),
+          SnackBar(
+            content: Text(isEnglish ? 'Error updating favorites' : 'Error al actualizar favoritos'),
             backgroundColor: Colors.red,
           ),
         );
@@ -51,11 +53,11 @@ class FavoriteRecipesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return const Center(child: Text('No hay usuario autenticado'));
+    if (currentUser == null) return Center(child: Text(isEnglish ? 'No authenticated user' : 'No hay usuario autenticado'));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recetas Favoritas'),
+        title: Text(isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas'),
         backgroundColor: const Color(0xFF96B4D8),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -65,7 +67,7 @@ class FavoriteRecipesScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(child: Text('Error al cargar las recetas'));
+            return Center(child: Text(isEnglish ? 'Error loading recipes' : 'Error al cargar las recetas'));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -78,8 +80,8 @@ class FavoriteRecipesScreen extends StatelessWidget {
           }).toList() ?? [];
 
           if (recipes.isEmpty) {
-            return const Center(
-              child: Text('No tienes recetas favoritas'),
+            return Center(
+              child: Text(isEnglish ? 'You don\'t have favorite recipes' : 'No tienes recetas favoritas'),
             );
           }
 
@@ -102,9 +104,12 @@ class FavoriteRecipesScreen extends StatelessWidget {
                     InkWell(
                       onTap: () {
                         Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RecipeDetailScreen(recipe: recipe),
+                  context,
+                  MaterialPageRoute(
+                            builder: (context) => RecipeDetailScreen(
+                              recipe: recipe,
+                              isEnglish: isEnglish,
+                            ),
                           ),
                         );
                       },

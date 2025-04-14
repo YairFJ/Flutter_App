@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 class StopwatchPage extends StatefulWidget {
-  const StopwatchPage({super.key});
+  final bool isEnglish;
+  
+  const StopwatchPage({
+    super.key,
+    this.isEnglish = false,
+  });
 
   @override
   State<StopwatchPage> createState() => _StopwatchPageState();
@@ -13,6 +18,36 @@ class _StopwatchPageState extends State<StopwatchPage> {
   Timer? timer;
   bool isRunning = false;
   List<String> laps = [];
+  late bool isEnglish;
+  
+  // Mapeo de etiquetas de tiempo
+  final Map<String, String> _timeLabels = {
+    'Horas': 'Hours',
+    'Minutos': 'Minutes',
+    'Segundos': 'Seconds',
+    'Vuelta': 'Lap',
+  };
+  
+  // Obtener etiqueta según el idioma
+  String _getLabel(String label) {
+    return isEnglish ? _timeLabels[label] ?? label : label;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    isEnglish = widget.isEnglish;
+  }
+  
+  @override
+  void didUpdateWidget(StopwatchPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
+    }
+  }
 
   void startTimer() {
     timer = Timer.periodic(const Duration(milliseconds: 10), (timer) {
@@ -130,7 +165,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
                         itemBuilder: (context, index) {
                           return ListTile(
                             title: Text(
-                              'Vuelta ${laps.length - index}',
+                              '${_getLabel('Vuelta')} ${laps.length - index}',
                               style: const TextStyle(fontSize: 16),
                             ),
                             trailing: Text(
@@ -158,7 +193,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          label,
+          _getLabel(label),
           style: TextStyle(
             fontSize: 16,
             color: Colors.grey[600],

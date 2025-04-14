@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../constants/categories.dart';
 import '../screens/recipe_detail_screen.dart';
 
 class RecipesPage extends StatefulWidget {
-  const RecipesPage({super.key});
+  final bool isEnglish;
+
+  const RecipesPage({super.key, this.isEnglish = false});
 
   @override
   State<RecipesPage> createState() => _RecipesPageState();
@@ -14,6 +17,7 @@ class RecipesPage extends StatefulWidget {
 class _RecipesPageState extends State<RecipesPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool get isEnglish => widget.isEnglish;
 
   @override
   void dispose() {
@@ -30,7 +34,7 @@ class _RecipesPageState extends State<RecipesPage> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Buscar recetas...',
+              hintText: isEnglish ? 'Search recipes...' : 'Buscar recetas...',
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -84,9 +88,13 @@ class _RecipesPageState extends State<RecipesPage> {
               if (_searchQuery.isNotEmpty) {
                 filteredRecipes = recipes.where((recipe) {
                   final description = recipe.description?.toLowerCase() ?? '';
+                  final translatedCategory =
+                      RecipeCategories.getTranslatedCategory(
+                              recipe.category, isEnglish)
+                          .toLowerCase();
                   return recipe.title.toLowerCase().contains(_searchQuery) ||
                       description.contains(_searchQuery) ||
-                      recipe.category.toLowerCase().contains(_searchQuery);
+                      translatedCategory.contains(_searchQuery);
                 }).toList();
               }
 
@@ -99,7 +107,9 @@ class _RecipesPageState extends State<RecipesPage> {
                           size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
-                        'No hay recetas disponibles',
+                        isEnglish
+                            ? 'No recipes available'
+                            : 'No hay recetas disponibles',
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.grey[600],
@@ -135,6 +145,9 @@ class _RecipesPageState extends State<RecipesPage> {
 
     if (categoryRecipes.isEmpty) return const SizedBox.shrink();
 
+    final translatedCategory =
+        RecipeCategories.getTranslatedCategory(category, isEnglish);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -151,7 +164,7 @@ class _RecipesPageState extends State<RecipesPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    category,
+                    translatedCategory,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -160,7 +173,7 @@ class _RecipesPageState extends State<RecipesPage> {
                 ],
               ),
               Text(
-                '${categoryRecipes.length} recetas',
+                '${categoryRecipes.length} ${isEnglish ? 'recipes' : 'recetas'}',
                 style: TextStyle(
                   color: Colors.grey[600],
                 ),
@@ -191,8 +204,10 @@ class _RecipesPageState extends State<RecipesPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              RecipeDetailScreen(recipe: recipe),
+                          builder: (context) => RecipeDetailScreen(
+                            recipe: recipe,
+                            isEnglish: isEnglish,
+                          ),
                         ),
                       );
                     },
@@ -321,6 +336,63 @@ class _RecipesPageState extends State<RecipesPage> {
   }
 
   Future<void> _toggleFavorite(BuildContext context, Recipe recipe) async {
-    // No se puede cambiar favoritos sin autenticación
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isEnglish
+              ? 'You must log in to save favorites'
+              : 'Debes iniciar sesión para guardar favoritos'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final recipeRef =
+        FirebaseFirestore.instance.collection('recipes').doc(recipe.id);
+
+    try {
+      if (recipe.favoritedBy.contains(currentUser.uid)) {
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
+        });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isEnglish
+                  ? 'Recipe removed from favorites'
+                  : 'Receta eliminada de favoritos'),
+              backgroundColor: Colors.grey,
+            ),
+          );
+        }
+      } else {
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
+        });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isEnglish
+                  ? 'Recipe saved to favorites'
+                  : 'Receta guardada en favoritos'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isEnglish
+                ? 'Error updating favorites'
+                : 'Error al actualizar favoritos'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

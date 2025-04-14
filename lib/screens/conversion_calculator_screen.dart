@@ -5,13 +5,17 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
+import 'package:provider/provider.dart';
+import '../services/language_service.dart';
 
 class ConversionCalculatorScreen extends StatefulWidget {
   final Recipe recipe;
+  final bool isEnglish;
 
   const ConversionCalculatorScreen({
     super.key,
     required this.recipe,
+    this.isEnglish = false,
   });
 
   @override
@@ -27,6 +31,7 @@ class _ConversionCalculatorScreenState
   double _platosOrigen = 1.0;
   double _platosDestino = 1.0;
   double _valorOriginalRendimiento = 1.0;
+  late bool isEnglish;
   
   // Valores base para conversiones consistentes
   double _valorBaseGramos = 0.0;
@@ -389,7 +394,7 @@ class _ConversionCalculatorScreenState
     },
   };
 
-  // Mapa de plurales para las unidades
+  // Mapeo de plurales para las unidades
   final Map<String, String> _unidadesPlural = {
     'Persona': 'Personas',
     'Porción': 'Porciones',
@@ -398,71 +403,118 @@ class _ConversionCalculatorScreenState
     'Unidad': 'Unidades',
   };
 
+  // Mapeo de unidades en inglés
+  final Map<String, String> _unidadesEnIngles = {
+    'Gramo': 'Gram',
+    'Kilogramo': 'Kilogram',
+    'Miligramos': 'Milligrams',
+    'Onza': 'Ounce',
+    'Libra': 'Pound',
+    'Mililitros': 'Milliliters',
+    'Litro': 'Liter',
+    'Centilitros': 'Centiliters',
+    'Cucharada': 'Tablespoon',
+    'Cucharadita': 'Teaspoon',
+    'Taza': 'Cup',
+    'Onza liquida': 'Fluid ounce',
+    'Pinta': 'Pint',
+    'Cuarto galon': 'Quart',
+    'Galon': 'Gallon',
+    'Persona': 'Person',
+    'Personas': 'People',
+    'Porción': 'Serving',
+    'Porciones': 'Servings',
+    'Ración': 'Portion',
+    'Raciones': 'Portions',
+    'Plato': 'Plate',
+    'Platos': 'Plates',
+    'Unidad': 'Unit',
+    'Unidades': 'Units'
+  };
+
+  // Método para obtener la unidad traducida y formateada
+  String _getUnidadFormateada(String unidad, {bool abreviada = false}) {
+    String unidadTraducida = isEnglish ? (_unidadesEnIngles[unidad] ?? unidad) : unidad;
+    return abreviada ? (_unidadesAbreviadas[unidadTraducida] ?? unidadTraducida) : unidadTraducida;
+  }
+
+  // Método para obtener la unidad en plural
+  String _getUnidadPlural(String unidad, double cantidad) {
+    if (cantidad <= 1) return _getUnidadFormateada(unidad);
+    
+    if (isEnglish) {
+      // En inglés, generalmente se agrega 's' al final
+      String unidadTraducida = _unidadesEnIngles[unidad] ?? unidad;
+      return '${unidadTraducida}s';
+    } else {
+      // En español, usamos el mapa de plurales
+      return _unidadesPlural[unidad] ?? '${unidad}s';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    try {
-      print("Serving Size: ${widget.recipe.servingSize}");
-      print("Ingredients: ${widget.recipe.ingredients}");
-
-      final parts = widget.recipe.servingSize.trim().split(' ');
-      if (parts.length >= 2) {
-        _platosOrigen = double.tryParse(parts[0].replaceAll(',', '.')) ?? 1.0;
-        _valorOriginalRendimiento = _platosOrigen;
-        String unidadOriginalTemp = parts[1].toLowerCase();
-        _unidadOriginal = _convertirUnidadAntigua[unidadOriginalTemp] ?? 'Persona';
-        _unidadDestino = _unidadOriginal;
-        _unidadActual = _unidadOriginal;
-        
-        // Inicializamos valores base de conversión
-        if (_esTipoUnidadPeso(_unidadOriginal)) {
-          _valorBaseGramos = _convertirAUnidadBase(_platosOrigen, _unidadOriginal, 'peso');
-        } else if (_esTipoUnidadVolumen(_unidadOriginal)) {
-          _valorBaseMililitros = _convertirAUnidadBase(_platosOrigen, _unidadOriginal, 'volumen');
-        }
-      } else {
-        _unidadOriginal = 'Persona';
-        _unidadDestino = 'Persona';
-        _unidadActual = 'Persona';
-        _platosOrigen = 1.0;
-        _valorOriginalRendimiento = 1.0;
-      }
-
-      // Inicialización segura de controladores
-      _cantidadController = TextEditingController(text: _formatearNumero(_platosOrigen));
-      _destinoController = TextEditingController(text: _formatearNumero(_platosOrigen));
-      _platosDestino = _platosOrigen;
-
-      // Inicialización segura de ingredientes
-      if (widget.recipe.ingredients.isNotEmpty) {
-        _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
-          try {
-            String unidadOriginal = ingrediente.unit.toLowerCase() ?? 'gr';
-            String unidadConvertida = _convertirUnidadAntigua[unidadOriginal] ?? 'Gramo';
-            print("Unidad original: $unidadOriginal, Unidad convertida: $unidadConvertida");
-
-            return IngredienteTabla(
-              nombre: ingrediente.name ?? '',
-              cantidad: (ingrediente.quantity ?? 0).toDouble(), // Asegurarnos de que sea double
-              unidad: unidadConvertida,
-            );
-          } catch (e) {
-            print("Error al convertir ingrediente: $e");
-            return IngredienteTabla(
-              nombre: '',
-              cantidad: 0.0, // Asegurarnos de que sea double
-              unidad: 'Gramo',
-            );
-          }
-        }).toList();
-      } else {
-        _ingredientesTabla = [];
-      }
-
-      _calcularConversion();
-    } catch (e) {
-      print("Error en initState: $e");
+    isEnglish = Provider.of<LanguageService>(context, listen: false).isEnglish;
+    
+    // Obtener el valor y unidad de servingSize
+    String servingSize = widget.recipe.servingSize;
+    final parts = servingSize.split(' ');
+    
+    // Valor por defecto en caso de que el formato no sea el esperado
+    double cantidad = 1.0;
+    String unidad = "Porción";
+    
+    if (parts.length >= 2) {
+      cantidad = double.tryParse(parts[0].replaceAll(',', '.')) ?? 1.0;
+      unidad = parts[1].toLowerCase();
     }
+    
+    _platosOrigen = cantidad;
+    _valorOriginalRendimiento = _platosOrigen;
+    _unidadOriginal = _convertirUnidadAntigua[unidad] ?? 'Persona';
+    _unidadDestino = _unidadOriginal;
+    _unidadActual = _unidadOriginal;
+    
+    // Inicializamos valores base de conversión
+    if (_esTipoUnidadPeso(_unidadOriginal)) {
+      _valorBaseGramos = _convertirAUnidadBase(_platosOrigen, _unidadOriginal, 'peso');
+    } else if (_esTipoUnidadVolumen(_unidadOriginal)) {
+      _valorBaseMililitros = _convertirAUnidadBase(_platosOrigen, _unidadOriginal, 'volumen');
+    }
+
+    // Inicialización segura de controladores
+    _cantidadController = TextEditingController(text: _formatearNumero(_platosOrigen));
+    _destinoController = TextEditingController(text: _formatearNumero(_platosOrigen));
+    _platosDestino = _platosOrigen;
+
+    // Inicialización segura de ingredientes
+    if (widget.recipe.ingredients.isNotEmpty) {
+      _ingredientesTabla = widget.recipe.ingredients.map((ingrediente) {
+        try {
+          String unidadOriginal = ingrediente.unit.toLowerCase() ?? 'gr';
+          String unidadConvertida = _convertirUnidadAntigua[unidadOriginal] ?? 'Gramo';
+          print("Unidad original: $unidadOriginal, Unidad convertida: $unidadConvertida");
+
+          return IngredienteTabla(
+            nombre: ingrediente.name ?? '',
+            cantidad: (ingrediente.quantity ?? 0).toDouble(),
+            unidad: unidadConvertida,
+          );
+        } catch (e) {
+          print("Error al convertir ingrediente: $e");
+          return IngredienteTabla(
+            nombre: '',
+            cantidad: 0.0,
+            unidad: 'Gramo',
+          );
+        }
+      }).toList();
+    } else {
+      _ingredientesTabla = [];
+    }
+
+    _calcularConversion();
   }
 
   @override
@@ -533,7 +585,7 @@ class _ConversionCalculatorScreenState
           _resultado = _platosDestino;
         }
       });
-    } catch (e) {
+            } catch (e) {
       print("Error en cálculo de conversión: $e");
     }
   }
@@ -627,7 +679,7 @@ class _ConversionCalculatorScreenState
                ['Mililitros', 'Litro', 'Centilitros', 'Cucharada', 'Cucharadita',
                 'Taza', 'Onza liquida', 'Pinta', 'Cuarto galon', 'Galon'].contains(hasta)) {
       unidadBase = 'Mililitros';
-    } else {
+        } else {
       return false; // No podemos determinar una unidad base común
     }
     
@@ -1023,69 +1075,103 @@ class _ConversionCalculatorScreenState
     return quantity.toStringAsFixed(2);
   }
 
+  // Método para generar y compartir el PDF
   Future<void> _generarPDF() async {
+    try {
     final pdf = pw.Document();
+      
+      // Obtener el tema actual
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      
+      // Definir colores según el tema
+      final fontColor = isDark ? PdfColors.white : PdfColors.black;
+      final backgroundColor = isDark ? PdfColors.blueGrey800 : PdfColors.white;
+      final headerColor = isDark ? PdfColors.blue200 : PdfColors.blue700;
 
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) {
-          return pw.Column(
+            return pw.Container(
+              color: backgroundColor,
+              child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                'CALCULADORA DE CONVERSIÓN',
+                  pw.Header(
+                    level: 0,
+                    child: pw.Text(
+                      isEnglish ? 'Recipe Conversion' : 'Conversión de Receta',
                 style: pw.TextStyle(
+                        color: headerColor,
                   fontSize: 24,
                   fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  pw.Text(
+                    '${widget.recipe.title}',
+                    style: pw.TextStyle(
+                      fontSize: 20,
+                      fontWeight: pw.FontWeight.bold,
+                      color: fontColor,
                 ),
               ),
               pw.SizedBox(height: 20),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
               pw.Text(
-                'Rendimiento Nuevo: $_platosDestino ${_getUnidadPlural(_unidadDestino, _platosDestino)}',
-                style: const pw.TextStyle(fontSize: 14),
+                        isEnglish ? 'Original: $_platosOrigen $_unidadOriginal' : 'Original: $_platosOrigen $_unidadOriginal',
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          color: fontColor,
+                        ),
+              ),
+              pw.Text(
+                        isEnglish ? 'New: $_platosDestino $_unidadDestino' : 'Nuevo: $_platosDestino $_unidadDestino',
+                        style: pw.TextStyle(
+                          fontSize: 14,
+                          color: fontColor,
+                        ),
+                      ),
+                    ],
               ),
               pw.SizedBox(height: 20),
               pw.Text(
-                'TABLA DE INGREDIENTES',
+                    isEnglish ? 'Ingredients' : 'Ingredientes',
                 style: pw.TextStyle(
                   fontSize: 18,
                   fontWeight: pw.FontWeight.bold,
+                      color: fontColor,
                 ),
               ),
               pw.SizedBox(height: 10),
               pw.Table(
-                border: pw.TableBorder.all(),
-                columnWidths: {
-                  0: pw.FlexColumnWidth(2),
-                  1: pw.FlexColumnWidth(1),
-                  2: pw.FlexColumnWidth(1),
-                },
+                    border: pw.TableBorder.all(color: PdfColors.grey400),
                 children: [
                   pw.TableRow(
-                    decoration: pw.BoxDecoration(
-                      color: PdfColors.grey300,
-                    ),
+                        decoration: pw.BoxDecoration(color: PdfColors.grey200),
                     children: [
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                            padding: const pw.EdgeInsets.all(8.0),
                         child: pw.Text(
-                          'INGREDIENTE',
+                              isEnglish ? 'Ingredient' : 'Ingrediente',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
                       ),
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                            padding: const pw.EdgeInsets.all(8.0),
                         child: pw.Text(
-                          'CANTIDAD',
+                              isEnglish ? 'Quantity' : 'Cantidad',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
                       ),
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                            padding: const pw.EdgeInsets.all(8.0),
                         child: pw.Text(
-                          'UNIDAD',
+                              isEnglish ? 'Unit' : 'Unidad',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
@@ -1096,46 +1182,113 @@ class _ConversionCalculatorScreenState
                     return pw.TableRow(
                       children: [
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                              padding: const pw.EdgeInsets.all(8.0),
                           child: pw.Text(
                             ingrediente.nombre,
                             textAlign: pw.TextAlign.left,
                           ),
                         ),
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                              padding: const pw.EdgeInsets.all(8.0),
                           child: pw.Text(
-                            _formatQuantity(ingrediente.cantidad),
+                                _formatearNumero(ingrediente.cantidad),
                             textAlign: pw.TextAlign.center,
                           ),
                         ),
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                              padding: const pw.EdgeInsets.all(8.0),
                           child: pw.Text(
-                            _unidadesAbreviadas[ingrediente.unidad] ??
                                 ingrediente.unidad,
                             textAlign: pw.TextAlign.center,
                           ),
                         ),
                       ],
                     );
-                  }),
+                      }).toList(),
+                    ],
+                  ),
+                  pw.SizedBox(height: 20),
+                  pw.Text(
+                    isEnglish ? 'Steps' : 'Pasos',
+                    style: pw.TextStyle(
+                      fontSize: 18,
+                      fontWeight: pw.FontWeight.bold,
+                      color: fontColor,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: widget.recipe.steps.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final step = entry.value;
+                      return pw.Padding(
+                        padding: const pw.EdgeInsets.only(bottom: 10),
+                        child: pw.Row(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Container(
+                              width: 25,
+                              height: 25,
+                              decoration: pw.BoxDecoration(
+                                color: headerColor,
+                                shape: pw.BoxShape.circle,
+                              ),
+                              alignment: pw.Alignment.center,
+                              child: pw.Text(
+                                '${index + 1}',
+                                style: pw.TextStyle(
+                                  color: PdfColors.white,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            pw.SizedBox(width: 10),
+                            pw.Expanded(
+                              child: pw.Text(
+                                step,
+                                style: pw.TextStyle(color: fontColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  pw.SizedBox(height: 20),
+                  pw.Footer(
+                    title: pw.Text(
+                      isEnglish ? 'Generated with Recipe App' : 'Generado con la App de Recetas',
+                      style: pw.TextStyle(
+                        color: fontColor,
+                        fontSize: 12,
+                        fontStyle: pw.FontStyle.italic,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ],
           );
         },
       ),
     );
 
+      // Guardar el PDF en un archivo temporal
     final output = await getTemporaryDirectory();
-    final file = File('${output.path}/conversion_receta.pdf');
+      final file = File('${output.path}/receta_convertida.pdf');
     await file.writeAsBytes(await pdf.save());
 
-    if (context.mounted) {
+      // Compartir el PDF
       await Share.shareXFiles(
         [XFile(file.path)],
-        subject: 'Conversión de Receta',
+        text: isEnglish ? 'Converted Recipe: ${widget.recipe.title}' : 'Receta Convertida: ${widget.recipe.title}',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isEnglish ? 'Error generating PDF: $e' : 'Error al generar PDF: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -1146,17 +1299,17 @@ class _ConversionCalculatorScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calculadora de Conversiones'),
+        title: Text(_getTextoTraducido('Calculadora de Conversión', 'Conversion Calculator')),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: _mostrarTablaEquivalencias,
-            tooltip: 'Ver tabla de equivalencias',
+            tooltip: _getTextoTraducido('Ver tabla de equivalencias', 'View conversion table'),
           ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: _generarPDF,
-            tooltip: 'Generar PDF',
+            tooltip: _getTextoTraducido('Generar PDF', 'Generate PDF'),
           ),
         ],
       ),
@@ -1164,7 +1317,7 @@ class _ConversionCalculatorScreenState
         padding: const EdgeInsets.all(16.0),
         children: [
           Text(
-            'CALCULADORA DE CONVERSIÓN',
+            _getTextoTraducido('CALCULADORA DE CONVERSIÓN', 'CONVERSION CALCULATOR'),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
@@ -1176,9 +1329,9 @@ class _ConversionCalculatorScreenState
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               children: [
-                const Text(
-                  'RENDIMIENTO',
-                  style: TextStyle(
+                Text(
+                  _getTextoTraducido('RENDIMIENTO', 'YIELD'),
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -1198,28 +1351,28 @@ class _ConversionCalculatorScreenState
                       ),
                       children: [
                         Padding(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                               vertical: 16.0, horizontal: 8.0),
                           child: Text(
-                            'ORIGINAL',
+                            _getTextoTraducido('ORIGINAL', 'ORIGINAL'),
                             style: TextStyle(fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                               vertical: 16.0, horizontal: 8.0),
                           child: Text(
-                            'UNIDAD',
+                            _getTextoTraducido('UNIDAD', 'UNIT'),
                             style: TextStyle(fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                               vertical: 16.0, horizontal: 8.0),
                           child: Text(
-                            'NUEVO',
+                            _getTextoTraducido('NUEVO', 'NEW'),
                             style: TextStyle(fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
@@ -1267,8 +1420,8 @@ class _ConversionCalculatorScreenState
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _unidadesAbreviadas[_getUnidadPlural(_unidadOriginal, _platosOrigen)] ?? 
-                                _getUnidadPlural(_unidadOriginal, _platosOrigen),
+                                _unidadesAbreviadas[_getUnidadTraducida(_unidadOriginal)] ?? 
+                                _getUnidadTraducida(_unidadOriginal),
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: isDarkMode ? Colors.white : Colors.black,
@@ -1616,7 +1769,7 @@ class _ConversionCalculatorScreenState
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Resultado: ',
+                        isEnglish ? 'Result: ' : 'Resultado: ',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -1639,7 +1792,7 @@ class _ConversionCalculatorScreenState
           ),
           const SizedBox(height: 32),
           Text(
-            'TABLA DE INGREDIENTES',
+            _getTextoTraducido('TABLA DE INGREDIENTES', 'INGREDIENTS TABLE'),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
@@ -1661,11 +1814,8 @@ class _ConversionCalculatorScreenState
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'INGREDIENTE',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
+                      _getTextoTraducido('INGREDIENTE', 'INGREDIENT'),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -1674,11 +1824,8 @@ class _ConversionCalculatorScreenState
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'CANTIDAD',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
+                      _getTextoTraducido('CANTIDAD', 'QUANTITY'),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -1687,11 +1834,8 @@ class _ConversionCalculatorScreenState
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'UNIDAD',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
+                      _getTextoTraducido('UNIDAD', 'UNIT'),
+                      style: TextStyle(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -1813,7 +1957,7 @@ class _ConversionCalculatorScreenState
                                 style: TextStyle(
                                   fontSize: 14,
                                   color:
-                                      isDarkMode ? Colors.white : Colors.black,
+                                      isDarkMode ? Colors.white : const Color.fromARGB(255, 26, 22, 22),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -1835,12 +1979,13 @@ class _ConversionCalculatorScreenState
               )),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _generarPDF,
+        icon: const Icon(Icons.share),
+        label: Text(isEnglish ? 'Share PDF' : 'Compartir PDF'),
+        backgroundColor: Theme.of(context).primaryColor,
+      ),
     );
-  }
-
-  String _getUnidadPlural(String unidad, double cantidad) {
-    if (cantidad <= 1) return unidad;
-    return _unidadesPlural[unidad] ?? '${unidad}s';
   }
 
   // Nuevos métodos para simplificar la comprobación de tipo de unidad
@@ -1878,56 +2023,104 @@ class _ConversionCalculatorScreenState
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Tabla de Equivalencias',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          title: Text(
+            isEnglish ? 'Conversion Table' : 'Tabla de Equivalencias',
+            style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildEquivalenciasSection('UNIDADES DE PESO', [
-                  '1 Kilogramo (kg) = 1000 Gramos (g)',
-                  '1 Gramo (g) = 1000 Miligramos (mg)',
-                  '1 Libra (lb) = 453.6 Gramos (g)',
-                  '1 Libra (lb) = 16 Onzas (oz)',
-                  '1 Onza (oz) = 28.35 Gramos (g)',
-                ]),
+                _buildEquivalenciasSection(
+                  isEnglish ? 'WEIGHT UNITS' : 'UNIDADES DE PESO',
+                  isEnglish ? [
+                    '1 Kilogram (kg) = 1000 Grams (g)',
+                    '1 Gram (g) = 1000 Milligrams (mg)',
+                    '1 Pound (lb) = 453.6 Grams (g)',
+                    '1 Pound (lb) = 16 Ounces (oz)',
+                    '1 Ounce (oz) = 28.35 Grams (g)',
+                  ] : [
+                    '1 Kilogramo (kg) = 1000 Gramos (g)',
+                    '1 Gramo (g) = 1000 Miligramos (mg)',
+                    '1 Libra (lb) = 453.6 Gramos (g)',
+                    '1 Libra (lb) = 16 Onzas (oz)',
+                    '1 Onza (oz) = 28.35 Gramos (g)',
+                  ]
+                ),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('UNIDADES DE VOLUMEN', [
-                  '1 Litro (L) = 1000 Mililitros (ml)',
-                  '1 Litro (L) = 100 Centilitros (cl)',
-                  '1 Centilitro (cl) = 10 Mililitros (ml)',
-                  '1 Taza = 240 Mililitros (ml)',
-                  '1 Cucharada (cda) = 15 Mililitros (ml)',
-                  '1 Cucharadita (cdta) = 5 Mililitros (ml)',
-                  '1 Taza = 16 Cucharadas (cda)',
-                  '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
-                  '1 Onza líquida = 29.57 Mililitros (ml)',
-                  '1 Pinta = 473.2 Mililitros (ml)',
-                  '1 Cuarto galón = 946.4 Mililitros (ml)',
-                  '1 Galón = 3.785 Litros (L)',
-                ]),
+                _buildEquivalenciasSection(
+                  isEnglish ? 'VOLUME UNITS' : 'UNIDADES DE VOLUMEN',
+                  isEnglish ? [
+                    '1 Liter (L) = 1000 Milliliters (ml)',
+                    '1 Liter (L) = 100 Centiliters (cl)',
+                    '1 Centiliter (cl) = 10 Milliliters (ml)',
+                    '1 Cup = 240 Milliliters (ml)',
+                    '1 Tablespoon (tbsp) = 15 Milliliters (ml)',
+                    '1 Teaspoon (tsp) = 5 Milliliters (ml)',
+                    '1 Cup = 16 Tablespoons (tbsp)',
+                    '1 Tablespoon (tbsp) = 3 Teaspoons (tsp)',
+                    '1 Fluid ounce = 29.57 Milliliters (ml)',
+                    '1 Pint = 473.2 Milliliters (ml)',
+                    '1 Quart = 946.4 Milliliters (ml)',
+                    '1 Gallon = 3.785 Liters (L)',
+                  ] : [
+                    '1 Litro (L) = 1000 Mililitros (ml)',
+                    '1 Litro (L) = 100 Centilitros (cl)',
+                    '1 Centilitro (cl) = 10 Mililitros (ml)',
+                    '1 Taza = 240 Mililitros (ml)',
+                    '1 Cucharada (cda) = 15 Mililitros (ml)',
+                    '1 Cucharadita (cdta) = 5 Mililitros (ml)',
+                    '1 Taza = 16 Cucharadas (cda)',
+                    '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
+                    '1 Onza líquida = 29.57 Mililitros (ml)',
+                    '1 Pinta = 473.2 Mililitros (ml)',
+                    '1 Cuarto galón = 946.4 Mililitros (ml)',
+                    '1 Galón = 3.785 Litros (L)',
+                  ]
+                ),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('PORCIONES', [
-                  '1 Porción = 250 Gramos (g)',
-                  '1 Porción = 0.25 Kilogramos (kg)',
-                  '1 Porción = 250 Mililitros (ml)',
-                  '1 Porción = 8.8 Onzas (oz)',
-                  '1 Porción = 0.55 Libras (lb)',
-                  '1 Kilogramo (kg) = 4 Porciones',
-                  '1 Litro (L) = 4 Porciones',
-                ]),
+                _buildEquivalenciasSection(
+                  isEnglish ? 'SERVINGS' : 'PORCIONES',
+                  isEnglish ? [
+                    '1 Serving = 250 Grams (g)',
+                    '1 Serving = 0.25 Kilograms (kg)',
+                    '1 Serving = 250 Milliliters (ml)',
+                    '1 Serving = 8.8 Ounces (oz)',
+                    '1 Serving = 0.55 Pounds (lb)',
+                    '1 Kilogram (kg) = 4 Servings',
+                    '1 Liter (L) = 4 Servings',
+                  ] : [
+                    '1 Porción = 250 Gramos (g)',
+                    '1 Porción = 0.25 Kilogramos (kg)',
+                    '1 Porción = 250 Mililitros (ml)',
+                    '1 Porción = 8.8 Onzas (oz)',
+                    '1 Porción = 0.55 Libras (lb)',
+                    '1 Kilogramo (kg) = 4 Porciones',
+                    '1 Litro (L) = 4 Porciones',
+                  ]
+                ),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('PESO-VOLUMEN (aprox.)', [
-                  '1 Gramo (g) = 1 Mililitro (ml) de agua',
-                  '1 Kilogramo (kg) = 1 Litro (L) de agua',
-                  '1 Libra (lb) = 454 Mililitros (ml) de agua',
-                  '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
-                ]),
+                _buildEquivalenciasSection(
+                  isEnglish ? 'WEIGHT-VOLUME (approx.)' : 'PESO-VOLUMEN (aprox.)',
+                  isEnglish ? [
+                    '1 Gram (g) = 1 Milliliter (ml) of water',
+                    '1 Kilogram (kg) = 1 Liter (L) of water',
+                    '1 Pound (lb) = 454 Milliliters (ml) of water',
+                    '1 Ounce (oz) = 28.4 Milliliters (ml) of water',
+                  ] : [
+                    '1 Gramo (g) = 1 Mililitro (ml) de agua',
+                    '1 Kilogramo (kg) = 1 Litro (L) de agua',
+                    '1 Libra (lb) = 454 Mililitros (ml) de agua',
+                    '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
+                  ]
+                ),
                 const SizedBox(height: 8),
-                const Text('Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
-                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                Text(
+                  isEnglish 
+                    ? 'Note: Weight to volume conversions are approximate and valid mainly for water.'
+                    : 'Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
+                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -1936,7 +2129,7 @@ class _ConversionCalculatorScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cerrar'),
+              child: Text(isEnglish ? 'Close' : 'Cerrar'),
             ),
           ],
         );
@@ -1967,6 +2160,37 @@ class _ConversionCalculatorScreenState
         )),
       ],
     );
+  }
+
+  @override
+  void didUpdateWidget(ConversionCalculatorScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isEnglish != widget.isEnglish) {
+      setState(() {
+        isEnglish = widget.isEnglish;
+      });
+    }
+  }
+
+  // Método para obtener el texto traducido
+  String _getTextoTraducido(String textoEspanol, String textoIngles) {
+    return isEnglish ? textoIngles : textoEspanol;
+  }
+
+  // Método para obtener la unidad traducida
+  String _getUnidadTraducida(String unidad) {
+    return _getUnidadFormateada(unidad);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final languageService = Provider.of<LanguageService>(context);
+    if (isEnglish != languageService.isEnglish) {
+      setState(() {
+        isEnglish = languageService.isEnglish;
+      });
+    }
   }
 }
 
@@ -2016,7 +2240,7 @@ class IngredienteTabla {
 
     String tipoMedida = _determinarTipoMedida(unidad);
     if (tipoMedida == 'unidad') return cantidad;
-    
+
     return cantidad * (factoresABase[unidad] ?? 1);
   }
 

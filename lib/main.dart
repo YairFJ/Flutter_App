@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
 import 'screens/signup_screen.dart';
@@ -13,10 +14,12 @@ import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
 import 'pages/profile_page.dart';
 import 'screens/groups_screen.dart';
+import 'services/language_service.dart';
+import 'services/theme_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DefaultFirebaseOptions.loadEnv(); // Cargar variables de entorno
+  await DefaultFirebaseOptions.loadEnv();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -31,54 +34,56 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.light;
-
-  void toggleTheme() {
-    setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
-  }
+  final _languageService = LanguageService();
+  final _themeService = ThemeService();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Restaurante App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        primaryColor: const Color(0xFF96B4D8),
-        scaffoldBackgroundColor: Colors.white,
-        cardColor: Colors.white,
-        brightness: Brightness.light,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      darkTheme: ThemeData(
-        primarySwatch: Colors.blue,
-        primaryColor: const Color(0xFF96B4D8),
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        cardColor: const Color(0xFF1E1E1E),
-        brightness: Brightness.dark,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      themeMode: _themeMode,
-      home: AuthWrapper(toggleTheme: toggleTheme),
-      routes: {
-        '/profile': (context) => ProfilePage(
-              user: FirebaseAuth.instance.currentUser!,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _languageService),
+        ChangeNotifierProvider.value(value: _themeService),
+      ],
+      child: Consumer<ThemeService>(
+        builder: (context, themeService, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Restaurante App',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              primaryColor: const Color(0xFF96B4D8),
+              scaffoldBackgroundColor: Colors.white,
+              cardColor: Colors.white,
+              brightness: Brightness.light,
+              visualDensity: VisualDensity.adaptivePlatformDensity,
             ),
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const SignUpScreen(),
-        '/groups': (context) => const GroupsScreen(),
-      },
+            darkTheme: ThemeData(
+              primarySwatch: Colors.blue,
+              primaryColor: const Color(0xFF96B4D8),
+              scaffoldBackgroundColor: const Color(0xFF121212),
+              cardColor: const Color(0xFF1E1E1E),
+              brightness: Brightness.dark,
+              visualDensity: VisualDensity.adaptivePlatformDensity,
+            ),
+            themeMode:
+                themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const AuthWrapper(),
+            routes: {
+              '/profile': (context) =>
+                  ProfilePage(user: FirebaseAuth.instance.currentUser!),
+              '/login': (context) => const LoginPage(),
+              '/register': (context) => const SignUpScreen(),
+              '/groups': (context) => const GroupsScreen(),
+            },
+          );
+        },
+      ),
     );
   }
 }
 
 class AuthWrapper extends StatelessWidget {
-  final Function toggleTheme;
-
-  const AuthWrapper({super.key, required this.toggleTheme});
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +133,8 @@ class AuthWrapper extends StatelessWidget {
           userId: user.uid,
           userEmail: user.email ?? 'No disponible',
           userName: user.displayName ?? 'Usuario',
-          toggleTheme: toggleTheme,
+          toggleTheme:
+              Provider.of<ThemeService>(context, listen: false).toggleTheme,
         );
       },
     );
@@ -159,37 +165,46 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  bool isDarkMode = false;
-
-  // Lista de páginas/widgets para cada elemento del menú
-  final List<Widget> _pages = [
-    const RecipesPage(),
-    const ConversionTablePage(),
-    const TimerPage(),
-    const StopwatchPage(),
-  ];
-
-  final List<String> _pageTitles = [
-    'Recetas',
-    'Conversión',
-    'Temporizador',
-    'Cronómetro',
-  ];
+  late bool isDarkMode;
+  late bool isEnglish;
 
   @override
   void initState() {
     super.initState();
     print('HomeScreen initState llamado');
-    // Inicializar el tema inmediatamente
-    isDarkMode =
-        WidgetsBinding.instance.window.platformBrightness == Brightness.dark;
+    final themeService = Provider.of<ThemeService>(context, listen: false);
+    final languageService =
+        Provider.of<LanguageService>(context, listen: false);
+    isDarkMode = themeService.isDarkMode;
+    isEnglish = languageService.isEnglish;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final themeService = Provider.of<ThemeService>(context);
+    final languageService = Provider.of<LanguageService>(context);
+    if (isDarkMode != themeService.isDarkMode) {
+      setState(() {
+        isDarkMode = themeService.isDarkMode;
+      });
+    }
+    if (isEnglish != languageService.isEnglish) {
+      setState(() {
+        isEnglish = languageService.isEnglish;
+      });
+    }
   }
 
   void toggleTheme() {
-    setState(() {
-      isDarkMode = !isDarkMode;
-      widget.toggleTheme();
-    });
+    final themeService = Provider.of<ThemeService>(context, listen: false);
+    themeService.toggleTheme();
+  }
+
+  void toggleLanguage() {
+    final languageService =
+        Provider.of<LanguageService>(context, listen: false);
+    languageService.toggleLanguage();
   }
 
   void _onItemTapped(int index) {
@@ -206,16 +221,34 @@ class _HomeScreenState extends State<HomeScreen> {
     FirebaseAuth.instance.signOut();
   }
 
+  void _navigateToAddRecipe() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddRecipeScreen(isEnglish: isEnglish),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     print('HomeScreen build llamado');
+
+    // Lista de páginas/widgets para cada elemento del menú
+    final List<Widget> _pages = [
+      RecipesPage(isEnglish: isEnglish),
+      ConversionTablePage(isEnglish: isEnglish),
+      const TimerPage(),
+      StopwatchPage(isEnglish: isEnglish),
+    ];
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: primaryColor,
         title: Text(
-          _pageTitles[_selectedIndex],
+          isEnglish ? 'Recipes' : 'Recetas',
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -225,10 +258,20 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: Icon(
+              isEnglish ? Icons.language : Icons.translate,
+              color: Colors.white,
+            ),
+            onPressed: toggleLanguage,
+            tooltip: isEnglish ? 'Cambiar a Español' : 'Switch to English',
+          ),
+          IconButton(
+            icon: Icon(
               isDarkMode ? Icons.wb_sunny : Icons.nightlight_round,
               color: Colors.white,
             ),
             onPressed: toggleTheme,
+            tooltip:
+                isDarkMode ? 'Cambiar a modo claro' : 'Switch to dark mode',
           ),
         ],
       ),
@@ -261,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.home),
-              title: const Text('Inicio'),
+              title: Text(isEnglish ? 'Home' : 'Inicio'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, '/');
@@ -269,32 +312,47 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.person),
-              title: const Text('Mi Perfil'),
+              title: Text(isEnglish ? 'My Profile' : 'Mi Perfil'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/profile');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(
+                      user: FirebaseAuth.instance.currentUser!,
+                      isEnglish: isEnglish,
+                    ),
+                  ),
+                );
               },
             ),
             ListTile(
               leading: const Icon(Icons.group),
-              title: const Text('Comunidades'),
+              title: Text(isEnglish ? 'Communities' : 'Comunidades'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/groups');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupsScreen(isEnglish: isEnglish),
+                  ),
+                );
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.exit_to_app),
-              title: const Text('Cerrar Sesión'),
-              onTap: () async {
-                await FirebaseAuth.instance.signOut();
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  Navigator.pushReplacementNamed(context, '/');
-                }
-              },
-            ),
+            if (FirebaseAuth.instance.currentUser != null) ...[
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.exit_to_app),
+                title: Text(isEnglish ? 'Log Out' : 'Cerrar Sesión'),
+                onTap: () async {
+                  await FirebaseAuth.instance.signOut();
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    Navigator.pushReplacementNamed(context, '/');
+                  }
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -306,37 +364,34 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.white.withOpacity(0.6),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
-            label: 'Recetas',
+            icon: const Icon(Icons.restaurant_menu),
+            label: isEnglish ? 'Recipes' : 'Recetas',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calculate),
-            label: 'Conversión',
+            icon: const Icon(Icons.calculate),
+            label: isEnglish ? 'Conversion' : 'Conversión',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.timer),
-            label: 'Temporizador',
+            icon: const Icon(Icons.timer),
+            label: isEnglish ? 'Timer' : 'Temporizador',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.timelapse),
-            label: 'Cronómetro',
+            icon: const Icon(Icons.timer_outlined),
+            label: isEnglish ? 'Stopwatch' : 'Cronómetro',
           ),
         ],
       ),
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
-              backgroundColor: secondaryColor,
-              child: const Icon(Icons.add, color: Colors.white),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddRecipeScreen(),
-                  ),
-                );
-              },
+              onPressed: _navigateToAddRecipe,
+              backgroundColor: primaryColor,
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 30,
+              ),
             )
           : null,
     );
@@ -345,8 +400,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
+  final bool isEnglish;
 
-  const RecipeCard({super.key, required this.recipe});
+  const RecipeCard({super.key, required this.recipe, this.isEnglish = false});
 
   @override
   Widget build(BuildContext context) {
@@ -378,7 +434,10 @@ class RecipeCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => RecipeDetailScreen(recipe: recipe),
+              builder: (context) => RecipeDetailScreen(
+                recipe: recipe,
+                isEnglish: isEnglish,
+              ),
             ),
           );
         },
@@ -427,7 +486,11 @@ class RecipeCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Creado por: ${recipe.creatorName}',
+                            isEnglish
+                                ? 'Created by: ${recipe.creatorName}'
+                                : 'Creado por: ${recipe.creatorName}',
+
+                            /// posible error
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.white,
@@ -475,7 +538,7 @@ class RecipeCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            '${recipe.ingredients.length} ing.',
+                            '${recipe.ingredients.length} ${isEnglish ? 'ingr.' : 'ing.'}',
                             style: TextStyle(
                               fontSize: 10,
                               color: HomeScreen.primaryColor,

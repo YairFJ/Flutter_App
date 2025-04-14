@@ -9,8 +9,9 @@ import '../widgets/add_ingredient_dialog.dart';
 
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? recipe; // null si es nueva receta
+  final bool isEnglish;
 
-  const RecipeFormScreen({super.key, this.recipe});
+  const RecipeFormScreen({super.key, this.recipe, this.isEnglish = false});
 
   @override
   State<RecipeFormScreen> createState() => _RecipeFormScreenState();
@@ -26,6 +27,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   late String _category;
   late String _servingSize;
   bool _isPrivate = false;
+  bool get isEnglish => widget.isEnglish;
 
   // Mapa de unidades completas a abreviadas
   final Map<String, String> _unidadesAbreviadas = {
@@ -76,7 +78,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   unidad: ing.unit,
                 ))
             .toList(),
-        unidades: _todasLasUnidades, // Usar la lista de unidades de medida
+        unidades: _todasLasUnidades,
+        isEnglish: isEnglish,
       ),
     );
 
@@ -114,7 +117,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.recipe == null ? 'Nueva Receta' : 'Editar Receta'),
+        title: Text(widget.recipe == null 
+          ? (isEnglish ? 'New Recipe' : 'Nueva Receta') 
+          : (isEnglish ? 'Edit Recipe' : 'Editar Receta')),
       ),
       body: Form(
         key: _formKey,
@@ -123,13 +128,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
           children: [
             TextFormField(
               initialValue: _title,
-              decoration: const InputDecoration(
-                labelText: 'Título',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Title' : 'Título',
+                border: const OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Por favor ingresa un título';
+                  return isEnglish ? 'Please enter a title' : 'Por favor ingresa un título';
                 }
                 return null;
               },
@@ -138,88 +143,35 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
             const SizedBox(height: 16),
             TextFormField(
               initialValue: _description,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Description' : 'Descripción',
+                border: const OutlineInputBorder(),
               ),
               maxLines: 3,
               onSaved: (value) => _description = value ?? '',
             ),
             const SizedBox(height: 16),
-
-            // Sección de ingredientes
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Ingredientes',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _editIngredients,
-                  icon: const Icon(Icons.edit),
-                  label: Text(widget.recipe == null
-                      ? 'Agregar ingredientes'
-                      : 'Editar ingredientes'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Lista de ingredientes existentes
-            if (_ingredients.isNotEmpty) ...[
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _ingredients.length,
-                itemBuilder: (context, index) {
-                  final ingredient = _ingredients[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(ingredient.name),
-                      subtitle:
-                          Text('${ingredient.quantity} ${ingredient.unit}'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          setState(() {
-                            _ingredients.removeAt(index);
-                          });
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
-
-            const SizedBox(height: 16),
             TextFormField(
               initialValue: _cookingTime,
-              decoration: const InputDecoration(
-                labelText: 'Tiempo de cocción (minutos)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Cooking time (minutes)' : 'Tiempo de cocción (minutos)',
+                border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Por favor ingresa el tiempo de cocción';
+                  return isEnglish ? 'Please enter the cooking time' : 'Por favor ingresa el tiempo de cocción';
                 }
                 return null;
               },
               onSaved: (value) => _cookingTime = value ?? '0',
             ),
-
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _category,
-              decoration: const InputDecoration(
-                labelText: 'Categoría',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Category' : 'Categoría',
+                border: const OutlineInputBorder(),
               ),
               items: ['Desayuno', 'Almuerzo', 'Cena', 'Postre', 'Snack']
                   .map((category) => DropdownMenuItem(
@@ -229,25 +181,23 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   .toList(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Por favor selecciona una categoría';
+                  return isEnglish ? 'Please select a category' : 'Por favor selecciona una categoría';
                 }
                 return null;
               },
               onChanged: (value) => setState(() => _category = value!),
               onSaved: (value) => _category = value!,
             ),
-
             const SizedBox(height: 16),
             SwitchListTile(
-              title: const Text('Receta Privada'),
+              title: Text(isEnglish ? 'Private Recipe' : 'Receta Privada'),
               value: _isPrivate,
               onChanged: (value) => setState(() => _isPrivate = value),
             ),
             const SizedBox(height: 16),
-
-            const Text(
-              'Pasos',
-              style: TextStyle(
+            Text(
+              isEnglish ? 'Steps' : 'Pasos',
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -262,7 +212,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   return TextButton.icon(
                     onPressed: () => setState(() => _steps.add('')),
                     icon: const Icon(Icons.add),
-                    label: const Text('Agregar paso'),
+                    label: Text(isEnglish ? 'Add step' : 'Agregar paso'),
                   );
                 }
                 return ListTile(
@@ -271,7 +221,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     initialValue: _steps[index],
                     onChanged: (value) => _steps[index] = value,
                     decoration: InputDecoration(
-                      hintText: 'Paso ${index + 1}',
+                      hintText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
                     ),
                   ),
                   trailing: IconButton(
@@ -281,10 +231,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 );
               },
             ),
-
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _saveRecipe,
-              child: const Text('Guardar Receta'),
+              child: Text(isEnglish ? 'Save Recipe' : 'Guardar Receta'),
             ),
           ],
         ),
