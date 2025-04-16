@@ -1306,11 +1306,6 @@ class _ConversionCalculatorScreenState
             onPressed: _mostrarTablaEquivalencias,
             tooltip: _getTextoTraducido('Ver tabla de equivalencias', 'View conversion table'),
           ),
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: _generarPDF,
-            tooltip: _getTextoTraducido('Generar PDF', 'Generate PDF'),
-          ),
         ],
       ),
       body: ListView(

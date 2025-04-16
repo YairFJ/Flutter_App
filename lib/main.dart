@@ -14,7 +14,7 @@ import 'pages/timer_page.dart';
 import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
 import 'pages/profile_page.dart';
-import 'screens/groups_screen.dart';
+import 'Comunity/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
 

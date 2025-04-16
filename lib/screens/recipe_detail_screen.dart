@@ -7,6 +7,7 @@ import 'edit_recipe_screen.dart';
 import 'conversion_calculator_screen.dart';
 import 'package:printing/printing.dart';
 import '../utils/pdf_generator.dart';
+
 // import '../widgets/conversion_table_dialog.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -148,8 +149,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               onPressed: () => _deleteRecipe(context),
             ),
           ],
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
+        ],
+      ),
+      floatingActionButton: Align(
+        alignment: Alignment.bottomRight,
+        child: Container(
+          margin: const EdgeInsets.only(right: 16.0, bottom: 16.0),
+          child: ElevatedButton(
             onPressed: () async {
               final pdfBytes = await generateRecipePdf(widget.recipe);
               await Printing.sharePdf(
@@ -157,9 +163,39 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 filename: '${widget.recipe.title}.pdf',
               );
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB5CAE9),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(150, 32),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.share,
+                  size: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isEnglish ? 'Share PDF' : 'Compartir PDF',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
