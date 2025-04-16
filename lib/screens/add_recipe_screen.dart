@@ -234,7 +234,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEnglish ? 'Error saving recipe: ' : 'Error al guardar la receta: ' + e.toString()),
+            content: Text(isEnglish ? 'Error saving recipe: ' : 'Error al guardar la receta: $e'),
             backgroundColor: Colors.red,
           ),
         );

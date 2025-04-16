@@ -170,6 +170,17 @@ class AuthService {
       print(
           'Auth Service: Iniciando método simplificado de inicio de sesión con Google');
 
+      // Verificar si ya hay un usuario autenticado con Google
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        if (currentUser.providerData
+            .any((provider) => provider.providerId == 'google.com')) {
+          print(
+              'Auth Service: Usuario ya autenticado con Google, devolviendo usuario actual');
+          return currentUser;
+        }
+      }
+
       // 1. Crear una instancia básica de GoogleSignIn sin opciones complejas
       final googleSignIn = GoogleSignIn();
 
@@ -224,6 +235,15 @@ class AuthService {
       // Si el error es específicamente PigeonUserDetails, manejarlo de forma especial
       if (e.toString().contains('PigeonUserDetails')) {
         print('Auth Service: Error con PigeonUserDetails detectado');
+
+        // Intentar obtener el usuario actual ya que podría estar autenticado
+        final currentUser = _auth.currentUser;
+        if (currentUser != null) {
+          print(
+              'Auth Service: Recuperando sesión existente en lugar de mostrar error');
+          return currentUser;
+        }
+
         throw FirebaseAuthException(
           code: 'emulator-google-sign-in',
           message:

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/ingredient.dart';
-import '../services/language_service.dart';
 import 'ingredient_table_widget.dart';
 import '../models/ingrediente_tabla.dart';
 

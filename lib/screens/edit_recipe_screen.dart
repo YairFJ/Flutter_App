@@ -12,10 +12,10 @@ class EditRecipeScreen extends StatefulWidget {
   final bool isEnglish;
 
   const EditRecipeScreen({
-    Key? key,
+    super.key,
     this.recipe,
     this.isEnglish = false,
-  }) : super(key: key);
+  });
 
   @override
   State<EditRecipeScreen> createState() => _EditRecipeScreenState();

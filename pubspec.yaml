@@ -37,7 +37,7 @@ dependencies:
   pdf: ^3.8.1
   printing: ^5.9.0
   soundpool: ^2.4.1
-  google_sign_in: 6.1.4
+  google_sign_in: ^6.1.4
   flutter_dotenv: ^5.1.0
   shared_preferences: ^2.2.2
   provider: ^6.1.1

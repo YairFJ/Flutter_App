@@ -235,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
     print('HomeScreen build llamado');
 
     // Lista de páginas/widgets para cada elemento del menú
-    final List<Widget> _pages = [
+    final List<Widget> pages = [
       RecipesPage(isEnglish: isEnglish),
       ConversionTablePage(isEnglish: isEnglish),
       const TimerPage(),
@@ -356,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Theme.of(context).primaryColor,
