@@ -378,7 +378,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 30),
 
                   // or continue with
-                  Padding(
+                  /*Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
                     child: Row(
                       children: [
@@ -427,7 +427,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
                     ],
-                  ),
+                  ),*/
 
                   const SizedBox(height: 30),
 
