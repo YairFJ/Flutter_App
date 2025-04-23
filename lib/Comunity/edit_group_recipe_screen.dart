@@ -73,7 +73,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
       _steps.add('');
       _stepControllers.add(TextEditingController());
     }
-    return null;
+    return;
   }
 
   @override
@@ -535,6 +535,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
                     label: Text(isEnglish ? 'Add step' : 'Agregar paso'),
                   );
                 }
+                return null;
                 
               },
             ),

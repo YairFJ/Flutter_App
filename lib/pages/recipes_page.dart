@@ -7,7 +7,7 @@ import '../screens/recipe_detail_screen.dart';
 
 class RecipesPage extends StatefulWidget {
   final bool isEnglish;
-  
+
   const RecipesPage({super.key, this.isEnglish = false});
 
   @override
@@ -64,27 +64,34 @@ class _RecipesPageState extends State<RecipesPage> {
           ),
         ),
         Expanded(
-          child:   StreamBuilder<QuerySnapshot>(
-     stream: FirebaseFirestore.instance.collection('recipes').orderBy('createdAt', descending: true).snapshots(),
-     builder: (context, snapshot) {
-       if (snapshot.connectionState == ConnectionState.waiting) {
-         return const Center(child: CircularProgressIndicator());
-       }
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('recipes')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-       if (snapshot.hasError) {
-         return Center(child: Text('Error: ${snapshot.error}'));
-       }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
 
-       final recipes = snapshot.data!.docs.map((doc) {
-         return Recipe.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-       }).toList();
+              final recipes = snapshot.data!.docs.map((doc) {
+                return Recipe.fromMap(
+                    doc.data() as Map<String, dynamic>, doc.id);
+              }).toList();
 
               // Filtrar las recetas según la búsqueda
               var filteredRecipes = recipes;
               if (_searchQuery.isNotEmpty) {
                 filteredRecipes = recipes.where((recipe) {
                   final description = recipe.description?.toLowerCase() ?? '';
-                  final translatedCategory = RecipeCategories.getTranslatedCategory(recipe.category, isEnglish).toLowerCase();
+                  final translatedCategory =
+                      RecipeCategories.getTranslatedCategory(
+                              recipe.category, isEnglish)
+                          .toLowerCase();
                   return recipe.title.toLowerCase().contains(_searchQuery) ||
                       description.contains(_searchQuery) ||
                       translatedCategory.contains(_searchQuery);
@@ -100,7 +107,9 @@ class _RecipesPageState extends State<RecipesPage> {
                           size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
-                        isEnglish ? 'No recipes available' : 'No hay recetas disponibles',
+                        isEnglish
+                            ? 'No recipes available'
+                            : 'No hay recetas disponibles',
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.grey[600],
@@ -136,7 +145,8 @@ class _RecipesPageState extends State<RecipesPage> {
 
     if (categoryRecipes.isEmpty) return const SizedBox.shrink();
 
-    final translatedCategory = RecipeCategories.getTranslatedCategory(category, isEnglish);
+    final translatedCategory =
+        RecipeCategories.getTranslatedCategory(category, isEnglish);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,9 +189,7 @@ class _RecipesPageState extends State<RecipesPage> {
             itemCount: categoryRecipes.length,
             itemBuilder: (context, index) {
               final recipe = categoryRecipes[index];
-              final currentUser = FirebaseAuth.instance.currentUser;
-              final isFavorite = currentUser != null &&
-                  recipe.favoritedBy.contains(currentUser.uid);
+              final isFavorite = false; // Sin autenticación, no hay favoritos
 
               return SizedBox(
                 width: 180,
@@ -196,11 +204,10 @@ class _RecipesPageState extends State<RecipesPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              RecipeDetailScreen(
-                                recipe: recipe,
-                                isEnglish: isEnglish,
-                              ),
+                          builder: (context) => RecipeDetailScreen(
+                            recipe: recipe,
+                            isEnglish: isEnglish,
+                          ),
                         ),
                       );
                     },
@@ -257,16 +264,19 @@ class _RecipesPageState extends State<RecipesPage> {
                                       ? Icons.favorite
                                       : Icons.favorite_border,
                                   size: 18,
-                                  color: isFavorite ? Colors.red : const Color.fromARGB(255, 158, 158, 158),
+                                  color: isFavorite
+                                      ? Colors.red
+                                      : const Color.fromARGB(255, 158, 158, 158),
                                 ),
                                 onPressed: () =>
                                     _toggleFavorite(context, recipe),
                               ),
                             ],
                           ),
-                          const Divider(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(8),
+                          const SizedBox(height: 25),
+                          const Divider(height: 1),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Row(
                               children: [
                                 const Icon(
@@ -276,35 +286,18 @@ class _RecipesPageState extends State<RecipesPage> {
                                 ),
                                 const SizedBox(width: 6),
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        recipe.creatorName,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: Theme.of(context).brightness == Brightness.dark
-                                              ? Colors.white
-                                              : Colors.black87,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        recipe.creatorEmail,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Theme.of(context).brightness == Brightness.dark
-                                              ? Colors.white
-                                              : Colors.black87,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
+                                  child: Text(
+                                    recipe.creatorName,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -328,7 +321,9 @@ class _RecipesPageState extends State<RecipesPage> {
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEnglish ? 'You must log in to save favorites' : 'Debes iniciar sesión para guardar favoritos'),
+          content: Text(isEnglish
+              ? 'You must log in to save favorites'
+              : 'Debes iniciar sesión para guardar favoritos'),
           backgroundColor: Colors.red,
         ),
       );
@@ -346,7 +341,9 @@ class _RecipesPageState extends State<RecipesPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isEnglish ? 'Recipe removed from favorites' : 'Receta eliminada de favoritos'),
+              content: Text(isEnglish
+                  ? 'Recipe removed from favorites'
+                  : 'Receta eliminada de favoritos'),
               backgroundColor: Colors.grey,
             ),
           );
@@ -358,7 +355,9 @@ class _RecipesPageState extends State<RecipesPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isEnglish ? 'Recipe saved to favorites' : 'Receta guardada en favoritos'),
+              content: Text(isEnglish
+                  ? 'Recipe saved to favorites'
+                  : 'Receta guardada en favoritos'),
               backgroundColor: Colors.green,
             ),
           );
@@ -368,7 +367,9 @@ class _RecipesPageState extends State<RecipesPage> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEnglish ? 'Error updating favorites' : 'Error al actualizar favoritos'),
+            content: Text(isEnglish
+                ? 'Error updating favorites'
+                : 'Error al actualizar favoritos'),
             backgroundColor: Colors.red,
           ),
         );

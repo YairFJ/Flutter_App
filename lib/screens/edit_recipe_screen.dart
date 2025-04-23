@@ -5,7 +5,6 @@ import '../models/ingrediente_tabla.dart';
 import '../constants/categories.dart';
 import '../main.dart';
 import '../models/ingredient.dart';
-import '../widgets/ingredient_table_widget.dart';
 import '../widgets/add_ingredient_dialog.dart';
 
 class EditRecipeScreen extends StatefulWidget {
@@ -13,10 +12,10 @@ class EditRecipeScreen extends StatefulWidget {
   final bool isEnglish;
 
   const EditRecipeScreen({
-    Key? key,
+    super.key,
     this.recipe,
     this.isEnglish = false,
-  }) : super(key: key);
+  });
 
   @override
   State<EditRecipeScreen> createState() => _EditRecipeScreenState();
@@ -24,7 +23,7 @@ class EditRecipeScreen extends StatefulWidget {
 
 class _EditRecipeScreenState extends State<EditRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
-  final Color primaryColor = HomeScreen.primaryColor;
+  Color get primaryColor => Theme.of(context).primaryColor;
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _cookingTimeController;
@@ -113,54 +112,76 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       return isEnglish ? 'Please enter a title' : 'Por favor ingresa un título';
     }
     if (value.trim().length < 3) {
-      return isEnglish ? 'Title must have at least 3 characters' : 'El título debe tener al menos 3 caracteres';
+      return isEnglish
+          ? 'Title must have at least 3 characters'
+          : 'El título debe tener al menos 3 caracteres';
     }
     if (value.trim().length > 100) {
-      return isEnglish ? 'Title cannot exceed 100 characters' : 'El título no puede exceder los 100 caracteres';
+      return isEnglish
+          ? 'Title cannot exceed 100 characters'
+          : 'El título no puede exceder los 100 caracteres';
     }
     return null;
   }
 
   String? _validateDescription(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return isEnglish ? 'Please enter a description' : 'Por favor ingresa una descripción';
+      return isEnglish
+          ? 'Please enter a description'
+          : 'Por favor ingresa una descripción';
     }
     if (value.trim().length > 500) {
-      return isEnglish ? 'Description cannot exceed 500 characters' : 'La descripción no puede exceder los 500 caracteres';
+      return isEnglish
+          ? 'Description cannot exceed 500 characters'
+          : 'La descripción no puede exceder los 500 caracteres';
     }
     return null;
   }
 
   String? _validateCookingTime(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return isEnglish ? 'Please enter the cooking time' : 'Por favor ingresa el tiempo de cocción';
+      return isEnglish
+          ? 'Please enter the cooking time'
+          : 'Por favor ingresa el tiempo de cocción';
     }
     if (!_numberRegExp.hasMatch(value)) {
-      return isEnglish ? 'Enter only positive integers' : 'Ingresa solo números enteros positivos';
+      return isEnglish
+          ? 'Enter only positive integers'
+          : 'Ingresa solo números enteros positivos';
     }
     final minutes = int.parse(value);
     if (minutes <= 0) {
-      return isEnglish ? 'Time must be greater than 0' : 'El tiempo debe ser mayor a 0';
+      return isEnglish
+          ? 'Time must be greater than 0'
+          : 'El tiempo debe ser mayor a 0';
     }
     if (minutes > 1440) {
-      return isEnglish ? 'Time cannot exceed 24 hours (1440 minutes)' : 'El tiempo no puede exceder las 24 horas (1440 minutos)';
+      return isEnglish
+          ? 'Time cannot exceed 24 hours (1440 minutes)'
+          : 'El tiempo no puede exceder las 24 horas (1440 minutos)';
     }
     return null;
   }
 
   String? _validateServingSize(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return isEnglish ? 'Please enter the serving size' : 'Por favor ingresa el rendimiento';
+      return isEnglish
+          ? 'Please enter the serving size'
+          : 'Por favor ingresa el rendimiento';
     }
     if (!_numberRegExp.hasMatch(value)) {
       return isEnglish ? 'Enter a valid number' : 'Ingresa un número válido';
     }
     double? servings = double.tryParse(value);
     if (servings == null || servings <= 0) {
-      return isEnglish ? 'Serving size must be greater than 0' : 'El rendimiento debe ser mayor a 0';
+      return isEnglish
+          ? 'Serving size must be greater than 0'
+          : 'El rendimiento debe ser mayor a 0';
     }
     if (servings > 10000) {
-      return isEnglish ? 'Serving size is too large' : 'El rendimiento es demasiado grande';
+      return isEnglish
+          ? 'Serving size is too large'
+          : 'El rendimiento es demasiado grande';
     }
     return null;
   }
@@ -235,7 +256,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   decoration: InputDecoration(
                     labelText: isEnglish ? 'Title' : 'Título',
                     border: OutlineInputBorder(),
-                    helperText: isEnglish ? 'Between 3 and 100 characters' : 'Entre 3 y 100 caracteres',
+                    helperText: isEnglish
+                        ? 'Between 3 and 100 characters'
+                        : 'Entre 3 y 100 caracteres',
                   ),
                   validator: _validateTitle,
                   textCapitalization: TextCapitalization.sentences,
@@ -249,7 +272,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   decoration: InputDecoration(
                     labelText: isEnglish ? 'Description' : 'Descripción',
                     border: OutlineInputBorder(),
-                    helperText: isEnglish ? 'Maximum 500 characters' : 'Máximo 500 caracteres',
+                    helperText: isEnglish
+                        ? 'Maximum 500 characters'
+                        : 'Máximo 500 caracteres',
                   ),
                   maxLines: 3,
                   validator: _validateDescription,
@@ -262,7 +287,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                     color: isDarkMode ? Colors.white : Colors.black,
                   ),
                   decoration: InputDecoration(
-                    labelText: isEnglish ? 'Preparation time (minutes)' : 'Tiempo de preparación (minutos)',
+                    labelText: isEnglish
+                        ? 'Preparation time (minutes)'
+                        : 'Tiempo de preparación (minutos)',
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
@@ -333,7 +360,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
                       hint: Text(
-                        isEnglish ? 'Select a category' : 'Selecciona una categoría',
+                        isEnglish
+                            ? 'Select a category'
+                            : 'Selecciona una categoría',
                         style: TextStyle(
                           color: isDarkMode ? Colors.white70 : Colors.grey[700],
                         ),
@@ -385,8 +414,12 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   ),
                   subtitle: Text(
                     _isPrivate
-                        ? isEnglish ? 'Only you can see this recipe' : 'Solo tú podrás ver esta receta'
-                        : isEnglish ? 'Everyone can see this recipe' : 'Todos podrán ver esta receta',
+                        ? isEnglish
+                            ? 'Only you can see this recipe'
+                            : 'Solo tú podrás ver esta receta'
+                        : isEnglish
+                            ? 'Everyone can see this recipe'
+                            : 'Todos podrán ver esta receta',
                     style: TextStyle(
                       color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                       fontSize: 12,
@@ -495,7 +528,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   child: TextFormField(
                     controller: _stepControllers[index],
                     decoration: InputDecoration(
-                      labelText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
+                      labelText:
+                          isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
                     ),
                     maxLines: 2,
                   ),
@@ -531,7 +565,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       if (_ingredients.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEnglish ? 'You must add at least one ingredient' : 'Debes agregar al menos un ingrediente'),
+            content: Text(isEnglish
+                ? 'You must add at least one ingredient'
+                : 'Debes agregar al menos un ingrediente'),
             backgroundColor: Colors.red,
           ),
         );
@@ -541,7 +577,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       if (!_validateSteps()) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEnglish ? 'All steps must be completed' : 'Todos los pasos deben estar completos'),
+            content: Text(isEnglish
+                ? 'All steps must be completed'
+                : 'Todos los pasos deben estar completos'),
             backgroundColor: Colors.red,
           ),
         );
@@ -599,7 +637,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(isEnglish ? 'Recipe updated successfully' : 'Receta actualizada con éxito'),
+                content: Text(isEnglish
+                    ? 'Recipe updated successfully'
+                    : 'Receta actualizada con éxito'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -610,9 +650,9 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           Navigator.pop(context); // Cierra el diálogo de carga
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isEnglish 
-                ? 'Error updating recipe: ${e.toString()}'
-                : 'Error al actualizar la receta: ${e.toString()}'),
+              content: Text(isEnglish
+                  ? 'Error updating recipe: ${e.toString()}'
+                  : 'Error al actualizar la receta: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );

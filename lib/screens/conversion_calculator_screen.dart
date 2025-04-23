@@ -1109,7 +1109,7 @@ class _ConversionCalculatorScreenState
                   ),
                   pw.SizedBox(height: 10),
                   pw.Text(
-                    '${widget.recipe.title}',
+                    widget.recipe.title,
                     style: pw.TextStyle(
                       fontSize: 20,
                       fontWeight: pw.FontWeight.bold,
@@ -1204,7 +1204,7 @@ class _ConversionCalculatorScreenState
                         ),
                       ],
                     );
-                      }).toList(),
+                      }),
                     ],
                   ),
                   pw.SizedBox(height: 20),
@@ -2152,7 +2152,7 @@ class _ConversionCalculatorScreenState
         ...equivalencias.map((e) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           child: Text(e, style: const TextStyle(fontSize: 14)),
-        )).toList(),
+        )),
       ],
     );
   }

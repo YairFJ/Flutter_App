@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
-import 'models/pigeon_user_detail.dart';
 import 'screens/signup_screen.dart';
 import 'screens/add_recipe_screen.dart';
 import 'screens/recipe_detail_screen.dart';
@@ -66,7 +65,8 @@ class _MyAppState extends State<MyApp> {
               brightness: Brightness.dark,
               visualDensity: VisualDensity.adaptivePlatformDensity,
             ),
-            themeMode: themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode:
+                themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             home: const AuthWrapper(),
             routes: {
               '/profile': (context) =>
@@ -99,12 +99,42 @@ class AuthWrapper extends StatelessWidget {
         }
 
         final user = snapshot.data;
+
+        // Si no hay usuario, redirigir siempre al login
         if (user == null) {
+          print('AuthWrapper: Usuario no autenticado, redirigiendo a login');
           return const LoginPage();
         }
 
+        // Verificar si el email está verificado para usuarios de email/password
+        // Los usuarios de Google ya vienen verificados
+        if (!user.emailVerified &&
+            !user.providerData
+                .any((provider) => provider.providerId == 'google.com')) {
+          print('AuthWrapper: Email no verificado, cerrando sesión');
+          // Cerrar sesión y redirigir al login con mensaje
+          FirebaseAuth.instance.signOut();
+          // Mostrar mensaje después de que la página se construya
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Por favor, verifica tu email antes de iniciar sesión'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          });
+          return const LoginPage();
+        }
+
+        print(
+            'AuthWrapper: Usuario autenticado y verificado, accediendo a HomeScreen');
         return HomeScreen(
-          userData: PigeonUserDetail.fromUser(user),
+          userId: user.uid,
+          userEmail: user.email ?? 'No disponible',
+          userName: user.displayName ?? 'Usuario',
+          toggleTheme:
+              Provider.of<ThemeService>(context, listen: false).toggleTheme,
         );
       },
     );
@@ -112,9 +142,18 @@ class AuthWrapper extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
-  final PigeonUserDetail userData;
+  final String userId;
+  final String userEmail;
+  final String userName;
+  final Function toggleTheme;
 
-  const HomeScreen({super.key, required this.userData});
+  const HomeScreen({
+    super.key,
+    required this.userId,
+    required this.userEmail,
+    required this.userName,
+    required this.toggleTheme,
+  });
 
   // Definimos los colores como constantes estáticas
   static const Color primaryColor = Color(0xFF96B4D8);
@@ -134,7 +173,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     print('HomeScreen initState llamado');
     final themeService = Provider.of<ThemeService>(context, listen: false);
-    final languageService = Provider.of<LanguageService>(context, listen: false);
+    final languageService =
+        Provider.of<LanguageService>(context, listen: false);
     isDarkMode = themeService.isDarkMode;
     isEnglish = languageService.isEnglish;
   }
@@ -162,7 +202,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void toggleLanguage() {
-    final languageService = Provider.of<LanguageService>(context, listen: false);
+    final languageService =
+        Provider.of<LanguageService>(context, listen: false);
     languageService.toggleLanguage();
   }
 
@@ -192,15 +233,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     print('HomeScreen build llamado');
-    
+
     // Lista de páginas/widgets para cada elemento del menú
-    final List<Widget> _pages = [
+    final List<Widget> pages = [
       RecipesPage(isEnglish: isEnglish),
       ConversionTablePage(isEnglish: isEnglish),
       const TimerPage(),
       StopwatchPage(isEnglish: isEnglish),
     ];
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -229,7 +270,8 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white,
             ),
             onPressed: toggleTheme,
-            tooltip: isDarkMode ? 'Cambiar a modo claro' : 'Switch to dark mode',
+            tooltip:
+                isDarkMode ? 'Cambiar a modo claro' : 'Switch to dark mode',
           ),
         ],
       ),
@@ -251,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    FirebaseAuth.instance.currentUser?.email ?? 'Usuario',
+                    widget.userEmail,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -290,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
-                  context, 
+                  context,
                   MaterialPageRoute(
                     builder: (context) => GroupsScreen(isEnglish: isEnglish),
                   ),
@@ -314,12 +356,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Theme.of(context).cardColor,
-        selectedItemColor: primaryColor,
-        unselectedItemColor: Colors.grey,
+        backgroundColor: Theme.of(context).primaryColor,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white.withOpacity(0.6),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: [
@@ -365,10 +407,14 @@ class RecipeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textColor = theme.brightness == Brightness.dark ? Colors.white : Colors.black;
-    final secondaryTextColor = theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87;
-    final backgroundColor = theme.brightness == Brightness.dark ? Colors.black : Colors.white;
-    final userInfoBackgroundColor = theme.brightness == Brightness.dark ? Colors.black : Colors.grey[200];
+    final textColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
+    final secondaryTextColor =
+        theme.brightness == Brightness.dark ? Colors.white70 : Colors.black87;
+    final backgroundColor =
+        theme.brightness == Brightness.dark ? Colors.black : Colors.white;
+    final userInfoBackgroundColor =
+        theme.brightness == Brightness.dark ? Colors.black : Colors.grey[200];
 
     return Container(
       decoration: BoxDecoration(
@@ -440,18 +486,11 @@ class RecipeCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isEnglish ? 'Created by: ${recipe.creatorName}' : 'Creado por: ${recipe.creatorName}',/// posible error
+                            isEnglish
+                                ? 'Created by: ${recipe.creatorName}'
+                                : 'Creado por: ${recipe.creatorName}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            recipe.creatorEmail,
-                            style: TextStyle(
-                              fontSize: 10,
                               color: Colors.white,
                             ),
                             maxLines: 1,

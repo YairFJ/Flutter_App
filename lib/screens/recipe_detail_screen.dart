@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 //import '../models/ingredient.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_recipe_screen.dart';
 import 'conversion_calculator_screen.dart';
@@ -93,9 +92,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final isOwner = currentUser?.uid == widget.recipe.userId;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // Sin autenticación, cualquier usuario puede editar cualquier receta
+    final isOwner = true;
 
     return Scaffold(
       appBar: AppBar(
@@ -154,10 +153,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       floatingActionButton: Align(
         alignment: Alignment.bottomRight,
         child: Container(
-          margin: const EdgeInsets.only(right: 16.0, bottom: 16.0),
+          margin: const EdgeInsets.only(right: 20.0, bottom: 20.0),
           child: ElevatedButton(
             onPressed: () async {
-              final pdfBytes = await generateRecipePdf(widget.recipe);
+              final pdfBytes = await generateRecipePdf(widget.recipe, isDarkMode);
               await Printing.sharePdf(
                 bytes: pdfBytes,
                 filename: '${widget.recipe.title}.pdf',
@@ -165,29 +164,27 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFB5CAE9),
+              foregroundColor: const Color.fromARGB(255, 0, 0, 0),
               elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              minimumSize: const Size(150, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.share,
+                Icon(Icons.share, 
                   size: 16,
-                  color: Colors.white,
+                  color: Colors.red[400],
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Text(
                   isEnglish ? 'Share PDF' : 'Compartir PDF',
                   style: const TextStyle(
                     fontSize: 13,
-                    color: Colors.white,
                     fontWeight: FontWeight.w400,
+                    color: Colors.black,
                   ),
                 ),
               ],

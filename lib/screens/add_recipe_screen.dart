@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_app/constants/categories.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/models/ingredient.dart';
 import 'package:flutter_app/widgets/add_ingredient_dialog.dart';
 import 'package:flutter_app/models/recipe.dart';
@@ -184,22 +183,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
         );
 
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser == null) {
-          throw Exception('Usuario no autenticado');
-        }
-
-        // Obtener el nombre del usuario actual
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
-
-        if (!userDoc.exists) {
-          throw Exception('No se encontraron datos del usuario');
-        }
-
-        final userName = userDoc.data()?['name'] ?? 'Usuario desconocido';
+        // Datos del usuario fijos sin autenticación
+        const userId = "guest_user";
+        const userEmail = "invitado@example.com";
+        const userName = "Usuario Invitado";
 
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
@@ -210,13 +197,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           id: "",
           title: _titleController.text,
           description: _descriptionController.text,
-          userId: currentUser.uid,
-          creatorEmail: currentUser.email ?? 'No disponible',
+          userId: userId,
+          creatorEmail: userEmail,
           creatorName: userName,
           favoritedBy: [],
           cookingTime:
-              Duration(minutes: int.parse(_cookingTimeController.text.trim())),
-          servingSize: '${_servingSizeController.text.trim()} $_servingUnit',
+              Duration(minutes: int.parse(_cookingTimeController.text)),
+          servingSize: "${_servingSizeController.text} $_servingUnit",
           ingredients: _ingredients,
           steps: steps,
           imageUrl: _imageUrl,
@@ -224,14 +211,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           isPrivate: _isPrivate,
         );
 
-        final recipeData = {
-          ...recipe.toMap(),
-          'createdAt': FieldValue.serverTimestamp(),
-        };
-
-        await FirebaseFirestore.instance.collection('recipes').add(recipeData);
-
-        if (!mounted) return;
+        final recipeRef = await FirebaseFirestore.instance
+            .collection('recipes')
+            .add(recipe.toMap());
 
         // Cerrar el diálogo de carga
         Navigator.pop(context);
@@ -252,7 +234,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEnglish ? 'Error saving recipe: ' : 'Error al guardar la receta: ' + e.toString()),
+            content: Text(isEnglish ? 'Error saving recipe: ' : 'Error al guardar la receta: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -408,7 +390,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                           ? _selectedCategory
                           : null,
                       isExpanded: true,
-                      dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                      dropdownColor:
+                          isDarkMode ? Colors.grey[800] : Colors.white,
                       style: TextStyle(
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
@@ -433,7 +416,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                               Text(
                                 RecipeCategories.getTranslatedCategory(category, isEnglish),
                                 style: TextStyle(
-                                  color: isDarkMode ? Colors.white : Colors.black,
+                                  color:
+                                      isDarkMode ? Colors.white : Colors.black,
                                 ),
                               ),
                             ],
@@ -513,7 +497,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
           ),
         ),
         const SizedBox(height: 8),
@@ -557,7 +543,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
           ),
         ),
         const SizedBox(height: 8),
