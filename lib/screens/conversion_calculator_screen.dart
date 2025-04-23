@@ -1038,7 +1038,7 @@ class _ConversionCalculatorScreenState
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'CALCULADORA DE CONVERSIÓN',
+                isEnglish ? 'CONVERSION CALCULATOR' : 'CALCULADORA DE CONVERSIÓN',
                 style: pw.TextStyle(
                   fontSize: 24,
                   fontWeight: pw.FontWeight.bold,
@@ -1046,12 +1046,15 @@ class _ConversionCalculatorScreenState
               ),
               pw.SizedBox(height: 20),
               pw.Text(
-                'Rendimiento Nuevo: $_platosDestino ${_getUnidadPlural(_unidadDestino, _platosDestino)}',
+                // Usar _getUnidadPlural con la unidad de destino
+                isEnglish 
+                  ? 'New Yield: ${_formatearNumero(_platosDestino)} ${_getUnidadPlural(_unidadDestino, _platosDestino)}' 
+                  : 'Rendimiento Nuevo: ${_formatearNumero(_platosDestino)} ${_getUnidadPlural(_unidadDestino, _platosDestino)}',
                 style: const pw.TextStyle(fontSize: 14),
               ),
               pw.SizedBox(height: 20),
               pw.Text(
-                'TABLA DE INGREDIENTES',
+                isEnglish ? 'INGREDIENTS TABLE' : 'TABLA DE INGREDIENTES',
                 style: pw.TextStyle(
                   fontSize: 18,
                   fontWeight: pw.FontWeight.bold,
@@ -1061,36 +1064,36 @@ class _ConversionCalculatorScreenState
               pw.Table(
                 border: pw.TableBorder.all(),
                 columnWidths: {
-                  0: pw.FlexColumnWidth(2),
-                  1: pw.FlexColumnWidth(1),
-                  2: pw.FlexColumnWidth(1),
+                  0: const pw.FlexColumnWidth(2),
+                  1: const pw.FlexColumnWidth(1),
+                  2: const pw.FlexColumnWidth(1),
                 },
                 children: [
                   pw.TableRow(
-                    decoration: pw.BoxDecoration(
+                    decoration: const pw.BoxDecoration(
                       color: PdfColors.grey300,
                     ),
                     children: [
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                        padding: const pw.EdgeInsets.all(8),
                         child: pw.Text(
-                          'INGREDIENTE',
+                          isEnglish ? 'INGREDIENT' : 'INGREDIENTE',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
                       ),
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                        padding: const pw.EdgeInsets.all(8),
                         child: pw.Text(
-                          'CANTIDAD',
+                          isEnglish ? 'QUANTITY' : 'CANTIDAD',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
                       ),
                       pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
+                        padding: const pw.EdgeInsets.all(8),
                         child: pw.Text(
-                          'UNIDAD',
+                          isEnglish ? 'UNIT' : 'UNIDAD',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
@@ -1101,21 +1104,21 @@ class _ConversionCalculatorScreenState
                     return pw.TableRow(
                       children: [
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                          padding: const pw.EdgeInsets.all(8),
                           child: pw.Text(
                             ingrediente.nombre,
                             textAlign: pw.TextAlign.left,
                           ),
                         ),
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                          padding: const pw.EdgeInsets.all(8),
                           child: pw.Text(
                             _formatQuantity(ingrediente.cantidad),
                             textAlign: pw.TextAlign.center,
                           ),
                         ),
                         pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
+                          padding: const pw.EdgeInsets.all(8),
                           child: pw.Text(
                             _unidadesAbreviadas[ingrediente.unidad] ??
                                 ingrediente.unidad,
@@ -1140,7 +1143,7 @@ class _ConversionCalculatorScreenState
     if (context.mounted) {
       await Share.shareXFiles(
         [XFile(file.path)],
-        subject: 'Conversión de Receta',
+        subject: isEnglish ? 'Recipe Conversion' : 'Conversión de Receta', // Traducir asunto
       );
     }
   }
@@ -1174,29 +1177,37 @@ class _ConversionCalculatorScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calculadora de Conversiones'),
+        // --- INICIO CAMBIO: Traducción AppBar ---
+        title: Text(isEnglish ? 'Conversion Calculator' : 'Calculadora de Conversiones'),
+        // --- FIN CAMBIO ---
         elevation: 1, // Sombra sutil
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: _mostrarTablaEquivalencias,
-            tooltip: 'Ver tabla de equivalencias',
+            // --- INICIO CAMBIO: Traducción Tooltip ---
+            tooltip: isEnglish ? 'View equivalency table' : 'Ver tabla de equivalencias',
+            // --- FIN CAMBIO ---
           ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: _generarPDF,
-            tooltip: 'Generar PDF',
+            // --- INICIO CAMBIO: Traducción Tooltip ---
+            tooltip: isEnglish ? 'Generate PDF' : 'Generar PDF',
+            // --- FIN CAMBIO ---
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0), // Padding general
         children: [
+          // --- INICIO CAMBIO: Traducción Título Principal ---
           Text(
-            'CALCULADORA DE CONVERSIÓN',
+            isEnglish ? 'CONVERSION CALCULATOR' : 'CALCULADORA DE CONVERSIÓN',
             style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600), // Estilo de título
             textAlign: TextAlign.center,
           ),
+          // --- FIN CAMBIO ---
           const SizedBox(height: 24),
 
           // --- Sección Rendimiento con Card ---
@@ -1209,17 +1220,21 @@ class _ConversionCalculatorScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // --- INICIO CAMBIO: Traducción Título Sección ---
                   Text(
-                    'RENDIMIENTO',
+                    isEnglish ? 'YIELD' : 'RENDIMIENTO',
                     style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600), // Título de sección
                   ),
+                  // --- FIN CAMBIO ---
                   const SizedBox(height: 16),
                   // Encabezados de la tabla
                   Row(
                     children: [
-                      Expanded(child: Text('ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text('UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(flex: 2, child: Text('NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      // --- INICIO CAMBIO: Traducción Headers Rendimiento ---
+                      Expanded(child: Text(isEnglish ? 'ORIGINAL' : 'ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text(isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(flex: 2, child: Text(isEnglish ? 'NEW' : 'NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      // --- FIN CAMBIO ---
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -1425,7 +1440,8 @@ class _ConversionCalculatorScreenState
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                       decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer, // Usar color del tema
+                        // --- INICIO CAMBIO: Usar color azul claro específico y texto blanco ---
+                        color: const Color(0xFF96B4D8), // Azul claro específico
                         borderRadius: BorderRadius.circular(30), // Más redondeado
                       ),
                       child: Row(
@@ -1433,32 +1449,35 @@ class _ConversionCalculatorScreenState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Resultado: ',
+                            isEnglish ? 'Result: ' : 'Resultado: ',
                             style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimaryContainer,
+                              color: Colors.white, // Texto blanco
                             ),
                           ),
                           Text(
                             '${_formatearNumero(_platosDestino)} ${_unidadesAbreviadas[_unidadDestino] ?? _unidadDestino}',
                             style: textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: colorScheme.onPrimaryContainer,
+                              color: Colors.white, // Texto blanco
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
+                  // --- FIN CAMBIO ---
                 ],
               ),
             ),
           ), // Fin Card Rendimiento
 
           // --- Inicio Sección Tabla Ingredientes con Card ---
+          // --- INICIO CAMBIO: Traducción Título Sección ---
           Text(
-            'TABLA DE INGREDIENTES',
+            isEnglish ? 'INGREDIENTS TABLE' : 'TABLA DE INGREDIENTES',
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600), // Título de sección
           ),
+          // --- FIN CAMBIO ---
           const SizedBox(height: 16),
           Card(
             elevation: 2,
@@ -1478,9 +1497,11 @@ class _ConversionCalculatorScreenState
                   ),
                   child: Row(
                     children: [
-                      Expanded(flex: 2, child: Text('INGREDIENTE', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text('CANTIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text('UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      // --- INICIO CAMBIO: Traducción Headers Ingredientes ---
+                      Expanded(flex: 2, child: Text(isEnglish ? 'INGREDIENT' : 'INGREDIENTE', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text(isEnglish ? 'QUANTITY' : 'CANTIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text(isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      // --- FIN CAMBIO ---
                     ],
                   ),
                 ),
@@ -1676,66 +1697,116 @@ class _ConversionCalculatorScreenState
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // --- INICIO CAMBIO: Listas de Equivalencias Traducidas ---
+        final List<String> weightEquivalencies = isEnglish ? [
+            '1 Kilogram (kg) = 1000 Grams (g)',
+            '1 Gram (g) = 1000 Milligrams (mg)',
+            '1 Pound (lb) = 453.6 Grams (g)',
+            '1 Pound (lb) = 16 Ounces (oz)',
+            '1 Ounce (oz) = 28.35 Grams (g)',
+          ] : [
+            '1 Kilogramo (kg) = 1000 Gramos (g)',
+            '1 Gramo (g) = 1000 Miligramos (mg)',
+            '1 Libra (lb) = 453.6 Gramos (g)',
+            '1 Libra (lb) = 16 Onzas (oz)',
+            '1 Onza (oz) = 28.35 Gramos (g)',
+          ];
+
+        final List<String> volumeEquivalencies = isEnglish ? [
+            '1 Liter (L) = 1000 Milliliters (ml)',
+            '1 Liter (L) = 100 Centiliters (cl)',
+            '1 Centiliter (cl) = 10 Milliliters (ml)',
+            '1 Cup = 240 Milliliters (ml)',
+            '1 Tablespoon (tbsp) = 15 Milliliters (ml)',
+            '1 Teaspoon (tsp) = 5 Milliliters (ml)',
+            '1 Cup = 16 Tablespoons (tbsp)',
+            '1 Tablespoon (tbsp) = 3 Teaspoons (tsp)',
+            '1 Fluid ounce (fl oz) = 29.57 Milliliters (ml)',
+            '1 Pint (pt) = 473.2 Milliliters (ml)',
+            '1 Quart (qt) = 946.4 Milliliters (ml)',
+            '1 Gallon (gal) = 3.785 Liters (L)',
+          ] : [
+            '1 Litro (L) = 1000 Mililitros (ml)',
+            '1 Litro (L) = 100 Centilitros (cl)',
+            '1 Centilitro (cl) = 10 Mililitros (ml)',
+            '1 Taza = 240 Mililitros (ml)',
+            '1 Cucharada (cda) = 15 Mililitros (ml)',
+            '1 Cucharadita (cdta) = 5 Mililitros (ml)',
+            '1 Taza = 16 Cucharadas (cda)',
+            '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
+            '1 Onza líquida = 29.57 Mililitros (ml)',
+            '1 Pinta = 473.2 Mililitros (ml)',
+            '1 Cuarto galón = 946.4 Mililitros (ml)',
+            '1 Galón = 3.785 Litros (L)',
+          ];
+
+        final List<String> portionEquivalencies = isEnglish ? [
+            '1 Portion = 250 Grams (g)',
+            '1 Portion = 0.25 Kilograms (kg)',
+            '1 Portion = 250 Milliliters (ml)',
+            '1 Portion = 8.8 Ounces (oz)',
+            '1 Portion = 0.55 Pounds (lb)',
+            '1 Kilogram (kg) = 4 Portions',
+            '1 Liter (L) = 4 Portions',
+          ] : [
+            '1 Porción = 250 Gramos (g)',
+            '1 Porción = 0.25 Kilogramos (kg)',
+            '1 Porción = 250 Mililitros (ml)',
+            '1 Porción = 8.8 Onzas (oz)',
+            '1 Porción = 0.55 Libras (lb)',
+            '1 Kilogramo (kg) = 4 Porciones',
+            '1 Litro (L) = 4 Porciones',
+          ];
+        
+        final List<String> weightVolumeEquivalencies = isEnglish ? [
+            '1 Gram (g) ≈ 1 Milliliter (ml) of water',
+            '1 Kilogram (kg) ≈ 1 Liter (L) of water',
+            '1 Pound (lb) ≈ 454 Milliliters (ml) of water',
+            '1 Ounce (oz) ≈ 28.4 Milliliters (ml) of water',
+          ] : [
+            '1 Gramo (g) = 1 Mililitro (ml) de agua',
+            '1 Kilogramo (kg) = 1 Litro (L) de agua',
+            '1 Libra (lb) = 454 Mililitros (ml) de agua',
+            '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
+          ];
+        // --- FIN CAMBIO ---
+
         return AlertDialog(
-          title: const Text('Tabla de Equivalencias',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          // --- INICIO CAMBIO: Traducción Título Dialogo ---
+          title: Text(isEnglish ? 'Equivalency Table' : 'Tabla de Equivalencias',
+            style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
+          // --- FIN CAMBIO ---
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildEquivalenciasSection('UNIDADES DE PESO', [
-                  '1 Kilogramo (kg) = 1000 Gramos (g)',
-                  '1 Gramo (g) = 1000 Miligramos (mg)',
-                  '1 Libra (lb) = 453.6 Gramos (g)',
-                  '1 Libra (lb) = 16 Onzas (oz)',
-                  '1 Onza (oz) = 28.35 Gramos (g)',
-                ]),
+                // --- INICIO CAMBIO: Pasar isEnglish y listas traducidas ---
+                _buildEquivalenciasSection(isEnglish ? 'WEIGHT UNITS' : 'UNIDADES DE PESO', weightEquivalencies),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('UNIDADES DE VOLUMEN', [
-                  '1 Litro (L) = 1000 Mililitros (ml)',
-                  '1 Litro (L) = 100 Centilitros (cl)',
-                  '1 Centilitro (cl) = 10 Mililitros (ml)',
-                  '1 Taza = 240 Mililitros (ml)',
-                  '1 Cucharada (cda) = 15 Mililitros (ml)',
-                  '1 Cucharadita (cdta) = 5 Mililitros (ml)',
-                  '1 Taza = 16 Cucharadas (cda)',
-                  '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
-                  '1 Onza líquida = 29.57 Mililitros (ml)',
-                  '1 Pinta = 473.2 Mililitros (ml)',
-                  '1 Cuarto galón = 946.4 Mililitros (ml)',
-                  '1 Galón = 3.785 Litros (L)',
-                ]),
+                _buildEquivalenciasSection(isEnglish ? 'VOLUME UNITS' : 'UNIDADES DE VOLUMEN', volumeEquivalencies),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('PORCIONES', [
-                  '1 Porción = 250 Gramos (g)',
-                  '1 Porción = 0.25 Kilogramos (kg)',
-                  '1 Porción = 250 Mililitros (ml)',
-                  '1 Porción = 8.8 Onzas (oz)',
-                  '1 Porción = 0.55 Libras (lb)',
-                  '1 Kilogramo (kg) = 4 Porciones',
-                  '1 Litro (L) = 4 Porciones',
-                ]),
+                _buildEquivalenciasSection(isEnglish ? 'PORTIONS' : 'PORCIONES', portionEquivalencies),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('PESO-VOLUMEN (aprox.)', [
-                  '1 Gramo (g) = 1 Mililitro (ml) de agua',
-                  '1 Kilogramo (kg) = 1 Litro (L) de agua',
-                  '1 Libra (lb) = 454 Mililitros (ml) de agua',
-                  '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
-                ]),
+                _buildEquivalenciasSection(isEnglish ? 'WEIGHT-VOLUME (approx.)' : 'PESO-VOLUMEN (aprox.)', weightVolumeEquivalencies),
+                // --- FIN CAMBIO ---
                 const SizedBox(height: 8),
-                const Text('Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
-                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                // --- INICIO CAMBIO: Traducción Nota ---
+                Text(isEnglish ? 'Note: Conversions between weight and volume are approximate and mainly valid for water.' : 'Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
+                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
                 ),
+                // --- FIN CAMBIO ---
               ],
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cerrar'),
+              // --- INICIO CAMBIO: Traducción Botón Cerrar ---
+              child: Text(isEnglish ? 'Close' : 'Cerrar'),
+              // --- FIN CAMBIO ---
             ),
           ],
         );
@@ -1743,7 +1814,9 @@ class _ConversionCalculatorScreenState
     );
   }
 
+  // --- INICIO CAMBIO: Modificar _buildEquivalenciasSection para aceptar lista ---
   Widget _buildEquivalenciasSection(String title, List<String> equivalencias) {
+  // --- FIN CAMBIO ---
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1754,16 +1827,18 @@ class _ConversionCalculatorScreenState
               ? Colors.blueGrey.shade800 
               : Colors.blue.shade100,
           child: Text(
-            title,
+            title, // El título ya viene traducido
             style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ),
         const SizedBox(height: 4),
+        // --- INICIO CAMBIO: Usar lista de equivalencias directamente ---
         ...equivalencias.map((e) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           child: Text(e, style: const TextStyle(fontSize: 14)),
         )).toList(),
+        // --- FIN CAMBIO ---
       ],
     );
   }

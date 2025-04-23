@@ -109,7 +109,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      ConversionCalculatorScreen(recipe: widget.recipe),
+                      ConversionCalculatorScreen(recipe: widget.recipe, isEnglish: isEnglish),
                 ),
               );
             },
