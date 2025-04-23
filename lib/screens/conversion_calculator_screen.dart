@@ -743,31 +743,21 @@ class _ConversionCalculatorScreenState
     print("Unidad anterior: $unidadAnterior");
     print("Nueva unidad seleccionada: $nuevaUnidad");
     
-    // --- Conversión basada en VALOR BASE --- 
-    double nuevaCantidad = ingrediente.cantidad; // Valor por defecto si falla conversión
-    String? tipoUnidad = null;
-    double? valorBase = null;
+    // --- CORRECCIÓN: Conversión basada en CANTIDAD ACTUAL --- 
+    double cantidadActual = ingrediente.cantidad;
+    double nuevaCantidad;
 
-    if (ingrediente.valorBaseGramos != null) {
-      tipoUnidad = 'peso';
-      valorBase = ingrediente.valorBaseGramos;
-    } else if (ingrediente.valorBaseMililitros != null) {
-      tipoUnidad = 'volumen';
-      valorBase = ingrediente.valorBaseMililitros;
-    }
-
-    if (tipoUnidad != null && valorBase != null && _esConversionValida(unidadAnterior, nuevaUnidad)) {
-        print("  Calculando desde valor base ($valorBase ${tipoUnidad == 'peso' ? 'Gramos' : 'Mililitros'}) a $nuevaUnidad");
-        // Convertir DESDE la unidad base ALMACENADA a la nueva unidad seleccionada
-        nuevaCantidad = _convertirDesdeUnidadBase(valorBase, nuevaUnidad, tipoUnidad);
+    // Intentar convertir la cantidad ACTUAL de la unidad ANTERIOR a la NUEVA
+    if (_esConversionValida(unidadAnterior, nuevaUnidad)) {
+        print("  Calculando conversión directa: $cantidadActual $unidadAnterior -> $nuevaUnidad");
+        nuevaCantidad = _convertirRendimiento(cantidadActual, unidadAnterior, nuevaUnidad);
     } else {
-       print("  ⚠️ No se pudo usar valor base o conversión no válida. Manteniendo cantidad anterior.");
-       // Si no hay base o la conversión no es válida (ej. g a ml), mantener cantidad
-       // y solo cambiar la unidad (puede que el usuario quiera corregir manualmente)
+        print("  ⚠️ Conversión no válida entre '$unidadAnterior' y '$nuevaUnidad'. Manteniendo cantidad anterior.");
+        nuevaCantidad = cantidadActual; // Mantener cantidad si no se puede convertir
     }
-    // --- Fin Conversión basada en VALOR BASE ---
+    // --- Fin CORRECCIÓN ---
 
-    // Validar que la conversión sea válida (puede fallar incluso con base si hay error en factores)
+    // Validar que la conversión sea válida
     if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
       print("⚠️ Resultado de conversión inválido: $nuevaCantidad. Manteniendo cantidad anterior.");
       nuevaCantidad = ingrediente.cantidad; // Revertir a la cantidad anterior
@@ -2234,8 +2224,6 @@ class _ConversionCalculatorScreenState
 
               final otroIngrediente = _ingredientesTabla[i];
 
-              // // Saltar si el otro ingrediente también fue modificado manualmente --> ELIMINADO
-              
               // --- Escalado basado en VALOR BASE --- 
               double? valorBaseAnterior = null;
               String? tipoUnidadOtro = null;
@@ -2270,7 +2258,25 @@ class _ConversionCalculatorScreenState
                  otroIngrediente.cantidadController.text = _formatearNumero(cantidadCalculada);
                  print("  ✅ Ingrediente '${otroIngrediente.nombre}' actualizado (Base: $nuevoValorBase -> Cant: $cantidadCalculada ${otroIngrediente.unidad})");
               } else {
-                print("  ⚠️ No se pudo escalar '${otroIngrediente.nombre}' por falta de valor base.");
+                // --- INICIO CAMBIO ---
+                // Escalar usando cantidadOriginal si no hay valor base (para 'Unidad', etc.)
+                print("  ℹ️ Escalando '${otroIngrediente.nombre}' usando cantidad original (sin valor base).");
+                if (otroIngrediente.cantidadOriginal > 0 && !otroIngrediente.cantidadOriginal.isNaN && !otroIngrediente.cantidadOriginal.isInfinite) {
+                   double cantidadCalculada = otroIngrediente.cantidadOriginal * factorEscala;
+                   if (cantidadCalculada <= 0 || cantidadCalculada.isNaN || cantidadCalculada.isInfinite) {
+                       cantidadCalculada = 0.01;
+                   }
+                   cantidadCalculada = _redondearPrecision(cantidadCalculada);
+
+                   // Actualizar cantidad y controlador
+                   otroIngrediente.cantidad = cantidadCalculada;
+                   otroIngrediente.cantidadController.text = _formatearNumero(cantidadCalculada);
+                   // Mantener la unidad original (no hay base para recalcular)
+                   print("  ✅ Ingrediente '${otroIngrediente.nombre}' actualizado a $cantidadCalculada ${otroIngrediente.unidad} (escalado por original)");
+                } else {
+                   print("  ⚠️ No se pudo escalar '${otroIngrediente.nombre}' porque su cantidad original es inválida (${otroIngrediente.cantidadOriginal}).");
+                }
+                // --- FIN CAMBIO ---
               }
               // --- Fin Escalado basado en VALOR BASE ---
           }
