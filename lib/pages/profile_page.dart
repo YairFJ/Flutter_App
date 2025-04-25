@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../screens/favorite_recipes_screen.dart';
 import '../screens/my_recipes_screen.dart';
+import '../screens/account_settings_screen.dart';
 
 class ProfilePage extends StatelessWidget {
   final User user;
@@ -103,6 +104,146 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileSection({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    required bool isTablet,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Card(
+        elevation: 2,
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isTablet ? 24 : 16,
+            vertical: isTablet ? 16 : 8,
+          ),
+          leading: Icon(
+            icon,
+            color: const Color(0xFF96B4D8),
+            size: isTablet ? 36 : 30,
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: isTablet ? 20 : 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: isTablet ? 16 : 14,
+            ),
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: onTap,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isTablet = size.width > 600;
+
+    return Column(
+      children: [
+        _buildProfileSection(
+          icon: Icons.person_outline,
+          title: isEnglish ? 'Account Settings' : 'Configuración de Cuenta',
+          subtitle: isEnglish ? 'Manage your account information' : 'Gestiona la información de tu cuenta',
+          isTablet: isTablet,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AccountSettingsScreen(isEnglish: isEnglish),
+              ),
+            );
+          },
+        ),
+        _buildProfileSection(
+          icon: Icons.notifications,
+          title: isEnglish ? 'Notifications' : 'Notificaciones',
+          subtitle: isEnglish ? 'Configure your notification preferences' : 'Configura tus preferencias de notificación',
+          isTablet: isTablet,
+          onTap: () {
+            // TODO: Implementar configuración de notificaciones
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
+                backgroundColor: Colors.blue,
+              ),
+            );
+          },
+        ),
+        _buildProfileSection(
+          icon: Icons.language,
+          title: isEnglish ? 'Language' : 'Idioma',
+          subtitle: isEnglish ? 'Change app language' : 'Cambiar idioma de la aplicación',
+          isTablet: isTablet,
+          onTap: () {
+            // TODO: Implementar cambio de idioma
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
+                backgroundColor: Colors.blue,
+              ),
+            );
+          },
+        ),
+        _buildProfileSection(
+          icon: Icons.dark_mode,
+          title: isEnglish ? 'Appearance' : 'Apariencia',
+          subtitle: isEnglish ? 'Change theme and display settings' : 'Cambiar tema y configuración de visualización',
+          isTablet: isTablet,
+          onTap: () {
+            // TODO: Implementar cambio de tema
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
+                backgroundColor: Colors.blue,
+              ),
+            );
+          },
+        ),
+        _buildProfileSection(
+          icon: Icons.privacy_tip,
+          title: isEnglish ? 'Privacy & Security' : 'Privacidad y Seguridad',
+          subtitle: isEnglish ? 'Manage your privacy settings' : 'Gestiona tu configuración de privacidad',
+          isTablet: isTablet,
+          onTap: () {
+            // TODO: Implementar configuración de privacidad
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
+                backgroundColor: Colors.blue,
+              ),
+            );
+          },
+        ),
+        _buildProfileSection(
+          icon: Icons.help_outline,
+          title: isEnglish ? 'Help & Support' : 'Ayuda y Soporte',
+          subtitle: isEnglish ? 'Get help and contact support' : 'Obtén ayuda y contacta con soporte',
+          isTablet: isTablet,
+          onTap: () {
+            // TODO: Implementar sección de ayuda
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
+                backgroundColor: Colors.blue,
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -216,60 +357,30 @@ class ProfilePage extends StatelessWidget {
                     );
                   },
                 ),
-                _buildProfileSection(
-                  icon: Icons.settings,
-                  title: isEnglish ? 'Settings' : 'Configuración',
-                  subtitle: isEnglish
-                      ? 'Change username'
-                      : 'Cambiar nombre de usuario',
-                  isTablet: isTablet,
-                  onTap: () => _updateUserName(context),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          isEnglish ? 'Settings' : 'Configuración',
+                          style: TextStyle(
+                            fontSize: isTablet ? 24 : 20,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF96B4D8),
+                          ),
+                        ),
+                      ),
+                      _buildSettingsSection(context),
+                    ],
+                  ),
                 ),
               ],
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildProfileSection({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    required bool isTablet,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Card(
-        elevation: 2,
-        child: ListTile(
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: isTablet ? 24 : 16,
-            vertical: isTablet ? 16 : 8,
-          ),
-          leading: Icon(
-            icon,
-            color: const Color(0xFF96B4D8),
-            size: isTablet ? 36 : 30,
-          ),
-          title: Text(
-            title,
-            style: TextStyle(
-              fontSize: isTablet ? 20 : 18,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          subtitle: Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: isTablet ? 16 : 14,
-            ),
-          ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: onTap,
-        ),
       ),
     );
   }
