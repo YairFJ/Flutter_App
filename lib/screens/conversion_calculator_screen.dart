@@ -509,8 +509,8 @@ class _ConversionCalculatorScreenState
     
     print("\n🔄 INICIANDO CÁLCULO DE CONVERSIÓN");
     print("Estado actual:");
-    print("  - Platos origen: $_platosOrigen ${_unidadOriginal}");
-    print("  - Platos destino: $_platosDestino ${_unidadDestino}");
+    print("  - Platos origen: $_platosOrigen $_unidadOriginal");
+    print("  - Platos destino: $_platosDestino $_unidadDestino");
     print("  - Valor original rendimiento: $_valorOriginalRendimiento");
     
     // Si hemos alcanzado el límite de conversiones, reiniciamos los valores base
@@ -1837,7 +1837,7 @@ class _ConversionCalculatorScreenState
         ...equivalencias.map((e) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           child: Text(e, style: const TextStyle(fontSize: 14)),
-        )).toList(),
+        )),
         // --- FIN CAMBIO ---
       ],
     );
@@ -2009,7 +2009,7 @@ class _ConversionCalculatorScreenState
       // Validar la cantidad para asegurar que no sea 0
       double cantidad = ingredient.quantity;
       if (cantidad <= 0) {
-        print("⚠️ Cantidad inválida (${cantidad}) para '${ingredient.name}'. Corrigiendo a 0.01");
+        print("⚠️ Cantidad inválida ($cantidad) para '${ingredient.name}'. Corrigiendo a 0.01");
         cantidad = 0.01;
       }
       
@@ -2168,7 +2168,7 @@ class _ConversionCalculatorScreenState
   void _actualizarRendimientoReceta() {
     try {
       print("Iniciando conversión de rendimiento...");
-      print("Rendimiento original: ${_platosOrigen}");
+      print("Rendimiento original: $_platosOrigen");
       print("Nuevo rendimiento: $_platosDestino");
       
       // Validar el nuevo rendimiento
@@ -2300,8 +2300,8 @@ class _ConversionCalculatorScreenState
               final otroIngrediente = _ingredientesTabla[i];
 
               // --- Escalado basado en VALOR BASE --- 
-              double? valorBaseAnterior = null;
-              String? tipoUnidadOtro = null;
+              double? valorBaseAnterior;
+              String? tipoUnidadOtro;
 
               if (otroIngrediente.valorBaseGramos != null) {
                  tipoUnidadOtro = 'peso';

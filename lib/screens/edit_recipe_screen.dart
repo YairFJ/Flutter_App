@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/recipe.dart';
 import '../models/ingrediente_tabla.dart';
 import '../constants/categories.dart';
-import '../main.dart';
 import '../models/ingredient.dart';
 import '../widgets/add_ingredient_dialog.dart';
 

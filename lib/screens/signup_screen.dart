@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/components/my_button.dart';
 import 'package:flutter_app/components/my_textfield.dart';
-import 'package:flutter_app/components/square_tile.dart';
 import 'package:flutter_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_app/screens/code_verification_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -69,56 +69,32 @@ class _SignUpScreenState extends State<SignUpScreen> {
       try {
         final currentUser = FirebaseAuth.instance.currentUser;
         if (currentUser != null) {
-          print(
-              'Hay un usuario logueado, cerrando sesión antes de registrar: ${currentUser.email}');
+          print('Hay un usuario logueado, cerrando sesión antes de registrar: ${currentUser.email}');
           await FirebaseAuth.instance.signOut();
-
-          // Esperar un momento para asegurar que la sesión se cerró
           await Future.delayed(const Duration(milliseconds: 500));
         }
       } catch (logoutError) {
         print('Error al cerrar sesión existente: $logoutError');
       }
 
-      final error = await _authService.registerWithEmailAndPassword(
+      await _authService.registerWithEmailAndPassword(
         email,
         password,
         name,
       );
 
-      if (error != null) {
-        print('Error retornado por registerWithEmailAndPassword: $error');
-        _showError(error);
-      } else {
-        print('Registro exitoso, mostrando mensaje de éxito');
-        _showSuccess(
-            'INICIO DE SESIÓN EXITOSA. Por favor, verifica tu email antes de iniciar sesión');
-        // Esperar un momento para que el usuario vea el mensaje
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) {
-          print('Navegando a la página de login');
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil('/login', (route) => false);
-        }
+      print('Registro exitoso, navegando a verificación');
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CodeVerificationScreen(email: email),
+          ),
+        );
       }
     } catch (e) {
       print('Excepción capturada durante el registro: $e');
-
-      // Manejar específicamente el error de PigeonUserDetails
-      if (e.toString().contains('PigeonUserDetails')) {
-        _showError(
-            'Error de sistema durante el registro. Por favor, intenta de nuevo más tarde.');
-
-        // Intentar cerrar sesión para limpiar el estado
-        try {
-          await FirebaseAuth.instance.signOut();
-          print('Sesión cerrada después de error de PigeonUserDetails');
-        } catch (logoutError) {
-          print('Error al cerrar sesión después de error: $logoutError');
-        }
-      } else {
-        _showError('Error inesperado: $e');
-      }
+      _showError(e.toString());
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

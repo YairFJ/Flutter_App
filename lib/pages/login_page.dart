@@ -69,19 +69,14 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      print('Llamando a loginWithEmailAndPassword');
-      final error = await _authService.loginWithEmailAndPassword(
+      print('Llamando a signInWithEmailAndPassword');
+      await _authService.signInWithEmailAndPassword(
         email,
         password,
       );
 
-      if (error != null) {
-        print('Error en inicio de sesión: $error');
-        _showError(error);
-      } else {
-        print('Inicio de sesión exitoso');
-        _showSuccess('INICIO DE SESIÓN CORRECTO');
-      }
+      print('Inicio de sesión exitoso');
+      _showSuccess('INICIO DE SESIÓN CORRECTO');
     } catch (e) {
       print('Excepción durante inicio de sesión: $e');
       _showError('INICIO DE SESIÓN INCORRECTO: $e');

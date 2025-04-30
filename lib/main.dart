@@ -16,6 +16,7 @@ import 'pages/profile_page.dart';
 import 'screens/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
+import 'screens/code_verification_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,6 +75,9 @@ class _MyAppState extends State<MyApp> {
               '/login': (context) => const LoginPage(),
               '/register': (context) => const SignUpScreen(),
               '/groups': (context) => const GroupsScreen(),
+              '/verify': (context) => CodeVerificationScreen(
+                    email: ModalRoute.of(context)!.settings.arguments as String,
+                  ),
             },
           );
         },

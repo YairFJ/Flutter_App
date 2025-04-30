@@ -2,9 +2,24 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Función para verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
 
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    // Reglas para la colección de usuarios
+    match /users/{userId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Reglas para la colección de recetas
+    match /recipes/{recipeId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Reglas para la colección de verificaciones pendientes
+    match /pending_verifications/{email} {
+      allow read, write: if isAuthenticated();
     }
   }
 }

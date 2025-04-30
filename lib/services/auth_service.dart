@@ -3,218 +3,268 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:io' show Platform;
 import 'dart:async'; // Añadir import para TimeoutException
+import 'dart:math';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final smtpServer = gmail('your.email@gmail.com', 'your-app-password');
 
-  // Registro con email y contraseña
-  Future<String?> registerWithEmailAndPassword(
+  // Generar código de verificación
+  String _generateVerificationCode() {
+    Random random = Random();
+    return List.generate(6, (_) => random.nextInt(10)).join();
+  }
+
+  // Enviar email de verificación
+  Future<void> sendEmailVerification(String email, String verificationCode) async {
+    final message = Message()
+      ..from = Address('edinamita25@gmail.com', 'Gauge your Recipe')
+      ..recipients.add(email)
+      ..subject = 'Verifica tu cuenta'
+      ..text = 'Tu código de verificación es: $verificationCode'
+      ..html = '''
+        <h1>Verifica tu cuenta</h1>
+        <p>Tu código de verificación es: <strong>$verificationCode</strong></p>
+        <p>Ingresa este código en la aplicación para completar tu registro.</p>
+      ''';
+
+    try {
+      await send(message, smtpServer);
+    } catch (e) {
+      throw Exception('Error al enviar el email: $e');
+    }
+  }
+
+  // Registrar usuario
+  Future<UserCredential> registerWithEmailAndPassword(
       String email, String password, String name) async {
     try {
-      print('Intentando registrar usuario: $email');
-
-      // Verificar si hay un usuario actualmente logueado y cerrar sesión si es así
-      final currentUser = _auth.currentUser;
-      if (currentUser != null) {
-        print(
-            'Hay un usuario logueado, cerrando sesión antes de registrar: ${currentUser.email}');
-        await _auth.signOut();
-
-        // Esperar un momento para asegurar que la sesión se cerró
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-
-      // Crear usuario
-      final userCredential = await _auth.createUserWithEmailAndPassword(
+      print('Iniciando registro de usuario: $email');
+      
+      // Crear usuario en Firebase Auth
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      if (userCredential.user == null) {
-        print(
-            'Error: userCredential.user es null después de createUserWithEmailAndPassword');
-        return 'Error al crear el usuario';
-      }
+      print('Usuario creado exitosamente, enviando email de verificación...');
 
-      print(
-          'Usuario creado correctamente en Firebase Auth: ${userCredential.user!.uid}');
-
-      // Actualizar nombre del usuario
-      await userCredential.user!.updateDisplayName(name);
-      print('Nombre de usuario actualizado: $name');
-
-      // Crear documento en Firestore
+      // Verificar si estamos en un emulador
+      bool isEmulator = false;
       try {
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'name': name,
-          'email': email,
-          'createdAt': FieldValue.serverTimestamp(),
-          'verified': false,
-          'provider': 'password',
-        });
-        print(
-            'Documento creado en Firestore para el usuario: ${userCredential.user!.uid}');
-      } catch (firestoreError) {
-        print('Error al crear documento en Firestore: $firestoreError');
-        // Continuar incluso si hay un error en Firestore
+        isEmulator = _auth.app.options.projectId.contains('emulator');
+      } catch (e) {
+        print('No se pudo verificar si es emulador: $e');
       }
 
-      // Enviar email de verificación
-      try {
-        await userCredential.user!.sendEmailVerification();
-        print('Email de verificación enviado a: $email');
-      } catch (verificationError) {
-        print('Error al enviar email de verificación: $verificationError');
-        // Continuar incluso si hay un error en el envío del email
+      if (!isEmulator) {
+        // Enviar email de verificación solo si no estamos en emulador
+        await userCredential.user?.sendEmailVerification();
+        print('Email de verificación enviado');
+      } else {
+        print('Ejecutando en emulador - omitiendo envío de email');
       }
 
-      // Cerrar sesión para forzar la verificación del email
-      await _auth.signOut();
-      print('Sesión cerrada después del registro para forzar verificación');
+      // Guardar datos del usuario en Firestore con la estructura correcta
+      final userData = {
+        'name': name,
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+        'verified': isEmulator ? true : false,
+        'userId': userCredential.user?.uid, // Añadimos el userId
+        'lastLogin': FieldValue.serverTimestamp(),
+      };
 
-      return null; // No hay error
+      print('Guardando datos en Firestore: $userData');
+      await _firestore.collection('users').doc(userCredential.user?.uid).set(userData);
+      print('Datos guardados en Firestore exitosamente');
+
+      return userCredential;
     } on FirebaseAuthException catch (e) {
-      print(
-          'FirebaseAuthException durante el registro: ${e.code} - ${e.message}');
-      return _getErrorMessage(e);
+      print('Error de Firebase Auth en registro: ${e.code} - ${e.message}');
+      throw e;
     } catch (e) {
-      print('Error inesperado durante el registro: $e');
-      // Asegurarnos de cerrar sesión en caso de error
-      try {
-        await _auth.signOut();
-      } catch (logoutError) {
-        print('Error al cerrar sesión después de error: $logoutError');
+      print('Error en registerWithEmailAndPassword: $e');
+      if (e.toString().contains('PigeonUserDetails')) {
+        print('Error de PigeonUserDetails detectado, intentando recuperar usuario...');
+        final currentUser = _auth.currentUser;
+        if (currentUser != null) {
+          print('Usuario recuperado: ${currentUser.email}');
+          throw FirebaseAuthException(
+            code: 'emulator-user-details',
+            message: 'Usuario autenticado en emulador',
+          );
+        }
       }
-      return 'Error inesperado: $e';
+      throw e;
     }
   }
 
-  // Login con email y contraseña
-  Future<String?> loginWithEmailAndPassword(
-      String email, String password) async {
-    print('Auth Service: Intentando iniciar sesión con email: $email');
+  // Verificar email
+  Future<void> verifyEmail() async {
     try {
-      final userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      if (userCredential.user == null) {
-        print(
-            'Auth Service: Error - Usuario es nulo después de signInWithEmailAndPassword');
-        return 'Error al iniciar sesión';
+      final user = _auth.currentUser;
+      print('=== Iniciando verificación de email ===');
+      print('Usuario actual: ${user?.email}');
+      print('Email verificado: ${user?.emailVerified}');
+      print('Proveedor: ${user?.providerData.map((e) => e.providerId).join(', ')}');
+      
+      if (user == null) {
+        print('Error: No hay usuario autenticado');
+        throw Exception('No hay usuario autenticado');
       }
 
-      print('Auth Service: Usuario encontrado: ${userCredential.user!.uid}');
-
-      // Verificar si el email está verificado
-      if (!userCredential.user!.emailVerified) {
-        print(
-            'Auth Service: Email no verificado, enviando nuevo email y cerrando sesión');
-
-        // Enviar otro email de verificación
-        await userCredential.user!.sendEmailVerification();
-
-        // Asegurarnos de cerrar la sesión
-        await _auth.signOut();
-
-        return 'Por favor, verifica tu email. Se ha enviado un nuevo correo de verificación.';
+      // Verificar si estamos en un emulador
+      bool isEmulator = false;
+      try {
+        isEmulator = _auth.app.options.projectId.contains('emulator');
+      } catch (e) {
+        print('No se pudo verificar si es emulador: $e');
       }
 
-      print(
-          'Auth Service: Email verificado, actualizando último inicio de sesión');
+      if (isEmulator) {
+        print('Ejecutando en emulador - marcando email como verificado');
+        // En emulador, actualizamos el estado en Firestore
+        await _firestore.collection('users').doc(user.uid).update({
+          'verified': true,
+        });
+        return;
+      }
 
-      // Actualizar último inicio de sesión
-      await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .update({
-        'lastLogin': FieldValue.serverTimestamp(),
-        'verified': true,
-        'provider': 'password',
+      if (user.emailVerified) {
+        print('El email ya está verificado');
+        return;
+      }
+
+      print('Intentando enviar email de verificación...');
+      try {
+        await user.sendEmailVerification();
+        print('Email de verificación enviado exitosamente');
+      } on FirebaseAuthException catch (e) {
+        print('Error de Firebase Auth al enviar email:');
+        print('Código: ${e.code}');
+        print('Mensaje: ${e.message}');
+        print('Detalles: ${e.toString()}');
+        throw e;
+      } catch (e) {
+        print('Error inesperado al enviar email: $e');
+        throw e;
+      }
+    } catch (e) {
+      print('Error en verifyEmail: $e');
+      rethrow;
+    }
+  }
+
+  // Verificar código
+  Future<UserCredential> verifyCode(String email, String code) async {
+    try {
+      // Obtener datos de verificación
+      DocumentSnapshot doc = await _firestore
+          .collection('pending_verifications')
+          .doc(email)
+          .get();
+
+      if (!doc.exists) {
+        throw Exception('No se encontró la solicitud de verificación');
+      }
+
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      if (data['verificationCode'] != code) {
+        throw Exception('Código de verificación inválido');
+      }
+
+      // Crear usuario en Firestore
+      await _firestore.collection('users').doc(email).set({
+        'name': data['name'],
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
-      print('Auth Service: Inicio de sesión exitoso');
-      return null; // No hay error
-    } on FirebaseAuthException catch (e) {
-      print(
-          'Auth Service: FirebaseAuthException en loginWithEmailAndPassword: ${e.code} - ${e.message}');
+      // Eliminar datos temporales
+      await _firestore.collection('pending_verifications').doc(email).delete();
 
-      // Asegurarnos de cerrar cualquier sesión parcial
-      try {
-        await _auth.signOut();
-      } catch (logoutError) {
-        print('Auth Service: Error al cerrar sesión: $logoutError');
-      }
+      // Obtener credenciales del usuario
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: '', // La contraseña ya no es necesaria
+      );
 
-      return _getErrorMessage(e);
+      return userCredential;
     } catch (e) {
-      print('Auth Service: Error inesperado en loginWithEmailAndPassword: $e');
-
-      // Asegurarnos de cerrar cualquier sesión parcial
-      try {
-        await _auth.signOut();
-      } catch (logoutError) {
-        print(
-            'Auth Service: Error al cerrar sesión después de error: $logoutError');
-      }
-
-      return 'Error inesperado: $e';
+      throw e;
     }
   }
 
-  // Método simplificado para iniciar sesión con Google (compatible con emuladores)
+  // Iniciar sesión
+  Future<UserCredential> signInWithEmailAndPassword(
+      String email, String password) async {
+    try {
+      return await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  // Cerrar sesión
+  Future<void> signOut() async {
+    try {
+      return await _auth.signOut();
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  // Obtener usuario actual
+  User? get currentUser => _auth.currentUser;
+
+  // Stream de cambios en el estado de autenticación
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  // Método simplificado para iniciar sesión con Google
   Future<User?> signInWithGoogle() async {
     try {
-      print(
-          'Auth Service: Iniciando método simplificado de inicio de sesión con Google');
+      print('Auth Service: Iniciando método simplificado de inicio de sesión con Google');
 
       // Verificar si ya hay un usuario autenticado con Google
       final currentUser = _auth.currentUser;
       if (currentUser != null) {
         if (currentUser.providerData
             .any((provider) => provider.providerId == 'google.com')) {
-          print(
-              'Auth Service: Usuario ya autenticado con Google, devolviendo usuario actual');
+          print('Auth Service: Usuario ya autenticado con Google, devolviendo usuario actual');
           return currentUser;
         }
       }
 
-      // 1. Crear una instancia básica de GoogleSignIn sin opciones complejas
       final googleSignIn = GoogleSignIn();
-
-      // 2. Cerrar cualquier sesión existente para evitar conflictos
       await googleSignIn.signOut();
       await _auth.signOut();
 
-      // 3. Intentar iniciar sesión sin parámetros adicionales
       final googleUser = await googleSignIn.signIn();
-
       if (googleUser == null) {
         print('Auth Service: Usuario canceló el inicio de sesión');
         return null;
       }
 
       print('Auth Service: Cuenta seleccionada: ${googleUser.email}');
-
-      // 4. Obtener autenticación con manejo de errores específico
       final googleAuth = await googleUser.authentication;
 
-      // 5. Crear credenciales
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // 6. Iniciar sesión en Firebase
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user;
 
       if (user != null) {
         print('Auth Service: Inicio de sesión exitoso: ${user.email}');
-
-        // 7. Actualizar datos en Firestore
         try {
           await _firestore.collection('users').doc(user.uid).set({
             'name': user.displayName ?? 'Usuario de Google',
@@ -231,31 +281,21 @@ class AuthService {
       return user;
     } catch (e) {
       print('Auth Service: Error durante la autenticación con Google: $e');
-
-      // Si el error es específicamente PigeonUserDetails, manejarlo de forma especial
       if (e.toString().contains('PigeonUserDetails')) {
         print('Auth Service: Error con PigeonUserDetails detectado');
-
-        // Intentar obtener el usuario actual ya que podría estar autenticado
         final currentUser = _auth.currentUser;
         if (currentUser != null) {
-          print(
-              'Auth Service: Recuperando sesión existente en lugar de mostrar error');
+          print('Auth Service: Recuperando sesión existente en lugar de mostrar error');
           return currentUser;
         }
-
         throw FirebaseAuthException(
           code: 'emulator-google-sign-in',
-          message:
-              'Error al iniciar sesión con Google en el emulador. Intenta con un dispositivo físico.',
+          message: 'Error al iniciar sesión con Google en el emulador. Intenta con un dispositivo físico.',
         );
       }
-
-      // Cerrar sesión para evitar estado inconsistente
       try {
         await _auth.signOut();
       } catch (_) {}
-
       rethrow;
     }
   }
@@ -304,16 +344,6 @@ class AuthService {
     } catch (e) {
       return 'Error inesperado: $e';
     }
-  }
-
-  // Cerrar sesión
-  Future<void> signOut() async {
-    await _auth.signOut();
-  }
-
-  // Obtener usuario actual
-  User? getCurrentUser() {
-    return _auth.currentUser;
   }
 
   // Obtener mensaje de error
