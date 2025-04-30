@@ -10,7 +10,6 @@ import 'package:mailer/smtp_server.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final smtpServer = gmail('your.email@gmail.com', 'your-app-password');
 
   // Generar código de verificación
   String _generateVerificationCode() {
@@ -18,86 +17,120 @@ class AuthService {
     return List.generate(6, (_) => random.nextInt(10)).join();
   }
 
-  // Enviar email de verificación
-  Future<void> sendEmailVerification(String email, String verificationCode) async {
-    final message = Message()
-      ..from = Address('edinamita25@gmail.com', 'Gauge your Recipe')
-      ..recipients.add(email)
-      ..subject = 'Verifica tu cuenta'
-      ..text = 'Tu código de verificación es: $verificationCode'
-      ..html = '''
-        <h1>Verifica tu cuenta</h1>
-        <p>Tu código de verificación es: <strong>$verificationCode</strong></p>
-        <p>Ingresa este código en la aplicación para completar tu registro.</p>
-      ''';
-
+  // Verificar si estamos en un emulador
+  bool _isEmulator() {
     try {
-      await send(message, smtpServer);
+      return _auth.app.options.projectId.contains('emulator') ||
+             _auth.app.options.projectId.contains('demo') ||
+             _auth.app.options.projectId.contains('test');
     } catch (e) {
-      throw Exception('Error al enviar el email: $e');
+      print('Error al verificar emulador: $e');
+      return false;
     }
   }
 
   // Registrar usuario
   Future<UserCredential> registerWithEmailAndPassword(
       String email, String password, String name) async {
+    UserCredential? userCredential;
     try {
-      print('Iniciando registro de usuario: $email');
+      print('=== INICIO DEL PROCESO DE REGISTRO ===');
+      print('Email: $email');
+      print('Nombre: $name');
       
       // Crear usuario en Firebase Auth
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      print('Creando usuario en Firebase Auth...');
+      userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      print('Usuario creado exitosamente, enviando email de verificación...');
-
-      // Verificar si estamos en un emulador
-      bool isEmulator = false;
-      try {
-        isEmulator = _auth.app.options.projectId.contains('emulator');
-      } catch (e) {
-        print('No se pudo verificar si es emulador: $e');
+      print('Usuario creado exitosamente con UID: ${userCredential.user?.uid}');
+      
+      // Asegurarse de que el usuario esté autenticado
+      if (userCredential.user == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-created',
+          message: 'No se pudo crear el usuario correctamente',
+        );
       }
 
-      if (!isEmulator) {
-        // Enviar email de verificación solo si no estamos en emulador
-        await userCredential.user?.sendEmailVerification();
-        print('Email de verificación enviado');
-      } else {
-        print('Ejecutando en emulador - omitiendo envío de email');
-      }
-
-      // Guardar datos del usuario en Firestore con la estructura correcta
+      // Guardar datos del usuario en Firestore primero
       final userData = {
         'name': name,
         'email': email,
         'createdAt': FieldValue.serverTimestamp(),
-        'verified': isEmulator ? true : false,
-        'userId': userCredential.user?.uid, // Añadimos el userId
+        'verified': false,
+        'userId': userCredential.user?.uid,
         'lastLogin': FieldValue.serverTimestamp(),
+        'needsVerification': true,
       };
 
-      print('Guardando datos en Firestore: $userData');
+      print('Guardando datos en Firestore...');
       await _firestore.collection('users').doc(userCredential.user?.uid).set(userData);
       print('Datos guardados en Firestore exitosamente');
 
-      return userCredential;
-    } on FirebaseAuthException catch (e) {
-      print('Error de Firebase Auth en registro: ${e.code} - ${e.message}');
-      throw e;
-    } catch (e) {
-      print('Error en registerWithEmailAndPassword: $e');
-      if (e.toString().contains('PigeonUserDetails')) {
-        print('Error de PigeonUserDetails detectado, intentando recuperar usuario...');
+      // Enviar email de verificación después de guardar en Firestore
+      print('Enviando email de verificación...');
+      try {
+        // Forzar recarga del usuario
+        await userCredential.user?.reload();
         final currentUser = _auth.currentUser;
-        if (currentUser != null) {
-          print('Usuario recuperado: ${currentUser.email}');
+        
+        if (currentUser == null) {
           throw FirebaseAuthException(
-            code: 'emulator-user-details',
-            message: 'Usuario autenticado en emulador',
+            code: 'user-not-found',
+            message: 'No se encontró el usuario después de la creación',
           );
         }
+
+        print('Usuario actual antes de enviar email: ${currentUser.email}');
+        print('Estado de verificación antes de enviar: ${currentUser.emailVerified}');
+        
+        // Configurar el idioma del email
+        await _auth.setLanguageCode('es');
+        
+        // Enviar el email de verificación
+        await currentUser.sendEmailVerification();
+        print('Email de verificación enviado exitosamente');
+        
+        // Verificar el estado después de enviar
+        await Future.delayed(const Duration(seconds: 1));
+        await currentUser.reload();
+        print('Estado de verificación después de enviar: ${currentUser.emailVerified}');
+      } catch (e) {
+        print('Error al enviar email de verificación: $e');
+        if (e is FirebaseAuthException) {
+          print('Código de error: ${e.code}');
+          print('Mensaje de error: ${e.message}');
+          print('Detalles completos: ${e.toString()}');
+        }
+      }
+
+      print('=== FIN DEL PROCESO DE REGISTRO ===');
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print('Error de Firebase Auth en registro:');
+      print('Código: ${e.code}');
+      print('Mensaje: ${e.message}');
+      throw e;
+    } catch (e) {
+      print('Error inesperado en registerWithEmailAndPassword: $e');
+      // Si es el error de PigeonUserDetails y tenemos un userCredential válido
+      if (e.toString().contains('PigeonUserDetails') && userCredential != null) {
+        print('Error de PigeonUserDetails detectado, continuando con el proceso...');
+        // Intentar enviar el email de verificación de nuevo
+        try {
+          final currentUser = _auth.currentUser;
+          if (currentUser != null) {
+            print('Intentando enviar email de verificación nuevamente...');
+            await currentUser.sendEmailVerification();
+            print('Email de verificación enviado en segundo intento');
+          }
+        } catch (emailError) {
+          print('Error al enviar email en segundo intento: $emailError');
+        }
+        return userCredential;
       }
       throw e;
     }
@@ -118,24 +151,24 @@ class AuthService {
       }
 
       // Verificar si estamos en un emulador
-      bool isEmulator = false;
-      try {
-        isEmulator = _auth.app.options.projectId.contains('emulator');
-      } catch (e) {
-        print('No se pudo verificar si es emulador: $e');
-      }
+      bool isEmulator = _isEmulator();
+      print('¿Es emulador?: $isEmulator');
 
       if (isEmulator) {
         print('Ejecutando en emulador - marcando email como verificado');
-        // En emulador, actualizamos el estado en Firestore
         await _firestore.collection('users').doc(user.uid).update({
           'verified': true,
+          'needsVerification': false,
         });
         return;
       }
 
       if (user.emailVerified) {
         print('El email ya está verificado');
+        await _firestore.collection('users').doc(user.uid).update({
+          'verified': true,
+          'needsVerification': false,
+        });
         return;
       }
 
@@ -156,6 +189,29 @@ class AuthService {
     } catch (e) {
       print('Error en verifyEmail: $e');
       rethrow;
+    }
+  }
+
+  // Verificar estado de verificación
+  Future<bool> checkEmailVerification() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return false;
+
+      await user.reload();
+      final updatedUser = _auth.currentUser;
+      
+      if (updatedUser?.emailVerified == true) {
+        await _firestore.collection('users').doc(user.uid).update({
+          'verified': true,
+          'needsVerification': false,
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error al verificar email: $e');
+      return false;
     }
   }
 
@@ -324,13 +380,35 @@ class AuthService {
   Future<String?> sendVerificationEmail() async {
     try {
       final user = _auth.currentUser;
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
-        return null;
+      if (user == null) {
+        return 'No hay usuario autenticado';
       }
-      return 'No hay usuario autenticado o el email ya está verificado';
+
+      // Configurar el idioma del email
+      await _auth.setLanguageCode('es');
+      
+      // Forzar recarga del usuario
+      await user.reload();
+      
+      print('Enviando email de verificación a: ${user.email}');
+      print('Estado de verificación actual: ${user.emailVerified}');
+      
+      await user.sendEmailVerification();
+      
+      // Verificar el estado después de enviar
+      await Future.delayed(const Duration(seconds: 1));
+      await user.reload();
+      print('Estado de verificación después de enviar: ${user.emailVerified}');
+      
+      return null;
+    } on FirebaseAuthException catch (e) {
+      print('Error de Firebase Auth al enviar email:');
+      print('Código: ${e.code}');
+      print('Mensaje: ${e.message}');
+      return _getErrorMessage(e);
     } catch (e) {
-      return 'Error al enviar email de verificación: $e';
+      print('Error inesperado al enviar email: $e');
+      return 'Error inesperado: $e';
     }
   }
 

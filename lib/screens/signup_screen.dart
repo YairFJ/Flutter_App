@@ -77,24 +77,67 @@ class _SignUpScreenState extends State<SignUpScreen> {
         print('Error al cerrar sesión existente: $logoutError');
       }
 
-      await _authService.registerWithEmailAndPassword(
+      final userCredential = await _authService.registerWithEmailAndPassword(
         email,
         password,
         name,
       );
 
-      print('Registro exitoso, navegando a verificación');
+      print('Registro exitoso, verificando estado de verificación...');
+      
+      // Verificar si estamos en un emulador
+      bool isEmulator = false;
+      try {
+        isEmulator = FirebaseAuth.instance.app.options.projectId.contains('emulator');
+      } catch (e) {
+        print('No se pudo verificar si es emulador: $e');
+      }
+
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CodeVerificationScreen(email: email),
-          ),
-        );
+        if (isEmulator) {
+          // En emulador, mostrar mensaje de éxito y redirigir
+          _showSuccess('Registro exitoso en emulador');
+          await Future.delayed(const Duration(seconds: 1));
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        } else {
+          // En dispositivo real, mostrar mensaje y redirigir a verificación
+          _showSuccess('Registro exitoso. Por favor, verifica tu correo electrónico.');
+          await Future.delayed(const Duration(seconds: 2));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CodeVerificationScreen(email: email),
+            ),
+          );
+        }
       }
     } catch (e) {
       print('Excepción capturada durante el registro: $e');
-      _showError(e.toString());
+      if (e is FirebaseAuthException) {
+        if (e.code == 'needs-verification') {
+          // Si el usuario necesita verificación, mostrar mensaje y redirigir a verificación
+          _showSuccess('Por favor, verifica tu correo electrónico.');
+          await Future.delayed(const Duration(seconds: 2));
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CodeVerificationScreen(email: _emailController.text.trim()),
+              ),
+            );
+          }
+        } else if (e.code == 'email-already-in-use') {
+          _showError('Este correo ya está registrado. Por favor, inicia sesión.');
+          await Future.delayed(const Duration(seconds: 2));
+          if (mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          }
+        } else {
+          _showError(e.message ?? 'Error de autenticación');
+        }
+      } else {
+        _showError(e.toString());
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
