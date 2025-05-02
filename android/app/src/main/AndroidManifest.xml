@@ -33,7 +33,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <activity>
+        <activity android:name=".DeepLinkActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
