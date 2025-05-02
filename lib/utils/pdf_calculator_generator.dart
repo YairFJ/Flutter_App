@@ -2,21 +2,16 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../models/recipe.dart'; // Asegúrate de que la ruta y el modelo sean correctos.
-import '../models/ingrediente_tabla.dart';
 import 'package:flutter/material.dart';
 
 /// Genera un PDF a partir de la información de una receta.
-Future<Uint8List> generateRecipePdf(Recipe receta, {
-  double? rendimientoCalculado,
-  String? unidadRendimiento,
-  List<IngredienteTabla> ingredientesCalculados = const [],
-}) async {
+Future<Uint8List> generateRecipePdf(Recipe receta) async {
   final pdf = pw.Document();
   
   // Definir colores según el tema
   final fontColor = PdfColors.black;
   final backgroundColor = PdfColors.white;
-  final primaryColor = PdfColor.fromInt(0xFF2B4C8C); // Azul más fuerte
+  final primaryColor = PdfColor.fromInt(0xFFB5CAE9); // Color primario de la app
   final accentColor = PdfColor.fromInt(0xFF4C75FA); // Color del ícono de compartir
 
   pdf.addPage(
@@ -47,25 +42,12 @@ Future<Uint8List> generateRecipePdf(Recipe receta, {
                 ),
               ),
               pw.SizedBox(height: 20),
-              pw.Row(
-                children: [
-                  pw.Text(
-                    'Rendimiento original: ${receta.servingSize}',
-                    style: pw.TextStyle(
-                      fontSize: 14,
-                      color: fontColor,
-                    ),
-                  ),
-                  if (rendimientoCalculado != null && unidadRendimiento != null)
-                    pw.Text(
-                      ' | Rendimiento calculado: $rendimientoCalculado $unidadRendimiento',
-                      style: pw.TextStyle(
-                        fontSize: 14,
-                        color: primaryColor,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                ],
+              pw.Text(
+                'Rendimiento: ${receta.servingSize}',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  color: fontColor,
+                ),
               ),
               pw.SizedBox(height: 20),
               pw.Text(
@@ -97,7 +79,7 @@ Future<Uint8List> generateRecipePdf(Recipe receta, {
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(8.0),
                         child: pw.Text(
-                          'Cantidad Original',
+                          'Cantidad',
                           style: pw.TextStyle(
                             fontWeight: pw.FontWeight.bold,
                             color: primaryColor,
@@ -116,26 +98,9 @@ Future<Uint8List> generateRecipePdf(Recipe receta, {
                           textAlign: pw.TextAlign.center,
                         ),
                       ),
-                      if (ingredientesCalculados != null)
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8.0),
-                          child: pw.Text(
-                            'Cantidad Calculada',
-                            style: pw.TextStyle(
-                              fontWeight: pw.FontWeight.bold,
-                              color: primaryColor,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
                     ],
                   ),
-                  ...List.generate(receta.ingredients.length, (index) {
-                    final ingredient = receta.ingredients[index];
-                    final calculatedIngredient = index < ingredientesCalculados.length
-                        ? ingredientesCalculados[index]
-                        : null;
-
+                  ...receta.ingredients.map((ingredient) {
                     return pw.TableRow(
                       children: [
                         pw.Padding(
@@ -157,17 +122,6 @@ Future<Uint8List> generateRecipePdf(Recipe receta, {
                           child: pw.Text(
                             ingredient.unit,
                             textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8.0),
-                          child: pw.Text(
-                            calculatedIngredient?.cantidad.toString() ?? ingredient.quantity.toString(),
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(
-                              color: primaryColor,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
                           ),
                         ),
                       ],
@@ -226,7 +180,7 @@ Future<Uint8List> generateRecipePdf(Recipe receta, {
               pw.SizedBox(height: 20),
               pw.Footer(
                 title: pw.Text(
-                 'Generado por Gauge your Recipe ',
+                  'Generado con la aplicación de recetas',
                   style: pw.TextStyle(
                     color: fontColor,
                     fontSize: 12,

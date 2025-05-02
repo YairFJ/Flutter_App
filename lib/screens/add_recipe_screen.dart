@@ -251,6 +251,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   nombre: ing.name,
                   cantidad: ing.quantity,
                   unidad: ing.unit,
+                  cantidadController: TextEditingController(text: ing.quantity.toString()),
+                  cantidadOriginal: ing.quantity,
+                  unidadOriginal: ing.unit,
                 ))
             .toList(),
         unidades: _todasLasUnidades,

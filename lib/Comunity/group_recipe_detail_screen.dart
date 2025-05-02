@@ -23,7 +23,13 @@ class GroupRecipeDetailScreen extends StatefulWidget {
 }
 
 class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
-  bool get isEnglish => widget.isEnglish;
+  late bool isEnglish;
+
+  @override
+  void initState() {
+    super.initState();
+    isEnglish = widget.isEnglish;
+  }
 
   Future<void> _deleteRecipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
