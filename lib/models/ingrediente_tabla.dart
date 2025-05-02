@@ -6,20 +6,31 @@ class IngredienteTabla {
   String unidad;
   final TextEditingController nombreController;
   final TextEditingController cantidadController;
+  double cantidadOriginal;
+  String unidadOriginal;
+  bool modificadoManualmente;
+  double? valorBaseGramos;
+  double? valorBaseMililitros;
 
   IngredienteTabla({
     required this.nombre,
     required this.cantidad,
     required this.unidad,
-  })  : nombreController = TextEditingController(text: nombre),
-        cantidadController = TextEditingController(
-            text: cantidad == 0.0
-                ? '0,0'
-                : cantidad.toString().replaceAll('.', ','));
+    required this.cantidadController,
+    required this.cantidadOriginal,
+    required this.unidadOriginal,
+    this.modificadoManualmente = false,
+    this.valorBaseGramos,
+    this.valorBaseMililitros,
+  }) : nombreController = TextEditingController(text: nombre);
+
+  void actualizarValores(double nuevaCantidad, String nuevaUnidad) {
+    cantidad = nuevaCantidad;
+    unidad = nuevaUnidad;
+    cantidadController.text = nuevaCantidad.toString();
+  }
 
   bool isValid() {
-    return nombre.trim().isNotEmpty &&
-        cantidadController.text.trim().isNotEmpty &&
-        double.tryParse(cantidadController.text.replaceAll(',', '.')) != null;
+    return nombre.isNotEmpty && cantidad > 0 && unidad.isNotEmpty;
   }
 }

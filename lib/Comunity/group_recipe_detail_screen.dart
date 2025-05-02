@@ -4,7 +4,7 @@ import '../models/group.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_group_recipe_screen.dart';
-import 'conversion_calculator_screen.dart';
+import '../screens/conversion_calculator_screen.dart';
 
 class GroupRecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
