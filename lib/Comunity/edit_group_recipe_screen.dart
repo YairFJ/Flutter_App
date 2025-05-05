@@ -92,6 +92,9 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
               nombre: ing.name,
               cantidad: ing.quantity,
               unidad: _convertirUnidadAntigua(ing.unit),
+              cantidadController: TextEditingController(text: ing.quantity.toString()),
+              cantidadOriginal: ing.quantity,
+              unidadOriginal: _convertirUnidadAntigua(ing.unit),
             ))
         .toList();
 

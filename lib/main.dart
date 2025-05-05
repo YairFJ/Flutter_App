@@ -13,7 +13,7 @@ import 'pages/timer_page.dart';
 import 'pages/stopwatch_page.dart';
 import 'models/recipe.dart';
 import 'pages/profile_page.dart';
-import 'screens/groups_screen.dart';
+import 'Comunity/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
 import 'screens/code_verification_screen.dart';
@@ -493,19 +493,8 @@ class RecipeCard extends StatelessWidget {
                             isEnglish
                                 ? 'Created by: ${recipe.creatorName}'
                                 : 'Creado por: ${recipe.creatorName}',
-
-                            /// posible error
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            recipe.creatorEmail,
-                            style: TextStyle(
-                              fontSize: 10,
                               color: Colors.white,
                             ),
                             maxLines: 1,

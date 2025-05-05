@@ -509,8 +509,8 @@ class _ConversionCalculatorScreenState
     
     print("\n🔄 INICIANDO CÁLCULO DE CONVERSIÓN");
     print("Estado actual:");
-    print("  - Platos origen: $_platosOrigen $_unidadOriginal");
-    print("  - Platos destino: $_platosDestino $_unidadDestino");
+    print("  - Platos origen: $_platosOrigen ${_unidadOriginal}");
+    print("  - Platos destino: $_platosDestino ${_unidadDestino}");
     print("  - Valor original rendimiento: $_valorOriginalRendimiento");
     
     // Si hemos alcanzado el límite de conversiones, reiniciamos los valores base
@@ -621,8 +621,12 @@ class _ConversionCalculatorScreenState
 
   // Método auxiliar para redondear con precisión controlada y evitar errores de punto flotante
   double _redondearPrecision(double valor) {
-    // Usar una precisión consistente de 6 decimales para todos los valores
-    return double.parse(valor.toStringAsFixed(6));
+    // Para valores muy pequeños
+    if (valor.abs() < 0.01) {
+      return double.parse(valor.toStringAsFixed(4));
+    }
+    // Para el resto de valores
+    return double.parse(valor.toStringAsFixed(3));
   }
 
   void _actualizarCantidadIngrediente(int index, String value) {
@@ -721,6 +725,7 @@ class _ConversionCalculatorScreenState
   void _actualizarUnidad(int index, String nuevaUnidad) {
     print("\n🔄 ACTUALIZANDO UNIDAD DEL INGREDIENTE #$index");
     
+    // ... (Validación de índice igual)
     if (index < 0 || index >= _ingredientesTabla.length) {
       print("❌ Índice inválido: $index");
       return;
@@ -729,6 +734,7 @@ class _ConversionCalculatorScreenState
     final ingrediente = _ingredientesTabla[index];
     final unidadAnterior = ingrediente.unidad;
     
+    // ... (Comprobación si unidad cambió igual)
     if (unidadAnterior == nuevaUnidad) {
       print("ℹ️ La unidad no cambió");
       return;
@@ -737,54 +743,40 @@ class _ConversionCalculatorScreenState
     print("Unidad anterior: $unidadAnterior");
     print("Nueva unidad seleccionada: $nuevaUnidad");
     
+    // --- CORRECCIÓN: Conversión basada en CANTIDAD ACTUAL --- 
     double cantidadActual = ingrediente.cantidad;
-    double nuevaCantidad = cantidadActual;
+    double nuevaCantidad;
 
-    // Determinar si estamos trabajando con peso o volumen
-    bool esUnidadPesoAnterior = _esTipoUnidadPeso(unidadAnterior);
-    bool esUnidadPesoNueva = _esTipoUnidadPeso(nuevaUnidad);
-    bool esUnidadVolumenAnterior = _esTipoUnidadVolumen(unidadAnterior);
-    bool esUnidadVolumenNueva = _esTipoUnidadVolumen(nuevaUnidad);
-
-    // Convertir siempre a través de la unidad base (gramos o mililitros)
-    if (esUnidadPesoAnterior && esUnidadPesoNueva) {
-      // Conversión entre unidades de peso
-      double cantidadEnGramos = _convertirRendimiento(cantidadActual, unidadAnterior, 'Gramo');
-      nuevaCantidad = _convertirRendimiento(cantidadEnGramos, 'Gramo', nuevaUnidad);
-      print("  Conversión de peso: $cantidadActual $unidadAnterior -> $cantidadEnGramos Gramo -> $nuevaCantidad $nuevaUnidad");
-    } else if (esUnidadVolumenAnterior && esUnidadVolumenNueva) {
-      // Conversión entre unidades de volumen
-      double cantidadEnMililitros = _convertirRendimiento(cantidadActual, unidadAnterior, 'Mililitros');
-      nuevaCantidad = _convertirRendimiento(cantidadEnMililitros, 'Mililitros', nuevaUnidad);
-      print("  Conversión de volumen: $cantidadActual $unidadAnterior -> $cantidadEnMililitros Mililitros -> $nuevaCantidad $nuevaUnidad");
-    } else if (esUnidadPesoAnterior && esUnidadVolumenNueva) {
-      // Conversión de peso a volumen (asumiendo densidad de agua: 1g = 1ml)
-      double cantidadEnGramos = _convertirRendimiento(cantidadActual, unidadAnterior, 'Gramo');
-      double cantidadEnMililitros = cantidadEnGramos; // 1g = 1ml
-      nuevaCantidad = _convertirRendimiento(cantidadEnMililitros, 'Mililitros', nuevaUnidad);
-      print("  Conversión peso->volumen: $cantidadActual $unidadAnterior -> $cantidadEnGramos Gramo = $cantidadEnMililitros Mililitros -> $nuevaCantidad $nuevaUnidad");
-    } else if (esUnidadVolumenAnterior && esUnidadPesoNueva) {
-      // Conversión de volumen a peso (asumiendo densidad de agua: 1ml = 1g)
-      double cantidadEnMililitros = _convertirRendimiento(cantidadActual, unidadAnterior, 'Mililitros');
-      double cantidadEnGramos = cantidadEnMililitros; // 1ml = 1g
-      nuevaCantidad = _convertirRendimiento(cantidadEnGramos, 'Gramo', nuevaUnidad);
-      print("  Conversión volumen->peso: $cantidadActual $unidadAnterior -> $cantidadEnMililitros Mililitros = $cantidadEnGramos Gramo -> $nuevaCantidad $nuevaUnidad");
+    // Intentar convertir la cantidad ACTUAL de la unidad ANTERIOR a la NUEVA
+    if (_esConversionValida(unidadAnterior, nuevaUnidad)) {
+        print("  Calculando conversión directa: $cantidadActual $unidadAnterior -> $nuevaUnidad");
+        nuevaCantidad = _convertirRendimiento(cantidadActual, unidadAnterior, nuevaUnidad);
+    } else {
+        print("  ⚠️ Conversión no válida entre '$unidadAnterior' y '$nuevaUnidad'. Manteniendo cantidad anterior.");
+        nuevaCantidad = cantidadActual; // Mantener cantidad si no se puede convertir
     }
+    // --- Fin CORRECCIÓN ---
 
     // Validar que la conversión sea válida
     if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
-      print("⚠️ Resultado de conversión inválido: $nuevaCantidad. Manteniendo unidad anterior.");
-      return;
+      print("⚠️ Resultado de conversión inválido: $nuevaCantidad. Manteniendo cantidad anterior.");
+      nuevaCantidad = ingrediente.cantidad; // Revertir a la cantidad anterior
     }
     
-    // Aplicar redondeo SOLO al final, después de todas las conversiones
+    // Aplicar redondeo para evitar imprecisiones
     nuevaCantidad = _redondearPrecision(nuevaCantidad);
     
     setState(() {
+      // Marcar que este ingrediente ha sido modificado manualmente
       ingrediente.modificadoManualmente = true;
+      
+      // Actualizar la unidad y cantidad
       ingrediente.unidad = nuevaUnidad;
       ingrediente.cantidad = nuevaCantidad;
       ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
+      
+      // ¡Importante! NO actualizamos el valor base aquí.
+      // El valor base solo cambia si se escala la receta entera.
       
       print("Ingrediente actualizado:");
       print("  - Nombre: ${ingrediente.nombre}");
@@ -907,12 +899,28 @@ class _ConversionCalculatorScreenState
 
   // Método para formatear números con precisión adecuada
   String _formatearNumero(double numero) {
-    // Solo redondear para la visualización, manteniendo la precisión interna
-    if (numero == numero.roundToDouble()) {
-      return numero.toInt().toString();
+    try {
+      // Manejo de NaN o infinito
+      if (numero.isNaN || numero.isInfinite) {
+        return "0";
+      }
+
+      // Para valores muy pequeños, mostrar más decimales
+      if (numero.abs() < 0.01 && numero.abs() > 0) {
+        return numero.toStringAsFixed(4).replaceAll(RegExp(r'\.?0+$'), '');
+      }
+      
+      // Para valores normales
+      if (numero == numero.roundToDouble()) {
+        return numero.toInt().toString();
+      }
+      
+      String resultado = numero.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+      return resultado;
+    } catch (e) {
+      print("Error al formatear número: $e");
+      return "0";
     }
-    // Usar 3 decimales para la visualización
-    return numero.toStringAsFixed(3).replaceAll(RegExp(r'\.?0+$'), '');
   }
 
   double _convertirRendimiento(double cantidad, String desde, String hasta) {
@@ -949,43 +957,47 @@ class _ConversionCalculatorScreenState
         return resultado;
       }
 
-      // Determinar la unidad base apropiada
+      // Si no hay conversión directa, intentamos convertir a través de una unidad base
       String unidadBase;
-      if (_esTipoUnidadPeso(desdeNorm) || _esTipoUnidadPeso(hastaNorm)) {
-        unidadBase = 'Gramo';
-      } else if (_esTipoUnidadVolumen(desdeNorm) || _esTipoUnidadVolumen(hastaNorm)) {
-        unidadBase = 'Mililitros';
+      
+      // Determinar la unidad base adecuada
+      if (['Gramo', 'Kilogramo', 'Onza', 'Libra', 'Miligramos'].contains(desdeNorm) ||
+          ['Gramo', 'Kilogramo', 'Onza', 'Libra', 'Miligramos'].contains(hastaNorm)) {
+        unidadBase = 'Gramo';  // Para unidades de peso
       } else {
-        print("No se pudo determinar la unidad base para la conversión");
-        return cantidad;
+        unidadBase = 'Mililitros';  // Para unidades de volumen
       }
-
-      // Convertir a la unidad base
-      double cantidadEnBase;
+      
+      // Convertimos a través de la unidad base
+      print("Conversión a través de $unidadBase: $cantidad $desdeNorm -> $unidadBase -> $hastaNorm");
+      double cantidadBase;
+      
+      // Desde -> Unidad Base
       if (_factoresRendimiento.containsKey(desdeNorm) && _factoresRendimiento[desdeNorm]!.containsKey(unidadBase)) {
-        cantidadEnBase = cantidad * _factoresRendimiento[desdeNorm]![unidadBase]!;
+        cantidadBase = cantidad * _factoresRendimiento[desdeNorm]![unidadBase]!;
       } else if (_factoresRendimiento.containsKey(unidadBase) && _factoresRendimiento[unidadBase]!.containsKey(desdeNorm)) {
-        cantidadEnBase = cantidad / _factoresRendimiento[unidadBase]![desdeNorm]!;
+        cantidadBase = cantidad / _factoresRendimiento[unidadBase]![desdeNorm]!;
       } else {
-        print("No se encontró conversión a $unidadBase para $desdeNorm");
+        print("No se pudo convertir $desdeNorm a $unidadBase");
         return cantidad;
       }
-
-      // Convertir desde la unidad base a la unidad destino
+      
+      // Unidad Base -> Hasta
       double resultado;
       if (_factoresRendimiento.containsKey(unidadBase) && _factoresRendimiento[unidadBase]!.containsKey(hastaNorm)) {
-        resultado = cantidadEnBase * _factoresRendimiento[unidadBase]![hastaNorm]!;
+        resultado = cantidadBase * _factoresRendimiento[unidadBase]![hastaNorm]!;
       } else if (_factoresRendimiento.containsKey(hastaNorm) && _factoresRendimiento[hastaNorm]!.containsKey(unidadBase)) {
-        resultado = cantidadEnBase / _factoresRendimiento[hastaNorm]![unidadBase]!;
+        resultado = cantidadBase / _factoresRendimiento[hastaNorm]![unidadBase]!;
       } else {
-        print("No se encontró conversión desde $unidadBase a $hastaNorm");
+        print("No se pudo convertir $unidadBase a $hastaNorm");
         return cantidad;
       }
-
-      print("Conversión a través de $unidadBase: $cantidad $desdeNorm -> $cantidadEnBase $unidadBase -> $resultado $hastaNorm");
+      
+      print("Resultado final de conversión: $cantidad $desdeNorm -> $cantidadBase $unidadBase -> $resultado $hastaNorm");
       return resultado;
     } catch (e) {
-      print("Error en _convertirRendimiento: $e");
+      print("Error en conversión: $e");
+      // En caso de error, devolvemos la misma cantidad
       return cantidad;
     }
   }
@@ -1026,7 +1038,7 @@ class _ConversionCalculatorScreenState
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                isEnglish ? 'CONVERSION CALCULATOR' : 'CALCULADORA DE CONVERSIÓN',
+                'CALCULADORA DE CONVERSIÓN',
                 style: pw.TextStyle(
                   fontSize: 24,
                   fontWeight: pw.FontWeight.bold,
@@ -1034,15 +1046,12 @@ class _ConversionCalculatorScreenState
               ),
               pw.SizedBox(height: 20),
               pw.Text(
-                // Usar _getUnidadPlural con la unidad de destino
-                isEnglish 
-                  ? 'New Yield: ${_formatearNumero(_platosDestino)} ${_getUnidadPlural(_unidadDestino, _platosDestino)}' 
-                  : 'Rendimiento Nuevo: ${_formatearNumero(_platosDestino)} ${_getUnidadPlural(_unidadDestino, _platosDestino)}',
+                'Rendimiento Nuevo: $_platosDestino ${_getUnidadPlural(_unidadDestino, _platosDestino)}',
                 style: const pw.TextStyle(fontSize: 14),
               ),
               pw.SizedBox(height: 20),
               pw.Text(
-                isEnglish ? 'INGREDIENTS TABLE' : 'TABLA DE INGREDIENTES',
+                'TABLA DE INGREDIENTES',
                 style: pw.TextStyle(
                   fontSize: 18,
                   fontWeight: pw.FontWeight.bold,
@@ -1052,36 +1061,36 @@ class _ConversionCalculatorScreenState
               pw.Table(
                 border: pw.TableBorder.all(),
                 columnWidths: {
-                  0: const pw.FlexColumnWidth(2),
-                  1: const pw.FlexColumnWidth(1),
-                  2: const pw.FlexColumnWidth(1),
+                  0: pw.FlexColumnWidth(2),
+                  1: pw.FlexColumnWidth(1),
+                  2: pw.FlexColumnWidth(1),
                 },
                 children: [
                   pw.TableRow(
-                    decoration: const pw.BoxDecoration(
+                    decoration: pw.BoxDecoration(
                       color: PdfColors.grey300,
                     ),
                     children: [
                       pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
+                        padding: pw.EdgeInsets.all(8),
                         child: pw.Text(
-                          isEnglish ? 'INGREDIENT' : 'INGREDIENTE',
+                          'INGREDIENTE',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
                       ),
                       pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
+                        padding: pw.EdgeInsets.all(8),
                         child: pw.Text(
-                          isEnglish ? 'QUANTITY' : 'CANTIDAD',
+                          'CANTIDAD',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
                       ),
                       pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
+                        padding: pw.EdgeInsets.all(8),
                         child: pw.Text(
-                          isEnglish ? 'UNIT' : 'UNIDAD',
+                          'UNIDAD',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                           textAlign: pw.TextAlign.center,
                         ),
@@ -1092,24 +1101,24 @@ class _ConversionCalculatorScreenState
                     return pw.TableRow(
                       children: [
                         pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
+                          padding: pw.EdgeInsets.all(8),
                           child: pw.Text(
-                            ingrediente.nombre,
+                            ingrediente?.nombre ?? '',
                             textAlign: pw.TextAlign.left,
                           ),
                         ),
                         pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
+                          padding: pw.EdgeInsets.all(8),
                           child: pw.Text(
-                            _formatQuantity(ingrediente.cantidad),
+                            _formatQuantity(ingrediente?.cantidad ?? 0),
                             textAlign: pw.TextAlign.center,
                           ),
                         ),
                         pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
+                          padding: pw.EdgeInsets.all(8),
                           child: pw.Text(
-                            _unidadesAbreviadas[ingrediente.unidad] ??
-                                ingrediente.unidad,
+                            _unidadesAbreviadas[ingrediente?.unidad ?? ''] ??
+                                ingrediente?.unidad ?? '',
                             textAlign: pw.TextAlign.center,
                           ),
                         ),
@@ -1131,7 +1140,7 @@ class _ConversionCalculatorScreenState
     if (context.mounted) {
       await Share.shareXFiles(
         [XFile(file.path)],
-        subject: isEnglish ? 'Recipe Conversion' : 'Conversión de Receta', // Traducir asunto
+        subject: 'Conversión de Receta',
       );
     }
   }
@@ -1165,37 +1174,29 @@ class _ConversionCalculatorScreenState
 
     return Scaffold(
       appBar: AppBar(
-        // --- INICIO CAMBIO: Traducción AppBar ---
-        title: Text(isEnglish ? 'Conversion Calculator' : 'Calculadora de Conversiones'),
-        // --- FIN CAMBIO ---
+        title: const Text('Calculadora de Conversiones'),
         elevation: 1, // Sombra sutil
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: _mostrarTablaEquivalencias,
-            // --- INICIO CAMBIO: Traducción Tooltip ---
-            tooltip: isEnglish ? 'View equivalency table' : 'Ver tabla de equivalencias',
-            // --- FIN CAMBIO ---
+            tooltip: 'Ver tabla de equivalencias',
           ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: _generarPDF,
-            // --- INICIO CAMBIO: Traducción Tooltip ---
-            tooltip: isEnglish ? 'Generate PDF' : 'Generar PDF',
-            // --- FIN CAMBIO ---
+            tooltip: 'Generar PDF',
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0), // Padding general
         children: [
-          // --- INICIO CAMBIO: Traducción Título Principal ---
           Text(
-            isEnglish ? 'CONVERSION CALCULATOR' : 'CALCULADORA DE CONVERSIÓN',
+            'CALCULADORA DE CONVERSIÓN',
             style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600), // Estilo de título
             textAlign: TextAlign.center,
           ),
-          // --- FIN CAMBIO ---
           const SizedBox(height: 24),
 
           // --- Sección Rendimiento con Card ---
@@ -1208,21 +1209,17 @@ class _ConversionCalculatorScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- INICIO CAMBIO: Traducción Título Sección ---
                   Text(
-                    isEnglish ? 'YIELD' : 'RENDIMIENTO',
+                    'RENDIMIENTO',
                     style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600), // Título de sección
                   ),
-                  // --- FIN CAMBIO ---
                   const SizedBox(height: 16),
                   // Encabezados de la tabla
                   Row(
                     children: [
-                      // --- INICIO CAMBIO: Traducción Headers Rendimiento ---
-                      Expanded(child: Text(isEnglish ? 'ORIGINAL' : 'ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text(isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(flex: 2, child: Text(isEnglish ? 'NEW' : 'NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      // --- FIN CAMBIO ---
+                      Expanded(child: Text('ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text('UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(flex: 2, child: Text('NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -1428,8 +1425,7 @@ class _ConversionCalculatorScreenState
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                       decoration: BoxDecoration(
-                        // --- INICIO CAMBIO: Usar color azul claro específico y texto blanco ---
-                        color: const Color(0xFF96B4D8), // Azul claro específico
+                        color: colorScheme.primaryContainer, // Usar color del tema
                         borderRadius: BorderRadius.circular(30), // Más redondeado
                       ),
                       child: Row(
@@ -1437,35 +1433,32 @@ class _ConversionCalculatorScreenState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            isEnglish ? 'Result: ' : 'Resultado: ',
+                            'Resultado: ',
                             style: textTheme.titleMedium?.copyWith(
-                              color: Colors.white, // Texto blanco
+                              color: colorScheme.onPrimaryContainer,
                             ),
                           ),
                           Text(
                             '${_formatearNumero(_platosDestino)} ${_unidadesAbreviadas[_unidadDestino] ?? _unidadDestino}',
                             style: textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.white, // Texto blanco
+                              color: colorScheme.onPrimaryContainer,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  // --- FIN CAMBIO ---
                 ],
               ),
             ),
           ), // Fin Card Rendimiento
 
           // --- Inicio Sección Tabla Ingredientes con Card ---
-          // --- INICIO CAMBIO: Traducción Título Sección ---
           Text(
-            isEnglish ? 'INGREDIENTS TABLE' : 'TABLA DE INGREDIENTES',
+            'TABLA DE INGREDIENTES',
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600), // Título de sección
           ),
-          // --- FIN CAMBIO ---
           const SizedBox(height: 16),
           Card(
             elevation: 2,
@@ -1485,11 +1478,9 @@ class _ConversionCalculatorScreenState
                   ),
                   child: Row(
                     children: [
-                      // --- INICIO CAMBIO: Traducción Headers Ingredientes ---
-                      Expanded(flex: 2, child: Text(isEnglish ? 'INGREDIENT' : 'INGREDIENTE', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text(isEnglish ? 'QUANTITY' : 'CANTIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text(isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      // --- FIN CAMBIO ---
+                      Expanded(flex: 2, child: Text('INGREDIENTE', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text('CANTIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text('UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
                     ],
                   ),
                 ),
@@ -1685,116 +1676,66 @@ class _ConversionCalculatorScreenState
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        // --- INICIO CAMBIO: Listas de Equivalencias Traducidas ---
-        final List<String> weightEquivalencies = isEnglish ? [
-            '1 Kilogram (kg) = 1000 Grams (g)',
-            '1 Gram (g) = 1000 Milligrams (mg)',
-            '1 Pound (lb) = 453.6 Grams (g)',
-            '1 Pound (lb) = 16 Ounces (oz)',
-            '1 Ounce (oz) = 28.35 Grams (g)',
-          ] : [
-            '1 Kilogramo (kg) = 1000 Gramos (g)',
-            '1 Gramo (g) = 1000 Miligramos (mg)',
-            '1 Libra (lb) = 453.6 Gramos (g)',
-            '1 Libra (lb) = 16 Onzas (oz)',
-            '1 Onza (oz) = 28.35 Gramos (g)',
-          ];
-
-        final List<String> volumeEquivalencies = isEnglish ? [
-            '1 Liter (L) = 1000 Milliliters (ml)',
-            '1 Liter (L) = 100 Centiliters (cl)',
-            '1 Centiliter (cl) = 10 Milliliters (ml)',
-            '1 Cup = 240 Milliliters (ml)',
-            '1 Tablespoon (tbsp) = 15 Milliliters (ml)',
-            '1 Teaspoon (tsp) = 5 Milliliters (ml)',
-            '1 Cup = 16 Tablespoons (tbsp)',
-            '1 Tablespoon (tbsp) = 3 Teaspoons (tsp)',
-            '1 Fluid ounce (fl oz) = 29.57 Milliliters (ml)',
-            '1 Pint (pt) = 473.2 Milliliters (ml)',
-            '1 Quart (qt) = 946.4 Milliliters (ml)',
-            '1 Gallon (gal) = 3.785 Liters (L)',
-          ] : [
-            '1 Litro (L) = 1000 Mililitros (ml)',
-            '1 Litro (L) = 100 Centilitros (cl)',
-            '1 Centilitro (cl) = 10 Mililitros (ml)',
-            '1 Taza = 240 Mililitros (ml)',
-            '1 Cucharada (cda) = 15 Mililitros (ml)',
-            '1 Cucharadita (cdta) = 5 Mililitros (ml)',
-            '1 Taza = 16 Cucharadas (cda)',
-            '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
-            '1 Onza líquida = 29.57 Mililitros (ml)',
-            '1 Pinta = 473.2 Mililitros (ml)',
-            '1 Cuarto galón = 946.4 Mililitros (ml)',
-            '1 Galón = 3.785 Litros (L)',
-          ];
-
-        final List<String> portionEquivalencies = isEnglish ? [
-            '1 Portion = 250 Grams (g)',
-            '1 Portion = 0.25 Kilograms (kg)',
-            '1 Portion = 250 Milliliters (ml)',
-            '1 Portion = 8.8 Ounces (oz)',
-            '1 Portion = 0.55 Pounds (lb)',
-            '1 Kilogram (kg) = 4 Portions',
-            '1 Liter (L) = 4 Portions',
-          ] : [
-            '1 Porción = 250 Gramos (g)',
-            '1 Porción = 0.25 Kilogramos (kg)',
-            '1 Porción = 250 Mililitros (ml)',
-            '1 Porción = 8.8 Onzas (oz)',
-            '1 Porción = 0.55 Libras (lb)',
-            '1 Kilogramo (kg) = 4 Porciones',
-            '1 Litro (L) = 4 Porciones',
-          ];
-        
-        final List<String> weightVolumeEquivalencies = isEnglish ? [
-            '1 Gram (g) ≈ 1 Milliliter (ml) of water',
-            '1 Kilogram (kg) ≈ 1 Liter (L) of water',
-            '1 Pound (lb) ≈ 454 Milliliters (ml) of water',
-            '1 Ounce (oz) ≈ 28.4 Milliliters (ml) of water',
-          ] : [
-            '1 Gramo (g) = 1 Mililitro (ml) de agua',
-            '1 Kilogramo (kg) = 1 Litro (L) de agua',
-            '1 Libra (lb) = 454 Mililitros (ml) de agua',
-            '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
-          ];
-        // --- FIN CAMBIO ---
-
         return AlertDialog(
-          // --- INICIO CAMBIO: Traducción Título Dialogo ---
-          title: Text(isEnglish ? 'Equivalency Table' : 'Tabla de Equivalencias',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          title: const Text('Tabla de Equivalencias',
+            style: TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
-          // --- FIN CAMBIO ---
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // --- INICIO CAMBIO: Pasar isEnglish y listas traducidas ---
-                _buildEquivalenciasSection(isEnglish ? 'WEIGHT UNITS' : 'UNIDADES DE PESO', weightEquivalencies),
+                _buildEquivalenciasSection('UNIDADES DE PESO', [
+                  '1 Kilogramo (kg) = 1000 Gramos (g)',
+                  '1 Gramo (g) = 1000 Miligramos (mg)',
+                  '1 Libra (lb) = 453.6 Gramos (g)',
+                  '1 Libra (lb) = 16 Onzas (oz)',
+                  '1 Onza (oz) = 28.35 Gramos (g)',
+                ]),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection(isEnglish ? 'VOLUME UNITS' : 'UNIDADES DE VOLUMEN', volumeEquivalencies),
+                _buildEquivalenciasSection('UNIDADES DE VOLUMEN', [
+                  '1 Litro (L) = 1000 Mililitros (ml)',
+                  '1 Litro (L) = 100 Centilitros (cl)',
+                  '1 Centilitro (cl) = 10 Mililitros (ml)',
+                  '1 Taza = 240 Mililitros (ml)',
+                  '1 Cucharada (cda) = 15 Mililitros (ml)',
+                  '1 Cucharadita (cdta) = 5 Mililitros (ml)',
+                  '1 Taza = 16 Cucharadas (cda)',
+                  '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
+                  '1 Onza líquida = 29.57 Mililitros (ml)',
+                  '1 Pinta = 473.2 Mililitros (ml)',
+                  '1 Cuarto galón = 946.4 Mililitros (ml)',
+                  '1 Galón = 3.785 Litros (L)',
+                ]),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection(isEnglish ? 'PORTIONS' : 'PORCIONES', portionEquivalencies),
+                _buildEquivalenciasSection('PORCIONES', [
+                  '1 Porción = 250 Gramos (g)',
+                  '1 Porción = 0.25 Kilogramos (kg)',
+                  '1 Porción = 250 Mililitros (ml)',
+                  '1 Porción = 8.8 Onzas (oz)',
+                  '1 Porción = 0.55 Libras (lb)',
+                  '1 Kilogramo (kg) = 4 Porciones',
+                  '1 Litro (L) = 4 Porciones',
+                ]),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection(isEnglish ? 'WEIGHT-VOLUME (approx.)' : 'PESO-VOLUMEN (aprox.)', weightVolumeEquivalencies),
-                // --- FIN CAMBIO ---
+                _buildEquivalenciasSection('PESO-VOLUMEN (aprox.)', [
+                  '1 Gramo (g) = 1 Mililitro (ml) de agua',
+                  '1 Kilogramo (kg) = 1 Litro (L) de agua',
+                  '1 Libra (lb) = 454 Mililitros (ml) de agua',
+                  '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
+                ]),
                 const SizedBox(height: 8),
-                // --- INICIO CAMBIO: Traducción Nota ---
-                Text(isEnglish ? 'Note: Conversions between weight and volume are approximate and mainly valid for water.' : 'Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
-                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                const Text('Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
                 ),
-                // --- FIN CAMBIO ---
               ],
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              // --- INICIO CAMBIO: Traducción Botón Cerrar ---
-              child: Text(isEnglish ? 'Close' : 'Cerrar'),
-              // --- FIN CAMBIO ---
+              child: const Text('Cerrar'),
             ),
           ],
         );
@@ -1802,9 +1743,7 @@ class _ConversionCalculatorScreenState
     );
   }
 
-  // --- INICIO CAMBIO: Modificar _buildEquivalenciasSection para aceptar lista ---
   Widget _buildEquivalenciasSection(String title, List<String> equivalencias) {
-  // --- FIN CAMBIO ---
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1815,18 +1754,16 @@ class _ConversionCalculatorScreenState
               ? Colors.blueGrey.shade800 
               : Colors.blue.shade100,
           child: Text(
-            title, // El título ya viene traducido
+            title,
             style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ),
         const SizedBox(height: 4),
-        // --- INICIO CAMBIO: Usar lista de equivalencias directamente ---
         ...equivalencias.map((e) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           child: Text(e, style: const TextStyle(fontSize: 14)),
-        )),
-        // --- FIN CAMBIO ---
+        )).toList(),
       ],
     );
   }
@@ -1927,72 +1864,45 @@ class _ConversionCalculatorScreenState
     final ingrediente = _ingredientesTabla[index];
     if (ingrediente.unidad == nuevaUnidad) return;
     
-    print("\n🔄 CAMBIANDO UNIDAD DE INGREDIENTE #$index");
-    print("  - Ingrediente: ${ingrediente.nombre}");
-    print("  - De: ${ingrediente.cantidad} ${ingrediente.unidad}");
-    print("  - A: $nuevaUnidad");
-    
-    // Determinar el tipo de unidad actual y nueva
-    bool esUnidadPesoAnterior = _esTipoUnidadPeso(ingrediente.unidad);
-    bool esUnidadVolumenAnterior = _esTipoUnidadVolumen(ingrediente.unidad);
-    bool esUnidadPesoNueva = _esTipoUnidadPeso(nuevaUnidad);
-    bool esUnidadVolumenNueva = _esTipoUnidadVolumen(nuevaUnidad);
-    
+    // Realizamos la conversión de la cantidad actual a la nueva unidad
     double nuevaCantidad;
     
-    // Si tenemos un valor base, usarlo para la conversión
-    if (esUnidadPesoAnterior && esUnidadPesoNueva && ingrediente.valorBaseGramos != null) {
-      // Conversión entre unidades de peso usando gramos como base
-      nuevaCantidad = _convertirDesdeUnidadBase(ingrediente.valorBaseGramos!, nuevaUnidad, 'peso');
-      print("  Conversión usando base en gramos: ${ingrediente.valorBaseGramos} g -> $nuevaCantidad $nuevaUnidad");
-    } 
-    else if (esUnidadVolumenAnterior && esUnidadVolumenNueva && ingrediente.valorBaseMililitros != null) {
-      // Conversión entre unidades de volumen usando mililitros como base
-      nuevaCantidad = _convertirDesdeUnidadBase(ingrediente.valorBaseMililitros!, nuevaUnidad, 'volumen');
-      print("  Conversión usando base en mililitros: ${ingrediente.valorBaseMililitros} ml -> $nuevaCantidad $nuevaUnidad");
-    }
-    else {
-      // Si no tenemos valor base, calcularlo primero
-      double valorBase;
-      String tipoBase;
-      
-      if (esUnidadPesoAnterior) {
-        valorBase = _convertirAUnidadBase(ingrediente.cantidad, ingrediente.unidad, 'peso');
-        tipoBase = 'peso';
-        ingrediente.valorBaseGramos = valorBase;
-      } else if (esUnidadVolumenAnterior) {
-        valorBase = _convertirAUnidadBase(ingrediente.cantidad, ingrediente.unidad, 'volumen');
-        tipoBase = 'volumen';
-        ingrediente.valorBaseMililitros = valorBase;
+    // Si es conversión entre unidades de peso
+    if (_esTipoUnidadPeso(ingrediente.unidad) && _esTipoUnidadPeso(nuevaUnidad)) {
+      // Convertir entre kg, g, etc.
+      if (ingrediente.unidad == 'Kilogramo' && nuevaUnidad == 'Gramo') {
+        nuevaCantidad = ingrediente.cantidad * 1000;
+      } else if (ingrediente.unidad == 'Gramo' && nuevaUnidad == 'Kilogramo') {
+        nuevaCantidad = ingrediente.cantidad / 1000;
       } else {
-        print("⚠️ No se pudo determinar el tipo de unidad base");
-        return;
+        // Otras conversiones de peso (implementar según necesidad)
+        nuevaCantidad = ingrediente.cantidad;
       }
-      
-      // Convertir desde la unidad base a la nueva unidad
-      nuevaCantidad = _convertirDesdeUnidadBase(valorBase, nuevaUnidad, tipoBase);
-      print("  Conversión calculando base: $valorBase -> $nuevaCantidad $nuevaUnidad");
+    } 
+    // Si es conversión entre unidades de volumen
+    else if (_esTipoUnidadVolumen(ingrediente.unidad) && _esTipoUnidadVolumen(nuevaUnidad)) {
+      // Convertir entre l, ml, etc.
+      if (ingrediente.unidad == 'Litro' && nuevaUnidad == 'Mililitro') {
+        nuevaCantidad = ingrediente.cantidad * 1000;
+      } else if (ingrediente.unidad == 'Mililitro' && nuevaUnidad == 'Litro') {
+        nuevaCantidad = ingrediente.cantidad / 1000;
+      } else {
+        // Otras conversiones de volumen (implementar según necesidad)
+        nuevaCantidad = ingrediente.cantidad;
+      }
+    } else {
+      // Si las unidades no son del mismo tipo, mantenemos la cantidad
+      nuevaCantidad = ingrediente.cantidad;
     }
     
-    // Validar que la conversión sea válida
-    if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
-      print("⚠️ Resultado de conversión inválido: $nuevaCantidad. Manteniendo unidad anterior.");
-      return;
-    }
-    
-    // Aplicar redondeo SOLO al final, después de todas las conversiones
-    nuevaCantidad = _redondearPrecision(nuevaCantidad);
-    
+    // Actualizamos el ingrediente con la nueva unidad y cantidad
     setState(() {
-      ingrediente.modificadoManualmente = true;
-      ingrediente.unidad = nuevaUnidad;
       ingrediente.cantidad = nuevaCantidad;
+      ingrediente.unidad = nuevaUnidad;
       ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
       
-      print("Ingrediente actualizado:");
-      print("  - Nombre: ${ingrediente.nombre}");
-      print("  - Cantidad recalculada: $nuevaCantidad $nuevaUnidad");
-      print("  - Marcado como modificado manualmente: ${ingrediente.modificadoManualmente}");
+      // Marcamos que este ingrediente ha sido modificado manualmente
+      ingrediente.modificadoManualmente = true;
     });
   }
 
@@ -2024,7 +1934,7 @@ class _ConversionCalculatorScreenState
       // Validar la cantidad para asegurar que no sea 0
       double cantidad = ingredient.quantity;
       if (cantidad <= 0) {
-        print("⚠️ Cantidad inválida ($cantidad) para '${ingredient.name}'. Corrigiendo a 0.01");
+        print("⚠️ Cantidad inválida (${cantidad}) para '${ingredient.name}'. Corrigiendo a 0.01");
         cantidad = 0.01;
       }
       
@@ -2183,7 +2093,7 @@ class _ConversionCalculatorScreenState
   void _actualizarRendimientoReceta() {
     try {
       print("Iniciando conversión de rendimiento...");
-      print("Rendimiento original: $_platosOrigen");
+      print("Rendimiento original: ${_platosOrigen}");
       print("Nuevo rendimiento: $_platosDestino");
       
       // Validar el nuevo rendimiento
@@ -2315,8 +2225,8 @@ class _ConversionCalculatorScreenState
               final otroIngrediente = _ingredientesTabla[i];
 
               // --- Escalado basado en VALOR BASE --- 
-              double? valorBaseAnterior;
-              String? tipoUnidadOtro;
+              double? valorBaseAnterior = null;
+              String? tipoUnidadOtro = null;
 
               if (otroIngrediente.valorBaseGramos != null) {
                  tipoUnidadOtro = 'peso';
@@ -2537,9 +2447,8 @@ class IngredienteTabla {
   double cantidadOriginal;
   String unidadOriginal;
   bool modificadoManualmente;
-  // --- Nuevos campos para valor base ---
-  double? valorBaseGramos;      // Valor equivalente siempre en gramos (si es de peso)
-  double? valorBaseMililitros;  // Valor equivalente siempre en ml (si es de volumen)
+  double? valorBaseGramos;
+  double? valorBaseMililitros;
 
   IngredienteTabla({
     required this.nombre,
@@ -2549,7 +2458,6 @@ class IngredienteTabla {
     required this.cantidadOriginal,
     required this.unidadOriginal,
     this.modificadoManualmente = false,
-    // Inicializar valores base
     this.valorBaseGramos,
     this.valorBaseMililitros,
   }) : nombreController = TextEditingController(text: nombre);
