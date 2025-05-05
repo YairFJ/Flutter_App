@@ -55,6 +55,9 @@ class FavoriteRecipesScreen extends StatelessWidget {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return Center(child: Text(isEnglish ? 'No authenticated user' : 'No hay usuario autenticado'));
 
+    final size = MediaQuery.of(context).size;
+    final isTablet = size.width > 600;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas'),
@@ -86,15 +89,18 @@ class FavoriteRecipesScreen extends StatelessWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(isTablet ? 16 : 8),
             itemCount: recipes.length,
             itemBuilder: (context, index) {
               final recipe = recipes[index];
+              final size = MediaQuery.of(context).size;
+              final isTablet = size.width > 600;
+
               return Card(
                 color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color.fromRGBO(28, 28, 34, 1) // Modo oscuro
-                    : Colors.grey[100], // Modo claro
-                margin: const EdgeInsets.only(bottom: 8),
+                    ? const Color.fromRGBO(28, 28, 34, 1)
+                    : Colors.grey[100],
+                margin: EdgeInsets.only(bottom: isTablet ? 12 : 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -104,8 +110,8 @@ class FavoriteRecipesScreen extends StatelessWidget {
                     InkWell(
                       onTap: () {
                         Navigator.push(
-                  context,
-                  MaterialPageRoute(
+                          context,
+                          MaterialPageRoute(
                             builder: (context) => RecipeDetailScreen(
                               recipe: recipe,
                               isEnglish: isEnglish,
@@ -114,36 +120,35 @@ class FavoriteRecipesScreen extends StatelessWidget {
                         );
                       },
                       child: Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(isTablet ? 16 : 12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               recipe.title,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: isTablet ? 18 : 16,
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white // Modo oscuro
-                                    : Colors.black, // Modo claro
+                                    ? Colors.white
+                                    : Colors.black,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: isTablet ? 6 : 4),
                             Text(
                               recipe.description ?? '',
-                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                              style: TextStyle(
+                                fontSize: isTablet ? 14 : 12,
                                 color: Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white // Modo oscuro
-                                    : Colors.black, // Modo claro
+                                    ? Colors.white
+                                    : Colors.black,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: isTablet ? 12 : 8),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -151,14 +156,14 @@ class FavoriteRecipesScreen extends StatelessWidget {
                                   children: [
                                     Icon(
                                       Icons.timer_outlined,
-                                      size: 16,
+                                      size: isTablet ? 18 : 16,
                                       color: Theme.of(context).primaryColor,
                                     ),
-                                    const SizedBox(width: 4),
+                                    SizedBox(width: isTablet ? 6 : 4),
                                     Text(
                                       '${recipe.cookingTime.inMinutes} min',
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: isTablet ? 14 : 12,
                                         color: Theme.of(context).primaryColor,
                                       ),
                                     ),
@@ -166,23 +171,23 @@ class FavoriteRecipesScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const Divider(height: 16),
+                            Divider(height: isTablet ? 20 : 16),
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: EdgeInsets.all(isTablet ? 12 : 8),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).brightness == Brightness.dark
-                                    ? const Color.fromRGBO(28, 28, 34, 1) // Modo oscuro
-                                    : Colors.grey[100], // Modo claro
+                                    ? const Color.fromRGBO(28, 28, 34, 1)
+                                    : Colors.grey[100],
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.person_outline,
-                                    size: 16,
-                                    color: Color(0xFF96B4D8),
+                                    size: isTablet ? 18 : 16,
+                                    color: const Color(0xFF96B4D8),
                                   ),
-                                  const SizedBox(width: 6),
+                                  SizedBox(width: isTablet ? 8 : 6),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,11 +195,11 @@ class FavoriteRecipesScreen extends StatelessWidget {
                                         Text(
                                           recipe.creatorName,
                                           style: TextStyle(
-                                            fontSize: 13,
+                                            fontSize: isTablet ? 15 : 13,
                                             fontWeight: FontWeight.w600,
                                             color: Theme.of(context).brightness == Brightness.dark
-                                                ? Colors.white // Modo oscuro
-                                                : Colors.black87, // Modo claro
+                                                ? Colors.white
+                                                : Colors.black87,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -202,11 +207,11 @@ class FavoriteRecipesScreen extends StatelessWidget {
                                         Text(
                                           recipe.creatorEmail,
                                           style: TextStyle(
-                                            fontSize: 11,
+                                            fontSize: isTablet ? 13 : 11,
                                             fontWeight: FontWeight.w600,
                                             color: Theme.of(context).brightness == Brightness.dark
-                                                ? Colors.white // Modo oscuro
-                                                : Colors.black87, // Modo claro
+                                                ? Colors.white
+                                                : Colors.black87,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -221,19 +226,18 @@ class FavoriteRecipesScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Botón de eliminar de favoritos
                     Positioned(
-                      top: 8,
-                      right: 8,
+                      top: isTablet ? 12 : 8,
+                      right: isTablet ? 12 : 8,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1), // Fondo semitransparente
+                          color: Colors.white.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.favorite,
-                            size: 20,
+                            size: isTablet ? 24 : 20,
                             color: Colors.red,
                           ),
                           onPressed: () => _toggleFavorite(context, recipe),

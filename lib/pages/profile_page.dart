@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../screens/favorite_recipes_screen.dart';
 import '../screens/my_recipes_screen.dart';
 import '../screens/account_settings_screen.dart';
+import '../screens/help_support_screen.dart';
 
 class ProfilePage extends StatelessWidget {
   final User user;
@@ -169,76 +170,15 @@ class ProfilePage extends StatelessWidget {
           },
         ),
         _buildProfileSection(
-          icon: Icons.notifications,
-          title: isEnglish ? 'Notifications' : 'Notificaciones',
-          subtitle: isEnglish ? 'Configure your notification preferences' : 'Configura tus preferencias de notificación',
-          isTablet: isTablet,
-          onTap: () {
-            // TODO: Implementar configuración de notificaciones
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
-                backgroundColor: Colors.blue,
-              ),
-            );
-          },
-        ),
-        _buildProfileSection(
-          icon: Icons.language,
-          title: isEnglish ? 'Language' : 'Idioma',
-          subtitle: isEnglish ? 'Change app language' : 'Cambiar idioma de la aplicación',
-          isTablet: isTablet,
-          onTap: () {
-            // TODO: Implementar cambio de idioma
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
-                backgroundColor: Colors.blue,
-              ),
-            );
-          },
-        ),
-        _buildProfileSection(
-          icon: Icons.dark_mode,
-          title: isEnglish ? 'Appearance' : 'Apariencia',
-          subtitle: isEnglish ? 'Change theme and display settings' : 'Cambiar tema y configuración de visualización',
-          isTablet: isTablet,
-          onTap: () {
-            // TODO: Implementar cambio de tema
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
-                backgroundColor: Colors.blue,
-              ),
-            );
-          },
-        ),
-        _buildProfileSection(
-          icon: Icons.privacy_tip,
-          title: isEnglish ? 'Privacy & Security' : 'Privacidad y Seguridad',
-          subtitle: isEnglish ? 'Manage your privacy settings' : 'Gestiona tu configuración de privacidad',
-          isTablet: isTablet,
-          onTap: () {
-            // TODO: Implementar configuración de privacidad
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
-                backgroundColor: Colors.blue,
-              ),
-            );
-          },
-        ),
-        _buildProfileSection(
           icon: Icons.help_outline,
           title: isEnglish ? 'Help & Support' : 'Ayuda y Soporte',
           subtitle: isEnglish ? 'Get help and contact support' : 'Obtén ayuda y contacta con soporte',
           isTablet: isTablet,
           onTap: () {
-            // TODO: Implementar sección de ayuda
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isEnglish ? 'Coming soon!' : '¡Próximamente!'),
-                backgroundColor: Colors.blue,
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HelpSupportScreen(isEnglish: isEnglish),
               ),
             );
           },
@@ -323,45 +263,57 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                _buildProfileSection(
-                  icon: Icons.restaurant_menu,
-                  title: isEnglish ? 'My Recipes' : 'Mis Recetas',
-                  subtitle: isEnglish
-                      ? 'Manage your created recipes'
-                      : 'Gestiona tus recetas creadas',
-                  isTablet: isTablet,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            MyRecipesScreen(isEnglish: isEnglish),
-                      ),
-                    );
-                  },
-                ),
-                _buildProfileSection(
-                  icon: Icons.favorite,
-                  title: isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas',
-                  subtitle: isEnglish
-                      ? 'Recipes saved as favorites'
-                      : 'Recetas guardadas como favoritas',
-                  isTablet: isTablet,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            FavoriteRecipesScreen(isEnglish: isEnglish),
-                      ),
-                    );
-                  },
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          isEnglish ? 'My Content' : 'Mi Contenido',
+                          style: TextStyle(
+                            fontSize: isTablet ? 24 : 20,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF96B4D8),
+                          ),
+                        ),
+                      ),
+                      _buildProfileSection(
+                        icon: Icons.restaurant_menu,
+                        title: isEnglish ? 'My Recipes' : 'Mis Recetas',
+                        subtitle: isEnglish
+                            ? 'Manage your created recipes'
+                            : 'Gestiona tus recetas creadas',
+                        isTablet: isTablet,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  MyRecipesScreen(isEnglish: isEnglish),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildProfileSection(
+                        icon: Icons.favorite,
+                        title: isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas',
+                        subtitle: isEnglish
+                            ? 'Recipes saved as favorites'
+                            : 'Recetas guardadas como favoritas',
+                        isTablet: isTablet,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  FavoriteRecipesScreen(isEnglish: isEnglish),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
