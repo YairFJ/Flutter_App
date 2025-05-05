@@ -21,5 +21,10 @@ service cloud.firestore {
     match /pending_verifications/{email} {
       allow read, write: if isAuthenticated();
     }
+
+    // Reglas para la colección de grupos
+    match /groups/{groupId} {
+      allow read, write: if isAuthenticated();
+    }
   }
 }
