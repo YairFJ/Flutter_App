@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   final String email;
@@ -49,26 +50,49 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         print('Verificando estado del email para: ${user.email}');
-        await user.reload();
-        final reloadedUser = FirebaseAuth.instance.currentUser;
+        
+        try {
+          await user.reload();
+          final reloadedUser = FirebaseAuth.instance.currentUser;
 
-        if (reloadedUser?.emailVerified == true) {
-          print('Email verificado correctamente');
-          _timer?.cancel();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('¡Email verificado! Redirigiendo...'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            await Future.delayed(const Duration(seconds: 2));
-            if (mounted) {
-              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-            }
+          // Verificar en Firebase Auth
+          if (reloadedUser?.emailVerified == true) {
+            print('Email verificado correctamente en Firebase Auth');
+            _handleEmailVerified();
+            return;
           }
-        } else {
+          
+          // Verificar en Firestore como alternativa
+          final docSnapshot = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+              
+          if (docSnapshot.exists && docSnapshot.data()?['verified'] == true) {
+            print('Email verificado según Firestore');
+            _handleEmailVerified();
+            return;
+          }
+          
           print('Email aún no verificado');
+        } catch (e) {
+          print('Error en reload: $e');
+          if (e.toString().contains('PigeonUserInfo') || 
+              e.toString().contains('PigeonUserDetails')) {
+            // Error conocido, intentar verificar en Firestore
+            final docSnapshot = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+                
+            if (docSnapshot.exists && docSnapshot.data()?['verified'] == true) {
+              print('Email verificado según Firestore');
+              _handleEmailVerified();
+              return;
+            }
+          } else {
+            rethrow;
+          }
         }
       }
     } catch (e) {
@@ -87,6 +111,41 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       }
     }
   }
+  
+  // Manejar la redirección cuando el email es verificado
+  void _handleEmailVerified() async {
+    _timer?.cancel();
+    if (mounted) {
+      // Actualizar Firestore si es necesario
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({
+            'verified': true,
+            'needsVerification': false,
+          });
+        }
+      } catch (e) {
+        print('Error al actualizar Firestore: $e');
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Email verificado! Redirigiendo...'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      await Future.delayed(const Duration(seconds: 2));
+      
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      }
+    }
+  }
 
   // Reenviar email de verificación
   Future<void> _resendVerificationEmail() async {
@@ -97,46 +156,45 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        print('Reenviando email de verificación a: ${user.email}');
-        await user.sendEmailVerification();
-        print('Email de verificación reenviado exitosamente');
-
-        setState(() {
-          _remainingTime = 60; // Reiniciar contador
-        });
-
-        // Iniciar un contador para habilitar el botón de reenvío después de 60 segundos
-        Timer.periodic(const Duration(seconds: 1), (timer) {
-          if (_remainingTime > 0) {
-            setState(() {
-              _remainingTime--;
-            });
-          } else {
-            timer.cancel();
-          }
-        });
-
+      // Usar el servicio de autenticación mejorado
+      final error = await _authService.sendVerificationEmail();
+      if (error != null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Email de verificación enviado. Revisa tu bandeja de entrada.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        print('Error: No hay usuario autenticado para reenviar el email');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error: No hay usuario autenticado'),
+            SnackBar(
+              content: Text('Error: $error'),
               backgroundColor: Colors.red,
             ),
           );
         }
+        return;
+      }
+
+      print('Email de verificación reenviado exitosamente');
+
+      setState(() {
+        _remainingTime = 60; // Reiniciar contador
+      });
+
+      // Iniciar un contador para habilitar el botón de reenvío después de 60 segundos
+      Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_remainingTime > 0) {
+          setState(() {
+            _remainingTime--;
+          });
+        } else {
+          timer.cancel();
+        }
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Email de verificación enviado. Revisa tu bandeja de entrada.'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       print('Error al reenviar email de verificación: $e');
@@ -184,18 +242,28 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   // Método para enviar email de verificación inicial
   Future<void> _sendVerificationEmail() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
+      // Usar el servicio de autenticación mejorado
+      final error = await _authService.sendVerificationEmail();
+      if (error != null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'Email de verificación enviado. Revisa tu bandeja de entrada.'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: Text('Error: $error'),
+              backgroundColor: Colors.red,
             ),
           );
         }
+        return;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Email de verificación enviado. Revisa tu bandeja de entrada.'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       print('Error al enviar email de verificación inicial: $e');
@@ -206,6 +274,39 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
             backgroundColor: Colors.red,
           ),
         );
+      }
+    }
+  }
+
+  // Botón para marcar como verificado manualmente (para problemas específicos)
+  Future<void> _manuallyMarkAsVerified() async {
+    setState(() => _isChecking = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+          'verified': true,
+          'needsVerification': false,
+        });
+        _handleEmailVerified();
+      }
+    } catch (e) {
+      print('Error al marcar como verificado manualmente: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al marcar como verificado: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isChecking = false);
       }
     }
   }
@@ -295,6 +396,17 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 label: const Text(
                   'Ya verifiqué mi email',
                   style: TextStyle(fontSize: 16),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              
+              // Botón para marcar como verificado manualmente (para problemas específicos)
+              TextButton(
+                onPressed: _manuallyMarkAsVerified,
+                child: const Text(
+                  'Marcar como verificado (si hay problemas)',
+                  style: TextStyle(fontSize: 14, color: Colors.blue),
                 ),
               ),
 

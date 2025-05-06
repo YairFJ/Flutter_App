@@ -17,6 +17,8 @@ import 'Comunity/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
 import 'screens/code_verification_screen.dart';
+import 'screens/email_verification_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +80,9 @@ class _MyAppState extends State<MyApp> {
               '/verify': (context) => CodeVerificationScreen(
                     email: ModalRoute.of(context)!.settings.arguments as String,
                   ),
+              '/verify-email': (context) => EmailVerificationScreen(
+                    email: ModalRoute.of(context)!.settings.arguments as String,
+                  ),
             },
           );
         },
@@ -115,20 +120,43 @@ class AuthWrapper extends StatelessWidget {
         if (!user.emailVerified &&
             !user.providerData
                 .any((provider) => provider.providerId == 'google.com')) {
-          print('AuthWrapper: Email no verificado, cerrando sesión');
-          // Cerrar sesión y redirigir al login con mensaje
-          FirebaseAuth.instance.signOut();
-          // Mostrar mensaje después de que la página se construya
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                    'Por favor, verifica tu email antes de iniciar sesión'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          });
-          return const LoginPage();
+          
+          // Verificar también en Firestore
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+            builder: (context, firestoreSnapshot) {
+              // Si el documento está cargando, mostrar un indicador de carga
+              if (firestoreSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              // Si hay un error o no existe el documento, redirigir a verificación
+              if (firestoreSnapshot.hasError || 
+                  !firestoreSnapshot.hasData || 
+                  !firestoreSnapshot.data!.exists) {
+                print('AuthWrapper: Email no verificado, redirigiendo a pantalla de verificación');
+                return EmailVerificationScreen(email: user.email ?? '');
+              }
+              
+              // Verificar si el usuario está marcado como verificado en Firestore
+              final userData = firestoreSnapshot.data!.data() as Map<String, dynamic>?;
+              final isVerified = userData?['verified'] == true;
+              
+              if (isVerified) {
+                print('AuthWrapper: Usuario verificado según Firestore');
+                return HomeScreen(
+                  userId: user.uid,
+                  userEmail: user.email ?? 'No disponible',
+                  userName: user.displayName ?? 'Usuario',
+                  toggleTheme:
+                      Provider.of<ThemeService>(context, listen: false).toggleTheme,
+                );
+              } else {
+                print('AuthWrapper: Email no verificado, redirigiendo a pantalla de verificación');
+                return EmailVerificationScreen(email: user.email ?? '');
+              }
+            },
+          );
         }
 
         print(

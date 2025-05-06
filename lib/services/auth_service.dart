@@ -387,20 +387,52 @@ class AuthService {
       // Configurar el idioma del email
       await _auth.setLanguageCode('es');
       
-      // Forzar recarga del usuario
-      await user.reload();
-      
-      print('Enviando email de verificación a: ${user.email}');
-      print('Estado de verificación actual: ${user.emailVerified}');
-      
-      await user.sendEmailVerification();
-      
-      // Verificar el estado después de enviar
-      await Future.delayed(const Duration(seconds: 1));
-      await user.reload();
-      print('Estado de verificación después de enviar: ${user.emailVerified}');
-      
-      return null;
+      try {
+        // Forzar recarga del usuario
+        await user.reload();
+        
+        print('Enviando email de verificación a: ${user.email}');
+        print('Estado de verificación actual: ${user.emailVerified}');
+        
+        // Para evitar el error de PigeonUserInfo/PigeonUserDetails, intentamos un método más simple
+        try {
+          // Configurar URL de acción personalizada si es necesario
+          ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+            url: 'https://restaurante-app-6e13d.firebaseapp.com/__/auth/action',
+            handleCodeInApp: true,
+            androidPackageName: 'com.yourcompany.restaurante_app',
+            androidInstallApp: true,
+            androidMinimumVersion: '12',
+            iOSBundleId: 'com.yourcompany.restauranteApp',
+          );
+          
+          // Enviar email con las configuraciones personalizadas
+          await user.sendEmailVerification(actionCodeSettings);
+          print('Email de verificación enviado exitosamente con configuración personalizada');
+        } catch (e) {
+          print('Error con configuración personalizada: $e');
+          // Si falla con la configuración personalizada, intentar el método básico
+          await user.sendEmailVerification();
+          print('Email de verificación enviado exitosamente con método básico');
+        }
+        
+        return null;
+      } catch (e) {
+        if (e.toString().contains('PigeonUserInfo') || 
+            e.toString().contains('PigeonUserDetails')) {
+          print('Error conocido de Pigeon detectado, intentando solución alternativa');
+          // Si es error de Pigeon, marcar como verificado en Firestore para desarrollo
+          if (_isEmulator()) {
+            await _firestore.collection('users').doc(user.uid).update({
+              'verified': true,
+              'needsVerification': false,
+            });
+            return 'Verificación simulada en entorno de desarrollo';
+          }
+          return 'Error de Firebase: Por favor, intenta de nuevo más tarde';
+        }
+        rethrow;
+      }
     } on FirebaseAuthException catch (e) {
       print('Error de Firebase Auth al enviar email:');
       print('Código: ${e.code}');

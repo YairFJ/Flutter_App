@@ -100,14 +100,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           await Future.delayed(const Duration(seconds: 1));
           Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         } else {
-          // En dispositivo real, mostrar mensaje y redirigir a verificación
+          // En dispositivo real, mostrar mensaje y redirigir a verificación de email
           _showSuccess('Registro exitoso. Por favor, verifica tu correo electrónico.');
           await Future.delayed(const Duration(seconds: 2));
-          Navigator.push(
+          Navigator.pushNamed(
             context,
-            MaterialPageRoute(
-              builder: (context) => CodeVerificationScreen(email: email),
-            ),
+            '/verify-email',
+            arguments: email,
           );
         }
       }
