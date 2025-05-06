@@ -197,7 +197,9 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                         height: 1.5,
                         letterSpacing: 0.2,
                         wordSpacing: 1.2,
-                        color: const Color.fromARGB(221, 255, 255, 255),
+                        color: Theme.of(context).brightness == Brightness.dark 
+                            ? Colors.white 
+                            : Colors.black87,
                         fontFamily:
                             Theme.of(context).textTheme.bodyLarge?.fontFamily,
                       ),
@@ -303,10 +305,12 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                             Expanded(
                               child: Text(
                                 widget.recipe.steps[index],
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   height: 1.5,
-                                  color: Color.fromARGB(255, 255, 255, 255),
+                                  color: Theme.of(context).brightness == Brightness.dark 
+                                      ? Colors.white 
+                                      : Colors.black87,
                                 ),
                               ),
                             ),

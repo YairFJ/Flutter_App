@@ -22,9 +22,19 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
-    // Reglas para la colección de grupos
+    // Reglas para la colección de grupos y sus subcolecciones
     match /groups/{groupId} {
       allow read, write: if isAuthenticated();
+      
+      // Reglas para la subcolección de recetas dentro de grupos
+      match /recipes/{recipeId} {
+        allow read, write: if isAuthenticated();
+      }
+      
+      // Reglas para la subcolección de miembros dentro de grupos
+      match /members/{memberId} {
+        allow read, write: if isAuthenticated();
+      }
     }
   }
 }
