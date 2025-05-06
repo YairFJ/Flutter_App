@@ -5,6 +5,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
+import 'package:printing/printing.dart';
+import '../utils/pdf_calculator_generator.dart';
+import '../models/ingrediente_tabla.dart';
+import '../utils/pdf_generator.dart' as custom_pdf;
 
 class ConversionCalculatorScreen extends StatefulWidget {
   final Recipe recipe;
@@ -1029,114 +1033,17 @@ class _ConversionCalculatorScreenState
   }
 
   Future<void> _generarPDF() async {
-    final pdf = pw.Document();
-
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                'CALCULADORA DE CONVERSIÓN',
-                style: pw.TextStyle(
-                  fontSize: 24,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 20),
-              pw.Text(
-                'Rendimiento Nuevo: $_platosDestino ${_getUnidadPlural(_unidadDestino, _platosDestino)}',
-                style: const pw.TextStyle(fontSize: 14),
-              ),
-              pw.SizedBox(height: 20),
-              pw.Text(
-                'TABLA DE INGREDIENTES',
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 10),
-              pw.Table(
-                border: pw.TableBorder.all(),
-                columnWidths: {
-                  0: pw.FlexColumnWidth(2),
-                  1: pw.FlexColumnWidth(1),
-                  2: pw.FlexColumnWidth(1),
-                },
-                children: [
-                  pw.TableRow(
-                    decoration: pw.BoxDecoration(
-                      color: PdfColors.grey300,
-                    ),
-                    children: [
-                      pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'INGREDIENTE',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                          textAlign: pw.TextAlign.center,
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'CANTIDAD',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                          textAlign: pw.TextAlign.center,
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'UNIDAD',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                          textAlign: pw.TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                  ..._ingredientesTabla.map((ingrediente) {
-                    return pw.TableRow(
-                      children: [
-                        pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            ingrediente?.nombre ?? '',
-                            textAlign: pw.TextAlign.left,
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            _formatQuantity(ingrediente?.cantidad ?? 0),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: pw.EdgeInsets.all(8),
-                          child: pw.Text(
-                            _unidadesAbreviadas[ingrediente?.unidad ?? ''] ??
-                                ingrediente?.unidad ?? '',
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ],
-              ),
-            ],
-          );
-        },
-      ),
+    final pdfBytes = await generateCalculatorPdf(
+      ingredientes: _ingredientesTabla,
+      rendimiento: _platosDestino,
+      unidad: _unidadDestino,
+      detalles: widget.recipe.description ?? '',
+      pasos: widget.recipe.steps,
+      tituloReceta: widget.recipe.title, // Añadir el título de la receta original
     );
-
     final output = await getTemporaryDirectory();
     final file = File('${output.path}/conversion_receta.pdf');
-    await file.writeAsBytes(await pdf.save());
-
+    await file.writeAsBytes(pdfBytes);
     if (context.mounted) {
       await Share.shareXFiles(
         [XFile(file.path)],
@@ -1182,11 +1089,7 @@ class _ConversionCalculatorScreenState
             onPressed: _mostrarTablaEquivalencias,
             tooltip: 'Ver tabla de equivalencias',
           ),
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: _generarPDF,
-            tooltip: 'Generar PDF',
-          ),
+        
         ],
       ),
       body: ListView(
@@ -1632,6 +1535,45 @@ class _ConversionCalculatorScreenState
             ),
           ), // Fin Card Tabla Ingredientes
 
+          // Botón para compartir PDF (estilo igual al ejemplo)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  await _generarPDF();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFB5CAE9),
+                  foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.share,
+                      size: 16,
+                      color: const Color.fromARGB(255, 76, 117, 250),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Compartir PDF',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -2436,29 +2378,4 @@ class _ConversionCalculatorScreenState
       ),
     );
   }
-}
-
-class IngredienteTabla {
-  final String nombre;
-  double cantidad;
-  String unidad;
-  final TextEditingController nombreController;
-  final TextEditingController cantidadController;
-  double cantidadOriginal;
-  String unidadOriginal;
-  bool modificadoManualmente;
-  double? valorBaseGramos;
-  double? valorBaseMililitros;
-
-  IngredienteTabla({
-    required this.nombre,
-    required this.cantidad,
-    required this.unidad,
-    required this.cantidadController,
-    required this.cantidadOriginal,
-    required this.unidadOriginal,
-    this.modificadoManualmente = false,
-    this.valorBaseGramos,
-    this.valorBaseMililitros,
-  }) : nombreController = TextEditingController(text: nombre);
 }

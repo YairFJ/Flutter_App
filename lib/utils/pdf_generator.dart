@@ -97,7 +97,7 @@ Future<Uint8List> generateRecipePdf(Recipe receta, {
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(8.0),
                         child: pw.Text(
-                          'Cantidad Original',
+                          'Cantidad',
                           style: pw.TextStyle(
                             fontWeight: pw.FontWeight.bold,
                             color: primaryColor,
@@ -116,25 +116,10 @@ Future<Uint8List> generateRecipePdf(Recipe receta, {
                           textAlign: pw.TextAlign.center,
                         ),
                       ),
-                      if (ingredientesCalculados != null)
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8.0),
-                          child: pw.Text(
-                            'Cantidad Calculada',
-                            style: pw.TextStyle(
-                              fontWeight: pw.FontWeight.bold,
-                              color: primaryColor,
-                            ),
-                            textAlign: pw.TextAlign.center,
-                          ),
-                        ),
                     ],
                   ),
                   ...List.generate(receta.ingredients.length, (index) {
                     final ingredient = receta.ingredients[index];
-                    final calculatedIngredient = index < ingredientesCalculados.length
-                        ? ingredientesCalculados[index]
-                        : null;
 
                     return pw.TableRow(
                       children: [
@@ -157,17 +142,6 @@ Future<Uint8List> generateRecipePdf(Recipe receta, {
                           child: pw.Text(
                             ingredient.unit,
                             textAlign: pw.TextAlign.center,
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8.0),
-                          child: pw.Text(
-                            calculatedIngredient?.cantidad.toString() ?? ingredient.quantity.toString(),
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(
-                              color: primaryColor,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
                           ),
                         ),
                       ],

@@ -307,20 +307,7 @@ class _RecipesPageState extends State<RecipesPage> {
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            recipe.creatorEmail,
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.white
-                                                  : Colors.black87,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                          ),                                      
                                         ],
                                       ),
                                     ),
