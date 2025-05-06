@@ -50,6 +50,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.2
   share_plus: ^10.1.4
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +80,7 @@ flutter:
     - lib/images/google.png
     - lib/sounds/alarm.mp3
     - .env
+    - assets/icon/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
