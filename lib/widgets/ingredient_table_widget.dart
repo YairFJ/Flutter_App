@@ -23,29 +23,39 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
   late final List<IngredienteTabla> _ingredientes;
 
   final List<String> _unidadesDisponibles = [
-    'g', // gramos
-    'kg', // kilogramos
-    'ml', // mililitros
-    'l', // litros
-    'tz', // taza
-    'cda', // cucharada
-    'cdta', // cucharadita
-    'u', // unidad
-    'oz', // onzas
-    'lb', // libras
+    'gr',
+    'kg',
+    'mg',
+    'oz',
+    'lb',
+    'ml',
+    'l',
+    'cl',
+    'cda',
+    'cdta',
+    'tz',
+    'oz liq',
+    'pinta',
+    'c-galon',
+    'galon',
   ];
 
   final Map<String, Map<String, String>> _unidadesCompletas = {
-    'g': {'es': 'gramos', 'en': 'grams'},
-    'kg': {'es': 'kilogramos', 'en': 'kilograms'},
-    'ml': {'es': 'mililitros', 'en': 'milliliters'},
-    'l': {'es': 'litros', 'en': 'liters'},
-    'tz': {'es': 'taza', 'en': 'cup'},
-    'cda': {'es': 'cucharada', 'en': 'tablespoon'},
-    'cdta': {'es': 'cucharadita', 'en': 'teaspoon'},
-    'u': {'es': 'unidad', 'en': 'unit'},
-    'oz': {'es': 'onzas', 'en': 'ounces'},
-    'lb': {'es': 'libras', 'en': 'pounds'},
+    'gr': {'es': 'Gramo', 'en': 'Gram'},
+    'kg': {'es': 'Kilogramo', 'en': 'Kilogram'},
+    'mg': {'es': 'Miligramos', 'en': 'Milligrams'},
+    'ml': {'es': 'Mililitros', 'en': 'Milliliters'},
+    'l': {'es': 'Litro', 'en': 'Liter'},
+    'cl': {'es': 'Centilitros', 'en': 'Centiliters'},
+    'tz': {'es': 'Taza', 'en': 'Cup'},
+    'cda': {'es': 'Cucharada', 'en': 'Tablespoon'},
+    'cdta': {'es': 'Cucharadita', 'en': 'Teaspoon'},
+    'oz': {'es': 'Onza', 'en': 'Ounce'},
+    'lb': {'es': 'Libra', 'en': 'Pound'},
+    'oz liq': {'es': 'Onza líquida', 'en': 'Fluid ounce'},
+    'pinta': {'es': 'Pinta', 'en': 'Pint'},
+    'c-galon': {'es': 'Cuarto galón', 'en': 'Quart'},
+    'galon': {'es': 'Galón', 'en': 'Gallon'},
   };
 
   @override
@@ -153,10 +163,10 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                   _ingredientes.add(IngredienteTabla(
                     nombre: '',
                     cantidad: 0.0,
-                    unidad: 'g',
+                    unidad: 'gr',
                     cantidadController: TextEditingController(text: '0.0'),
                     cantidadOriginal: 0.0,
-                    unidadOriginal: 'g',
+                    unidadOriginal: 'gr',
                   ));
                   _actualizarIngredientes();
                 });
@@ -235,7 +245,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
             child: Padding(
               padding: const EdgeInsets.all(4.0),
               child: DropdownButtonFormField<String>(
-                value: ingrediente.unidad,
+                value: _unidadesDisponibles.contains(ingrediente.unidad) ? ingrediente.unidad : 'Gramo',
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(horizontal: 8),
