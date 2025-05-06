@@ -45,7 +45,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     'lb', // Libras
     'l', // Litros
     'ml', // Mililitros
-    'porciones'
+    'porc'
   ];
 
   // Expresión regular para validar números positivos (enteros o decimales)

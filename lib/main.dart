@@ -246,13 +246,21 @@ class _HomeScreenState extends State<HomeScreen> {
       StopwatchPage(isEnglish: isEnglish),
     ];
 
+    // Lista de títulos para cada página
+    final List<String> titles = [
+      isEnglish ? 'Recipes' : 'Recetas',
+      isEnglish ? 'Conversion' : 'Conversión',
+      isEnglish ? 'Timer' : 'Temporizador',
+      isEnglish ? 'Stopwatch' : 'Cronómetro',
+    ];
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: primaryColor,
         title: Text(
-          isEnglish ? 'Recipes' : 'Recetas',
+          titles[_selectedIndex],
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
