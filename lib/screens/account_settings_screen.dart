@@ -15,18 +15,16 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _emailController;
-  late TextEditingController _phoneController;
-  late TextEditingController _bioController;
-  String? _selectedGender;
-  DateTime? _selectedBirthDate;
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
     _emailController = TextEditingController();
-    _phoneController = TextEditingController();
-    _bioController = TextEditingController();
     _loadUserData();
   }
 
@@ -34,8 +32,9 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
-    _bioController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -52,48 +51,37 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         setState(() {
           _nameController.text = userData['name'] ?? '';
           _emailController.text = currentUser.email ?? '';
-          _phoneController.text = userData['phone'] ?? '';
-          _bioController.text = userData['bio'] ?? '';
-          _selectedGender = userData['gender'];
-          _selectedBirthDate = userData['birthDate']?.toDate();
         });
       }
     }
   }
 
-  Future<void> _selectBirthDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedBirthDate ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedBirthDate) {
-      setState(() {
-        _selectedBirthDate = picked;
-      });
-    }
-  }
-
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
       try {
         final currentUser = FirebaseAuth.instance.currentUser;
         if (currentUser != null) {
+          // Primero actualizar en Firebase Auth
+          try {
+            await currentUser.updateDisplayName(_nameController.text.trim());
+          } catch (e) {
+            print('Error updating display name: $e');
+            // Continuar con la actualización en Firestore incluso si falla la actualización del display name
+          }
+
+          // Luego actualizar en Firestore
           await FirebaseFirestore.instance
               .collection('users')
               .doc(currentUser.uid)
-              .update({
-            'name': _nameController.text,
-            'phone': _phoneController.text,
-            'bio': _bioController.text,
-            'gender': _selectedGender,
-            'birthDate': _selectedBirthDate,
+              .set({
+            'name': _nameController.text.trim(),
+            'email': currentUser.email,
             'updatedAt': FieldValue.serverTimestamp(),
-          });
-
-          // Actualizar el nombre en Firebase Auth
-          await currentUser.updateDisplayName(_nameController.text);
+          }, SetOptions(merge: true));
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -106,7 +94,20 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             );
           }
         }
+      } on FirebaseException catch (e) {
+        print('Firebase error: ${e.message}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.isEnglish
+                  ? 'Error updating profile: ${e.message}'
+                  : 'Error al actualizar el perfil: ${e.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } catch (e) {
+        print('General error: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -117,8 +118,132 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             ),
           );
         }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
+  }
+
+  Future<void> _showChangePasswordDialog() async {
+    _currentPasswordController.clear();
+    _newPasswordController.clear();
+    _confirmPasswordController.clear();
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(widget.isEnglish ? 'Change Password' : 'Cambiar Contraseña'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _currentPasswordController,
+                decoration: InputDecoration(
+                  labelText: widget.isEnglish ? 'Current Password' : 'Contraseña Actual',
+                  border: const OutlineInputBorder(),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _newPasswordController,
+                decoration: InputDecoration(
+                  labelText: widget.isEnglish ? 'New Password' : 'Nueva Contraseña',
+                  border: const OutlineInputBorder(),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _confirmPasswordController,
+                decoration: InputDecoration(
+                  labelText: widget.isEnglish ? 'Confirm New Password' : 'Confirmar Nueva Contraseña',
+                  border: const OutlineInputBorder(),
+                ),
+                obscureText: true,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(widget.isEnglish ? 'Cancel' : 'Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (_newPasswordController.text != _confirmPasswordController.text) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(widget.isEnglish
+                        ? 'New passwords do not match'
+                        : 'Las contraseñas nuevas no coinciden'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              try {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null && user.email != null) {
+                  // Reautenticar al usuario
+                  final credential = EmailAuthProvider.credential(
+                    email: user.email!,
+                    password: _currentPasswordController.text,
+                  );
+                  await user.reauthenticateWithCredential(credential);
+
+                  // Cambiar la contraseña
+                  await user.updatePassword(_newPasswordController.text);
+
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(widget.isEnglish
+                            ? 'Password updated successfully'
+                            : 'Contraseña actualizada con éxito'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                }
+              } on FirebaseAuthException catch (e) {
+                String message;
+                if (e.code == 'wrong-password') {
+                  message = widget.isEnglish
+                      ? 'Current password is incorrect'
+                      : 'La contraseña actual es incorrecta';
+                } else if (e.code == 'weak-password') {
+                  message = widget.isEnglish
+                      ? 'The password is too weak'
+                      : 'La contraseña es demasiado débil';
+                } else {
+                  message = widget.isEnglish
+                      ? 'Error changing password'
+                      : 'Error al cambiar la contraseña';
+                }
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(message),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text(widget.isEnglish ? 'Change' : 'Cambiar'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -131,90 +256,81 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         title: Text(widget.isEnglish ? 'Account Settings' : 'Configuración de Cuenta'),
         backgroundColor: const Color(0xFF96B4D8),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(isTablet ? 24 : 16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionTitle(
-                widget.isEnglish ? 'Personal Information' : 'Información Personal',
-              ),
-              const SizedBox(height: 16),
-              _buildProfilePicture(),
-              const SizedBox(height: 24),
-              _buildTextField(
-                controller: _nameController,
-                label: widget.isEnglish ? 'Full Name' : 'Nombre Completo',
-                icon: Icons.person_outline,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return widget.isEnglish
-                        ? 'Please enter your name'
-                        : 'Por favor ingresa tu nombre';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _emailController,
-                label: widget.isEnglish ? 'Email' : 'Correo Electrónico',
-                icon: Icons.email_outlined,
-                enabled: false,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _phoneController,
-                label: widget.isEnglish ? 'Phone Number' : 'Número de Teléfono',
-                icon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _bioController,
-                label: widget.isEnglish ? 'Bio' : 'Biografía',
-                icon: Icons.description_outlined,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              _buildGenderDropdown(),
-              const SizedBox(height: 16),
-              _buildBirthDatePicker(),
-              const SizedBox(height: 32),
-              _buildSectionTitle(
-                widget.isEnglish ? 'Account Security' : 'Seguridad de la Cuenta',
-              ),
-              const SizedBox(height: 16),
-              _buildSecurityOptions(),
-              const SizedBox(height: 32),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF96B4D8),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 48 : 32,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: EdgeInsets.all(isTablet ? 24 : 16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle(
+                    widget.isEnglish ? 'Personal Information' : 'Información Personal',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _nameController,
+                    label: widget.isEnglish ? 'Full Name' : 'Nombre Completo',
+                    icon: Icons.person_outline,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return widget.isEnglish
+                            ? 'Please enter your name'
+                            : 'Por favor ingresa tu nombre';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _emailController,
+                    label: widget.isEnglish ? 'Email' : 'Correo Electrónico',
+                    icon: Icons.email_outlined,
+                    enabled: false,
+                  ),
+                  const SizedBox(height: 32),
+                  _buildSectionTitle(
+                    widget.isEnglish ? 'Account Security' : 'Seguridad de la Cuenta',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSecurityOptions(),
+                  const SizedBox(height: 32),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _saveProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF96B4D8),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isTablet ? 48 : 32,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        widget.isEnglish ? 'Save Changes' : 'Guardar Cambios',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                  child: Text(
-                    widget.isEnglish ? 'Save Changes' : 'Guardar Cambios',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -226,53 +342,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         fontSize: 20,
         fontWeight: FontWeight.bold,
         color: Color(0xFF96B4D8),
-      ),
-    );
-  }
-
-  Widget _buildProfilePicture() {
-    return Center(
-      child: Stack(
-        children: [
-          CircleAvatar(
-            radius: 60,
-            backgroundColor: const Color(0xFFD6E3BB),
-            child: Text(
-              _nameController.text.isNotEmpty
-                  ? _nameController.text[0].toUpperCase()
-                  : 'U',
-              style: const TextStyle(
-                fontSize: 40,
-                color: Color(0xFF96B4D8),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF96B4D8),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.camera_alt, color: Colors.white),
-                onPressed: () {
-                  // TODO: Implementar selección de imagen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(widget.isEnglish
-                          ? 'Coming soon!'
-                          : '¡Próximamente!'),
-                      backgroundColor: Colors.blue,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -310,60 +379,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     );
   }
 
-  Widget _buildGenderDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _selectedGender,
-      decoration: InputDecoration(
-        labelText: widget.isEnglish ? 'Gender' : 'Género',
-        prefixIcon: const Icon(Icons.wc_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      items: [
-        DropdownMenuItem(
-          value: 'male',
-          child: Text(widget.isEnglish ? 'Male' : 'Masculino'),
-        ),
-        DropdownMenuItem(
-          value: 'female',
-          child: Text(widget.isEnglish ? 'Female' : 'Femenino'),
-        ),
-        DropdownMenuItem(
-          value: 'other',
-          child: Text(widget.isEnglish ? 'Other' : 'Otro'),
-        ),
-      ],
-      onChanged: (value) {
-        setState(() {
-          _selectedGender = value;
-        });
-      },
-    );
-  }
-
-  Widget _buildBirthDatePicker() {
-    return InkWell(
-      onTap: () => _selectBirthDate(context),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: widget.isEnglish ? 'Birth Date' : 'Fecha de Nacimiento',
-          prefixIcon: const Icon(Icons.calendar_today),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(
-          _selectedBirthDate != null
-              ? '${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}'
-              : widget.isEnglish
-                  ? 'Select your birth date'
-                  : 'Selecciona tu fecha de nacimiento',
-        ),
-      ),
-    );
-  }
-
   Widget _buildSecurityOptions() {
     return Column(
       children: [
@@ -371,17 +386,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           leading: const Icon(Icons.lock_outline),
           title: Text(widget.isEnglish ? 'Change Password' : 'Cambiar Contraseña'),
           trailing: const Icon(Icons.arrow_forward_ios),
-          onTap: () {
-            // TODO: Implementar cambio de contraseña
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(widget.isEnglish
-                    ? 'Coming soon!'
-                    : '¡Próximamente!'),
-                backgroundColor: Colors.blue,
-              ),
-            );
-          },
+          onTap: _showChangePasswordDialog,
         ),
         const Divider(),
         ListTile(
@@ -389,7 +394,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           title: Text(widget.isEnglish ? 'Two-Factor Authentication' : 'Autenticación de Dos Factores'),
           trailing: const Icon(Icons.arrow_forward_ios),
           onTap: () {
-            // TODO: Implementar autenticación de dos factores
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(widget.isEnglish
