@@ -38,6 +38,15 @@ class AuthService {
       print('Email: $email');
       print('Nombre: $name');
       
+      // Verificar si el email ya está registrado
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
+      if (methods.isNotEmpty) {
+        throw FirebaseAuthException(
+          code: 'email-already-in-use',
+          message: 'Este correo electrónico ya está registrado',
+        );
+      }
+      
       // Crear usuario en Firebase Auth
       print('Creando usuario en Firebase Auth...');
       userCredential = await _auth.createUserWithEmailAndPassword(
@@ -55,7 +64,7 @@ class AuthService {
         );
       }
 
-      // Guardar datos del usuario en Firestore primero
+      // Guardar datos del usuario en Firestore
       final userData = {
         'name': name,
         'email': email,
@@ -64,13 +73,14 @@ class AuthService {
         'userId': userCredential.user?.uid,
         'lastLogin': FieldValue.serverTimestamp(),
         'needsVerification': true,
+        'disabled': false,
       };
 
       print('Guardando datos en Firestore...');
       await _firestore.collection('users').doc(userCredential.user?.uid).set(userData);
       print('Datos guardados en Firestore exitosamente');
 
-      // Enviar email de verificación después de guardar en Firestore
+      // Enviar email de verificación
       print('Enviando email de verificación...');
       try {
         // Forzar recarga del usuario
@@ -90,8 +100,18 @@ class AuthService {
         // Configurar el idioma del email
         await _auth.setLanguageCode('es');
         
-        // Enviar el email de verificación
-        await currentUser.sendEmailVerification();
+        // Configurar URL de acción personalizada
+        ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+          url: 'https://restaurante-app-6e13d.firebaseapp.com/__/auth/action',
+          handleCodeInApp: true,
+          androidPackageName: 'com.yourcompany.restaurante_app',
+          androidInstallApp: true,
+          androidMinimumVersion: '12',
+          iOSBundleId: 'com.yourcompany.restauranteApp',
+        );
+        
+        // Enviar el email de verificación con configuración personalizada
+        await currentUser.sendEmailVerification(actionCodeSettings);
         print('Email de verificación enviado exitosamente');
         
         // Verificar el estado después de enviar
@@ -105,6 +125,7 @@ class AuthService {
           print('Mensaje de error: ${e.message}');
           print('Detalles completos: ${e.toString()}');
         }
+        // No lanzar el error aquí, continuar con el proceso
       }
 
       print('=== FIN DEL PROCESO DE REGISTRO ===');
@@ -116,22 +137,6 @@ class AuthService {
       throw e;
     } catch (e) {
       print('Error inesperado en registerWithEmailAndPassword: $e');
-      // Si es el error de PigeonUserDetails y tenemos un userCredential válido
-      if (e.toString().contains('PigeonUserDetails') && userCredential != null) {
-        print('Error de PigeonUserDetails detectado, continuando con el proceso...');
-        // Intentar enviar el email de verificación de nuevo
-        try {
-          final currentUser = _auth.currentUser;
-          if (currentUser != null) {
-            print('Intentando enviar email de verificación nuevamente...');
-            await currentUser.sendEmailVerification();
-            print('Email de verificación enviado en segundo intento');
-          }
-        } catch (emailError) {
-          print('Error al enviar email en segundo intento: $emailError');
-        }
-        return userCredential;
-      }
       throw e;
     }
   }

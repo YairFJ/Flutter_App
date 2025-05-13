@@ -48,7 +48,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     'lb', // Libras
     'l', // Litros
     'ml', // Mililitros
-    'porciones'
+    'porc'
   ];
 
   // Expresión regular para validar números positivos

@@ -17,7 +17,6 @@ import 'Comunity/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
 import 'screens/code_verification_screen.dart';
-import 'screens/email_verification_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
@@ -80,9 +79,6 @@ class _MyAppState extends State<MyApp> {
               '/verify': (context) => CodeVerificationScreen(
                     email: ModalRoute.of(context)!.settings.arguments as String,
                   ),
-              '/verify-email': (context) => EmailVerificationScreen(
-                    email: ModalRoute.of(context)!.settings.arguments as String,
-                  ),
             },
           );
         },
@@ -134,8 +130,8 @@ class AuthWrapper extends StatelessWidget {
               if (firestoreSnapshot.hasError || 
                   !firestoreSnapshot.hasData || 
                   !firestoreSnapshot.data!.exists) {
-                print('AuthWrapper: Email no verificado, redirigiendo a pantalla de verificación');
-                return EmailVerificationScreen(email: user.email ?? '');
+                print('AuthWrapper: Email no verificado, redirigiendo a login');
+                return const LoginPage();
               }
               
               // Verificar si el usuario está marcado como verificado en Firestore
@@ -152,8 +148,8 @@ class AuthWrapper extends StatelessWidget {
                       Provider.of<ThemeService>(context, listen: false).toggleTheme,
                 );
               } else {
-                print('AuthWrapper: Email no verificado, redirigiendo a pantalla de verificación');
-                return EmailVerificationScreen(email: user.email ?? '');
+                print('AuthWrapper: Email no verificado, redirigiendo a login');
+                return const LoginPage();
               }
             },
           );
