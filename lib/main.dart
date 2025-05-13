@@ -16,7 +16,6 @@ import 'pages/profile_page.dart';
 import 'Comunity/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
-import 'screens/code_verification_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
@@ -76,9 +75,6 @@ class _MyAppState extends State<MyApp> {
               '/login': (context) => const LoginPage(),
               '/register': (context) => const SignUpScreen(),
               '/groups': (context) => const GroupsScreen(),
-              '/verify': (context) => CodeVerificationScreen(
-                    email: ModalRoute.of(context)!.settings.arguments as String,
-                  ),
             },
           );
         },
@@ -126,7 +122,7 @@ class AuthWrapper extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               
-              // Si hay un error o no existe el documento, redirigir a verificación
+              // Si hay un error o no existe el documento, redirigir a login
               if (firestoreSnapshot.hasError || 
                   !firestoreSnapshot.hasData || 
                   !firestoreSnapshot.data!.exists) {
