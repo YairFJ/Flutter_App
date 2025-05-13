@@ -15,15 +15,17 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     try {
       debugPrint('Intentando abrir el email...');
       
-      final Uri emailUri = Uri(
-        scheme: 'mailto',
-        path: 'support@yourapp.com',
-        queryParameters: {
-          'subject': widget.isEnglish ? 'Support Request' : 'Solicitud de Soporte',
-          'body': widget.isEnglish 
-            ? 'Hello, I need help with the following issue:'
-            : 'Hola, necesito ayuda con el siguiente problema:',
-        },
+      final subject = Uri.encodeComponent(
+        widget.isEnglish ? 'Support Request' : 'Solicitud de Soporte'
+      );
+      final body = Uri.encodeComponent(
+        widget.isEnglish 
+          ? 'Hello, I need help with the following issue:'
+          : 'Hola, necesito ayuda con el siguiente problema:'
+      );
+      
+      final Uri emailUri = Uri.parse(
+        'mailto:edinamita25@gmail.com?subject=$subject&body=$body'
       );
       
       debugPrint('URI del email: $emailUri');
@@ -220,8 +222,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Text(
             answer,
-            style: const TextStyle(
-              color: Colors.black87,
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.white 
+                : Colors.black87,
             ),
           ),
         ),

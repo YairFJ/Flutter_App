@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 import '../utils/pdf_calculator_generator.dart';
 import '../models/ingrediente_tabla.dart';
 import '../utils/pdf_generator.dart' as custom_pdf;
+import 'package:flutter/services.dart';
 
 class ConversionCalculatorScreen extends StatefulWidget {
   final Recipe recipe;
@@ -625,12 +626,16 @@ class _ConversionCalculatorScreenState
 
   // Método auxiliar para redondear con precisión controlada y evitar errores de punto flotante
   double _redondearPrecision(double valor) {
-    // Para valores muy pequeños
+    // Aumentamos la precisión interna para cálculos
     if (valor.abs() < 0.01) {
+      return double.parse(valor.toStringAsFixed(6));
+    } else if (valor.abs() < 1) {
       return double.parse(valor.toStringAsFixed(4));
+    } else if (valor.abs() < 10) {
+      return double.parse(valor.toStringAsFixed(3));
+    } else {
+      return double.parse(valor.toStringAsFixed(2));
     }
-    // Para el resto de valores
-    return double.parse(valor.toStringAsFixed(3));
   }
 
   void _actualizarCantidadIngrediente(int index, String value) {
@@ -747,45 +752,63 @@ class _ConversionCalculatorScreenState
     print("Unidad anterior: $unidadAnterior");
     print("Nueva unidad seleccionada: $nuevaUnidad");
     
-    // --- CORRECCIÓN: Conversión basada en CANTIDAD ACTUAL --- 
+    // Guardar el valor base antes de la conversión
+    double? valorBaseOriginal;
+    if (_esTipoUnidadPeso(unidadAnterior)) {
+      valorBaseOriginal = ingrediente.valorBaseGramos;
+    } else if (_esTipoUnidadVolumen(unidadAnterior)) {
+      valorBaseOriginal = ingrediente.valorBaseMililitros;
+    }
+    
     double cantidadActual = ingrediente.cantidad;
     double nuevaCantidad;
 
-    // Intentar convertir la cantidad ACTUAL de la unidad ANTERIOR a la NUEVA
     if (_esConversionValida(unidadAnterior, nuevaUnidad)) {
-        print("  Calculando conversión directa: $cantidadActual $unidadAnterior -> $nuevaUnidad");
+      // Si tenemos un valor base, usarlo para la conversión
+      if (valorBaseOriginal != null) {
+        if (_esTipoUnidadPeso(nuevaUnidad)) {
+          nuevaCantidad = _convertirDesdeUnidadBase(valorBaseOriginal, nuevaUnidad, 'peso');
+        } else if (_esTipoUnidadVolumen(nuevaUnidad)) {
+          nuevaCantidad = _convertirDesdeUnidadBase(valorBaseOriginal, nuevaUnidad, 'volumen');
+        } else {
+          nuevaCantidad = _convertirRendimiento(cantidadActual, unidadAnterior, nuevaUnidad);
+        }
+      } else {
         nuevaCantidad = _convertirRendimiento(cantidadActual, unidadAnterior, nuevaUnidad);
+      }
     } else {
         print("  ⚠️ Conversión no válida entre '$unidadAnterior' y '$nuevaUnidad'. Manteniendo cantidad anterior.");
-        nuevaCantidad = cantidadActual; // Mantener cantidad si no se puede convertir
+        nuevaCantidad = cantidadActual;
     }
-    // --- Fin CORRECCIÓN ---
 
-    // Validar que la conversión sea válida
     if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
       print("⚠️ Resultado de conversión inválido: $nuevaCantidad. Manteniendo cantidad anterior.");
-      nuevaCantidad = ingrediente.cantidad; // Revertir a la cantidad anterior
+      nuevaCantidad = ingrediente.cantidad;
     }
     
-    // Aplicar redondeo para evitar imprecisiones
     nuevaCantidad = _redondearPrecision(nuevaCantidad);
     
     setState(() {
-      // Marcar que este ingrediente ha sido modificado manualmente
       ingrediente.modificadoManualmente = true;
-      
-      // Actualizar la unidad y cantidad
       ingrediente.unidad = nuevaUnidad;
       ingrediente.cantidad = nuevaCantidad;
       ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
       
-      // ¡Importante! NO actualizamos el valor base aquí.
-      // El valor base solo cambia si se escala la receta entera.
+      // Actualizar el valor base después de la conversión
+      if (_esTipoUnidadPeso(nuevaUnidad)) {
+        ingrediente.valorBaseGramos = _convertirAUnidadBase(nuevaCantidad, nuevaUnidad, 'peso');
+        ingrediente.valorBaseMililitros = null;
+      } else if (_esTipoUnidadVolumen(nuevaUnidad)) {
+        ingrediente.valorBaseMililitros = _convertirAUnidadBase(nuevaCantidad, nuevaUnidad, 'volumen');
+        ingrediente.valorBaseGramos = null;
+      }
       
       print("Ingrediente actualizado:");
       print("  - Nombre: ${ingrediente.nombre}");
       print("  - Cantidad recalculada: $nuevaCantidad $nuevaUnidad");
       print("  - Marcado como modificado manualmente: ${ingrediente.modificadoManualmente}");
+      print("  - Valor base en gramos: ${ingrediente.valorBaseGramos}");
+      print("  - Valor base en mililitros: ${ingrediente.valorBaseMililitros}");
     });
   }
 
@@ -909,18 +932,29 @@ class _ConversionCalculatorScreenState
         return "0";
       }
 
-      // Para valores muy pequeños, mostrar más decimales
-      if (numero.abs() < 0.01 && numero.abs() > 0) {
-        return numero.toStringAsFixed(4).replaceAll(RegExp(r'\.?0+$'), '');
-      }
+      // Convertir a cadena con máxima precisión necesaria
+      String numeroStr = numero.toString();
       
-      // Para valores normales
+      // Si es un número entero, mostrar sin decimales
       if (numero == numero.roundToDouble()) {
         return numero.toInt().toString();
       }
       
-      String resultado = numero.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
-      return resultado;
+      // Para números decimales, determinar la precisión necesaria
+      if (numero.abs() < 0.01) {
+        // Para valores muy pequeños, mostrar hasta 4 decimales significativos
+        String result = numero.toStringAsFixed(4);
+        return result.replaceAll(RegExp(r'\.?0+$'), '');
+      } else if (numero.abs() < 1) {
+        // Para valores menores a 1, mostrar hasta 3 decimales
+        String result = numero.toStringAsFixed(3);
+        return result.replaceAll(RegExp(r'\.?0+$'), '');
+      } else {
+        // Para el resto de valores, mostrar hasta 2 decimales
+        String result = numero.toStringAsFixed(2);
+        return result.replaceAll(RegExp(r'\.?0+$'), '');
+      }
+
     } catch (e) {
       print("Error al formatear número: $e");
       return "0";
@@ -1424,6 +1458,9 @@ class _ConversionCalculatorScreenState
                                   child: TextField(
                                     controller: ingrediente.cantidadController,
                                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                    ],
                                     textAlign: TextAlign.center, // Centrar cantidad
                                     style: textTheme.bodyMedium,
                                     decoration: inputDecoration,
@@ -2335,6 +2372,9 @@ class _ConversionCalculatorScreenState
       child: TextField(
         controller: _destinoController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+        ],
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Theme.of(context).textTheme.bodyLarge?.color,
