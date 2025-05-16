@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
 import 'screens/signup_screen.dart';
+import 'screens/verification_screen.dart';
 import 'screens/add_recipe_screen.dart';
 import 'screens/recipe_detail_screen.dart';
 import 'pages/recipes_page.dart';
@@ -74,6 +75,7 @@ class _MyAppState extends State<MyApp> {
                   ProfilePage(user: FirebaseAuth.instance.currentUser!),
               '/login': (context) => const LoginPage(),
               '/register': (context) => const SignUpScreen(),
+              '/verification': (context) => const VerificationScreen(),
               '/groups': (context) => const GroupsScreen(),
             },
           );

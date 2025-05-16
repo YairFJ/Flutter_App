@@ -41,7 +41,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
   shared_preferences: ^2.2.2
   provider: ^6.1.1
-  mailer: ^6.4.1
+  mailer: ^6.1.0
   url_launcher: ^6.2.2
   
 

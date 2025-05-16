@@ -7,6 +7,7 @@ class MyTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final Widget? suffix;
+  final Widget? prefixIcon;
 
   const MyTextField({
     super.key,
@@ -16,6 +17,7 @@ class MyTextField extends StatelessWidget {
     this.keyboardType,
     this.validator,
     this.suffix,
+    this.prefixIcon,
   });
 
   @override
@@ -49,6 +51,7 @@ class MyTextField extends StatelessWidget {
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.white70),
           suffixIcon: suffix,
+          prefixIcon: prefixIcon,
         ),
         style: const TextStyle(color: Colors.white),
       ),

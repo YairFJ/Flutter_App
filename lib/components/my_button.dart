@@ -3,17 +3,19 @@ import 'package:flutter/material.dart';
 class MyButton extends StatelessWidget {
   final VoidCallback onTap;
   final String text;
+  final bool isLoading;
 
   const MyButton({
     super.key,
     required this.onTap,
     required this.text,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
@@ -29,14 +31,23 @@ class MyButton extends StatelessWidget {
           ],
         ),
         child: Center(
-          child: Text(
-            text,
-            style: const TextStyle(
-              color: Color(0xFF96B4D8),
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF96B4D8)),
+                  ),
+                )
+              : Text(
+                  text,
+                  style: const TextStyle(
+                    color: Color(0xFF96B4D8),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
         ),
       ),
     );

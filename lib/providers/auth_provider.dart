@@ -37,13 +37,13 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> verifyCode(String email, String code) async {
+  Future<void> verifyCode(String code) async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      await _authService.verifyCode(email, code);
+      await _authService.verifyCode(code);
     } catch (e) {
       _error = e.toString();
       notifyListeners();

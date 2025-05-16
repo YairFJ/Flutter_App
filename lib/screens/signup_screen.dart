@@ -38,6 +38,21 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+  
+  // Controladores para los campos de texto
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleGoogleSignIn() async {
     if (_isLoading) return;
@@ -122,6 +137,57 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+  Future<void> _handleManualSignUp() async {
+    if (_isLoading) return;
+
+    // Validaciones básicas
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      _showError('Por favor, completa todos los campos');
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showError('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      _showError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userCredential = await _authService.registerWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text,
+        _nameController.text.trim(),
+      );
+
+      if (userCredential != null && userCredential.user != null) {
+        _showSuccess('REGISTRO EXITOSO');
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/verification');
+        }
+      }
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        _showError(_authService.getErrorMessage(e));
+      } else {
+        _showError('Error al registrar usuario: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -166,7 +232,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 30),
 
                 const Text(
-                  'Iniciar sesión',
+                  'Crear Cuenta',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -175,6 +241,52 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
 
                 const SizedBox(height: 50),
+
+                // Campos de registro
+                MyTextField(
+                  controller: _nameController,
+                  hintText: 'Nombre completo',
+                  obscureText: false,
+                  prefixIcon: Icon(Icons.person),
+                ),
+
+                const SizedBox(height: 10),
+
+                MyTextField(
+                  controller: _emailController,
+                  hintText: 'Correo electrónico',
+                  obscureText: false,
+                  prefixIcon: Icon(Icons.email),
+                ),
+
+                const SizedBox(height: 10),
+
+                MyTextField(
+                  controller: _passwordController,
+                  hintText: 'Contraseña',
+                  obscureText: true,
+                  prefixIcon: Icon(Icons.lock),
+                ),
+
+                const SizedBox(height: 10),
+
+                MyTextField(
+                  controller: _confirmPasswordController,
+                  hintText: 'Confirmar contraseña',
+                  obscureText: true,
+                  prefixIcon: Icon(Icons.lock),
+                ),
+
+                const SizedBox(height: 25),
+
+                // Botón de registro
+                MyButton(
+                  onTap: _handleManualSignUp,
+                  text: 'Registrarse',
+                  isLoading: _isLoading,
+                ),
+
+                const SizedBox(height: 30),
 
                 // google + apple sign in buttons
                 Row(

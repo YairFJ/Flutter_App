@@ -6,6 +6,7 @@ import 'dart:async'; // Añadir import para TimeoutException
 import 'dart:math';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
+import 'package:flutter_app/config/sendgrid_config.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -32,7 +33,6 @@ class AuthService {
   // Registrar usuario
   Future<UserCredential> registerWithEmailAndPassword(
       String email, String password, String name) async {
-    UserCredential? userCredential;
     try {
       print('=== INICIO DEL PROCESO DE REGISTRO ===');
       print('Email: $email');
@@ -49,22 +49,24 @@ class AuthService {
       
       // Crear usuario en Firebase Auth
       print('Creando usuario en Firebase Auth...');
-      userCredential = await _auth.createUserWithEmailAndPassword(
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      print('Usuario creado exitosamente con UID: ${userCredential.user?.uid}');
-      
-      // Asegurarse de que el usuario esté autenticado
       if (userCredential.user == null) {
         throw FirebaseAuthException(
-          code: 'user-not-created',
-          message: 'No se pudo crear el usuario correctamente',
+          code: 'user-creation-failed',
+          message: 'No se pudo crear el usuario',
         );
       }
 
-      // Guardar datos del usuario en Firestore
+      print('Usuario creado exitosamente con UID: ${userCredential.user?.uid}');
+      
+      // Generar código de verificación
+      final verificationCode = _generateVerificationCode();
+      
+      // Guardar datos del usuario y código de verificación en Firestore
       final userData = {
         'name': name,
         'email': email,
@@ -74,70 +76,157 @@ class AuthService {
         'lastLogin': FieldValue.serverTimestamp(),
         'needsVerification': true,
         'disabled': false,
+        'verificationCode': verificationCode,
+        'verificationCodeCreatedAt': FieldValue.serverTimestamp(),
       };
 
       print('Guardando datos en Firestore...');
       await _firestore.collection('users').doc(userCredential.user?.uid).set(userData);
       print('Datos guardados en Firestore exitosamente');
 
-      // Enviar email de verificación
-      print('Enviando email de verificación...');
+      // Enviar código de verificación por email
       try {
-        // Forzar recarga del usuario
-        await userCredential.user?.reload();
-        final currentUser = _auth.currentUser;
-        
-        if (currentUser == null) {
-          throw FirebaseAuthException(
-            code: 'user-not-found',
-            message: 'No se encontró el usuario después de la creación',
-          );
-        }
-
-        print('Usuario actual antes de enviar email: ${currentUser.email}');
-        print('Estado de verificación antes de enviar: ${currentUser.emailVerified}');
-        
-        // Configurar el idioma del email
-        await _auth.setLanguageCode('es');
-        
-        // Configurar URL de acción personalizada
-        ActionCodeSettings actionCodeSettings = ActionCodeSettings(
-          url: 'https://restaurante-app-6e13d.firebaseapp.com/__/auth/action',
-          handleCodeInApp: true,
-          androidPackageName: 'com.yourcompany.restaurante_app',
-          androidInstallApp: true,
-          androidMinimumVersion: '12',
-          iOSBundleId: 'com.yourcompany.restauranteApp',
-        );
-        
-        // Enviar el email de verificación con configuración personalizada
-        await currentUser.sendEmailVerification(actionCodeSettings);
+        await _sendVerificationEmail(email, verificationCode);
         print('Email de verificación enviado exitosamente');
-        
-        // Verificar el estado después de enviar
-        await Future.delayed(const Duration(seconds: 1));
-        await currentUser.reload();
-        print('Estado de verificación después de enviar: ${currentUser.emailVerified}');
       } catch (e) {
         print('Error al enviar email de verificación: $e');
-        if (e is FirebaseAuthException) {
-          print('Código de error: ${e.code}');
-          print('Mensaje de error: ${e.message}');
-          print('Detalles completos: ${e.toString()}');
-        }
-        // No lanzar el error aquí, continuar con el proceso
+        // No lanzar el error, continuar con el proceso
       }
 
       print('=== FIN DEL PROCESO DE REGISTRO ===');
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      print('Error de Firebase Auth en registro:');
-      print('Código: ${e.code}');
-      print('Mensaje: ${e.message}');
-      throw e;
+      print('Error de Firebase Auth en registro: ${e.code} - ${e.message}');
+      rethrow;
     } catch (e) {
-      print('Error inesperado en registerWithEmailAndPassword: $e');
-      throw e;
+      print('Error inesperado en registro: $e');
+      throw FirebaseAuthException(
+        code: 'unknown-error',
+        message: 'Error inesperado durante el registro',
+      );
+    }
+  }
+
+  // Método para enviar email de verificación
+  Future<void> _sendVerificationEmail(String email, String code) async {
+    try {
+      print('=== INICIANDO ENVÍO DE EMAIL ===');
+      print('Email destino: $email');
+      print('Código de verificación: $code');
+      
+      final smtpServer = SmtpServer(
+        'smtp.gmail.com',
+        port: 587,
+        username: SendGridConfig.fromEmail,
+        password: SendGridConfig.apiKey,
+        ssl: false,
+        allowInsecure: true,
+      );
+
+      print('Configuración SMTP creada');
+      print('Usuario SMTP: ${SendGridConfig.fromEmail}');
+
+      final message = Message()
+        ..from = Address(SendGridConfig.fromEmail, SendGridConfig.fromName)
+        ..recipients.add(email)
+        ..subject = 'Código de verificación - Tu App'
+        ..html = '''
+          <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+              <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #96B4D8;">Verificación de Email</h2>
+                <p>Gracias por registrarte en nuestra aplicación. Para verificar tu cuenta, por favor utiliza el siguiente código:</p>
+                <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                  <h1 style="color: #96B4D8; margin: 0; font-size: 32px;">$code</h1>
+                </div>
+                <p>Este código expirará en 24 horas.</p>
+                <p>Si no solicitaste este código, por favor ignora este correo.</p>
+                <hr style="border: 1px solid #eee; margin: 20px 0;">
+                <p style="color: #666; font-size: 12px;">Este es un correo automático, por favor no respondas a este mensaje.</p>
+              </div>
+            </body>
+          </html>
+        ''';
+
+      print('Mensaje configurado, intentando enviar...');
+
+      try {
+        final sendReport = await send(message, smtpServer);
+        print('Email enviado exitosamente');
+        print('Reporte de envío: $sendReport');
+      } catch (e) {
+        print('Error al enviar email: $e');
+        print('Detalles del error: ${e.toString()}');
+        // Si falla el envío, mostrar el código en la consola para desarrollo
+        print('Código de verificación para $email: $code');
+        throw Exception('Error al enviar email: $e');
+      }
+    } catch (e) {
+      print('Error en _sendVerificationEmail: $e');
+      print('Stack trace: ${StackTrace.current}');
+      // En caso de error, mostrar el código en la consola para desarrollo
+      print('Código de verificación para $email: $code');
+      throw Exception('Error al enviar email: $e');
+    }
+  }
+
+  // Método para verificar el código
+  Future<bool> verifyCode(String code) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return false;
+
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      if (!userDoc.exists) return false;
+
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final storedCode = userData['verificationCode'] as String?;
+      final codeCreatedAt = userData['verificationCodeCreatedAt'] as Timestamp?;
+
+      if (storedCode == null || codeCreatedAt == null) return false;
+
+      // Verificar si el código ha expirado (24 horas)
+      final now = DateTime.now();
+      final codeAge = now.difference(codeCreatedAt.toDate());
+      if (codeAge.inHours > 24) {
+        throw Exception('El código de verificación ha expirado');
+      }
+
+      if (storedCode == code) {
+        // Marcar usuario como verificado
+        await _firestore.collection('users').doc(user.uid).update({
+          'verified': true,
+          'needsVerification': false,
+          'verificationCode': FieldValue.delete(),
+          'verificationCodeCreatedAt': FieldValue.delete(),
+        });
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Error al verificar código: $e');
+      return false;
+    }
+  }
+
+  // Método para reenviar código de verificación
+  Future<void> resendVerificationCode() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('No hay usuario autenticado');
+
+      final newCode = _generateVerificationCode();
+      
+      await _firestore.collection('users').doc(user.uid).update({
+        'verificationCode': newCode,
+        'verificationCodeCreatedAt': FieldValue.serverTimestamp(),
+      });
+
+      await _sendVerificationEmail(user.email!, newCode);
+    } catch (e) {
+      print('Error al reenviar código: $e');
+      rethrow;
     }
   }
 
@@ -220,56 +309,106 @@ class AuthService {
     }
   }
 
-  // Verificar código
-  Future<UserCredential> verifyCode(String email, String code) async {
-    try {
-      // Obtener datos de verificación
-      DocumentSnapshot doc = await _firestore
-          .collection('pending_verifications')
-          .doc(email)
-          .get();
-
-      if (!doc.exists) {
-        throw Exception('No se encontró la solicitud de verificación');
-      }
-
-      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-      if (data['verificationCode'] != code) {
-        throw Exception('Código de verificación inválido');
-      }
-
-      // Crear usuario en Firestore
-      await _firestore.collection('users').doc(email).set({
-        'name': data['name'],
-        'email': email,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // Eliminar datos temporales
-      await _firestore.collection('pending_verifications').doc(email).delete();
-
-      // Obtener credenciales del usuario
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: '', // La contraseña ya no es necesaria
-      );
-
-      return userCredential;
-    } catch (e) {
-      throw e;
-    }
-  }
-
   // Iniciar sesión
   Future<UserCredential> signInWithEmailAndPassword(
       String email, String password) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
-        email: email,
+      print('=== INICIO DEL PROCESO DE LOGIN ===');
+      print('Email: $email');
+      
+      // Validar email
+      if (!email.contains('@') || !email.contains('.')) {
+        throw FirebaseAuthException(
+          code: 'invalid-email',
+          message: 'El formato del correo electrónico no es válido',
+        );
+      }
+
+      // Validar contraseña
+      if (password.length < 6) {
+        throw FirebaseAuthException(
+          code: 'weak-password',
+          message: 'La contraseña debe tener al menos 6 caracteres',
+        );
+      }
+
+      // Verificar si el usuario existe
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
+      if (methods.isEmpty) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'No existe una cuenta con este correo electrónico',
+        );
+      }
+      
+      // Intentar iniciar sesión
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
         password: password,
       );
+      
+      // Verificar si el usuario existe
+      if (userCredential.user != null) {
+        // Verificar si el usuario está verificado
+        final userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          if (userData['needsVerification'] == true) {
+            throw FirebaseAuthException(
+              code: 'email-not-verified',
+              message: 'Por favor, verifica tu correo electrónico antes de iniciar sesión',
+            );
+          }
+        }
+
+        // Actualizar último login en Firestore
+        await _firestore.collection('users').doc(userCredential.user!.uid).update({
+          'lastLogin': FieldValue.serverTimestamp(),
+        });
+        
+        print('Login exitoso para: ${userCredential.user?.email}');
+        return userCredential;
+      } else {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'No se pudo iniciar sesión',
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      print('Error de Firebase Auth: ${e.code} - ${e.message}');
+      String mensaje = 'Error al iniciar sesión';
+      
+      switch (e.code) {
+        case 'invalid-credential':
+          mensaje = 'Correo electrónico o contraseña incorrectos';
+          break;
+        case 'user-not-found':
+          mensaje = 'No existe una cuenta con este correo electrónico';
+          break;
+        case 'wrong-password':
+          mensaje = 'Contraseña incorrecta';
+          break;
+        case 'invalid-email':
+          mensaje = 'El formato del correo electrónico no es válido';
+          break;
+        case 'user-disabled':
+          mensaje = 'Esta cuenta ha sido deshabilitada';
+          break;
+        case 'too-many-requests':
+          mensaje = 'Demasiados intentos fallidos. Por favor, intenta más tarde';
+          break;
+      }
+      
+      throw FirebaseAuthException(
+        code: e.code,
+        message: mensaje,
+      );
     } catch (e) {
-      throw e;
+      print('Error inesperado en login: $e');
+      throw FirebaseAuthException(
+        code: 'unknown-error',
+        message: 'Error inesperado al iniciar sesión',
+      );
     }
   }
 
@@ -321,39 +460,39 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential = await _auth.signInWithCredential(credential);
-      final user = userCredential.user;
+      try {
+        final userCredential = await _auth.signInWithCredential(credential);
+        final user = userCredential.user;
 
-      if (user != null) {
-        print('Auth Service: Inicio de sesión exitoso: ${user.email}');
-        try {
-          await _firestore.collection('users').doc(user.uid).set({
-            'name': user.displayName ?? 'Usuario de Google',
-            'email': user.email ?? '',
-            'lastLogin': FieldValue.serverTimestamp(),
-            'provider': 'google',
-            'verified': true,
-          }, SetOptions(merge: true));
-        } catch (e) {
-          print('Auth Service: Error al actualizar Firestore: $e');
+        if (user != null) {
+          print('Auth Service: Inicio de sesión exitoso: ${user.email}');
+          try {
+            await _firestore.collection('users').doc(user.uid).set({
+              'name': user.displayName ?? 'Usuario de Google',
+              'email': user.email ?? '',
+              'lastLogin': FieldValue.serverTimestamp(),
+              'provider': 'google',
+              'verified': true,
+            }, SetOptions(merge: true));
+          } catch (e) {
+            print('Auth Service: Error al actualizar Firestore: $e');
+          }
         }
+        return user;
+      } catch (e) {
+        print('Auth Service: Error durante signInWithCredential: $e');
+        if (e.toString().contains('PigeonUserDetails')) {
+          print('Auth Service: Error de PigeonUserDetails detectado, intentando recuperar sesión');
+          final currentUser = _auth.currentUser;
+          if (currentUser != null) {
+            print('Auth Service: Sesión recuperada exitosamente');
+            return currentUser;
+          }
+        }
+        rethrow;
       }
-
-      return user;
     } catch (e) {
       print('Auth Service: Error durante la autenticación con Google: $e');
-      if (e.toString().contains('PigeonUserDetails')) {
-        print('Auth Service: Error con PigeonUserDetails detectado');
-        final currentUser = _auth.currentUser;
-        if (currentUser != null) {
-          print('Auth Service: Recuperando sesión existente en lugar de mostrar error');
-          return currentUser;
-        }
-        throw FirebaseAuthException(
-          code: 'emulator-google-sign-in',
-          message: 'Error al iniciar sesión con Google en el emulador. Intenta con un dispositivo físico.',
-        );
-      }
       try {
         await _auth.signOut();
       } catch (_) {}
@@ -442,7 +581,7 @@ class AuthService {
       print('Error de Firebase Auth al enviar email:');
       print('Código: ${e.code}');
       print('Mensaje: ${e.message}');
-      return _getErrorMessage(e);
+      return getErrorMessage(e);
     } catch (e) {
       print('Error inesperado al enviar email: $e');
       return 'Error inesperado: $e';
@@ -455,14 +594,14 @@ class AuthService {
       await _auth.sendPasswordResetEmail(email: email);
       return null;
     } on FirebaseAuthException catch (e) {
-      return _getErrorMessage(e);
+      return getErrorMessage(e);
     } catch (e) {
       return 'Error inesperado: $e';
     }
   }
 
   // Obtener mensaje de error
-  String _getErrorMessage(FirebaseAuthException e) {
+  String getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
         return 'No existe una cuenta con este correo';
