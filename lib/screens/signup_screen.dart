@@ -3,6 +3,7 @@ import 'package:flutter_app/components/my_button.dart';
 import 'package:flutter_app/components/my_textfield.dart';
 import 'package:flutter_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_app/screens/verification_screen.dart';
 
 class SquareTile extends StatelessWidget {
   final String imagePath;
@@ -162,20 +163,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final userCredential = await _authService.registerWithEmailAndPassword(
-        _emailController.text.trim(),
-        _passwordController.text,
-        _nameController.text.trim(),
+      print('Iniciando registro de usuario...');
+      
+      // Redirigir inmediatamente a la pantalla de verificación
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const VerificationScreen()),
+          (route) => false,
+        );
+      }
+
+      // Continuar con el registro en segundo plano
+      await _authService.registerWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        name: _nameController.text.trim(),
       );
 
-      if (userCredential != null && userCredential.user != null) {
-        _showSuccess('REGISTRO EXITOSO');
-        await Future.delayed(const Duration(seconds: 1));
-        if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/verification');
-        }
-      }
+      print('Registro exitoso');
     } catch (e) {
+      print('Error en registro: $e');
       if (e is FirebaseAuthException) {
         _showError(_authService.getErrorMessage(e));
       } else {

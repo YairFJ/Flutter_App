@@ -26,24 +26,11 @@ class AuthProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      await _authService.registerWithEmailAndPassword(email, password, name);
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> verifyCode(String code) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      await _authService.verifyCode(code);
+      await _authService.registerWithEmailAndPassword(
+        email: email,
+        password: password,
+        name: name,
+      );
     } catch (e) {
       _error = e.toString();
       notifyListeners();

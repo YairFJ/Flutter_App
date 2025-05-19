@@ -103,7 +103,7 @@ class AuthWrapper extends StatelessWidget {
 
         final user = snapshot.data;
 
-        // Si no hay usuario, redirigir siempre al login
+        // Si no hay usuario, redirigir al login
         if (user == null) {
           print('AuthWrapper: Usuario no autenticado, redirigiendo a login');
           return const LoginPage();
@@ -112,55 +112,27 @@ class AuthWrapper extends StatelessWidget {
         // Verificar si el email está verificado para usuarios de email/password
         // Los usuarios de Google ya vienen verificados
         if (!user.emailVerified &&
-            !user.providerData
-                .any((provider) => provider.providerId == 'google.com')) {
+            !user.providerData.any((provider) => provider.providerId == 'google.com')) {
           
-          // Verificar también en Firestore
-          return FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
-            builder: (context, firestoreSnapshot) {
-              // Si el documento está cargando, mostrar un indicador de carga
-              if (firestoreSnapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              
-              // Si hay un error o no existe el documento, redirigir a login
-              if (firestoreSnapshot.hasError || 
-                  !firestoreSnapshot.hasData || 
-                  !firestoreSnapshot.data!.exists) {
-                print('AuthWrapper: Email no verificado, redirigiendo a login');
-                return const LoginPage();
-              }
-              
-              // Verificar si el usuario está marcado como verificado en Firestore
-              final userData = firestoreSnapshot.data!.data() as Map<String, dynamic>?;
-              final isVerified = userData?['verified'] == true;
-              
-              if (isVerified) {
-                print('AuthWrapper: Usuario verificado según Firestore');
-                return HomeScreen(
-                  userId: user.uid,
-                  userEmail: user.email ?? 'No disponible',
-                  userName: user.displayName ?? 'Usuario',
-                  toggleTheme:
-                      Provider.of<ThemeService>(context, listen: false).toggleTheme,
-                );
-              } else {
-                print('AuthWrapper: Email no verificado, redirigiendo a login');
-                return const LoginPage();
-              }
-            },
-          );
+          // Verificar si el usuario acaba de registrarse
+          final needsVerification = user.metadata.creationTime != null &&
+              DateTime.now().difference(user.metadata.creationTime!).inMinutes < 5;
+          
+          if (needsVerification) {
+            print('AuthWrapper: Usuario recién registrado, redirigiendo a verificación');
+            return const VerificationScreen();
+          } else {
+            print('AuthWrapper: Usuario no verificado pero no recién registrado, redirigiendo a login');
+            return const LoginPage();
+          }
         }
 
-        print(
-            'AuthWrapper: Usuario autenticado y verificado, accediendo a HomeScreen');
+        print('AuthWrapper: Usuario autenticado y verificado, accediendo a HomeScreen');
         return HomeScreen(
           userId: user.uid,
           userEmail: user.email ?? 'No disponible',
           userName: user.displayName ?? 'Usuario',
-          toggleTheme:
-              Provider.of<ThemeService>(context, listen: false).toggleTheme,
+          toggleTheme: Provider.of<ThemeService>(context, listen: false).toggleTheme,
         );
       },
     );
