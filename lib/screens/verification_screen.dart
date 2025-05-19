@@ -15,24 +15,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   String? _userEmail;
-  Timer? _verificationTimer;
 
   @override
   void initState() {
     super.initState();
     _userEmail = FirebaseAuth.instance.currentUser?.email;
     print('Iniciando pantalla de verificación para: $_userEmail');
-    _checkVerification();
-    // Verificar cada 5 segundos
-    _verificationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      _checkVerification();
-    });
-  }
-
-  @override
-  void dispose() {
-    _verificationTimer?.cancel();
-    super.dispose();
   }
 
   Future<void> _checkVerification() async {
@@ -45,11 +33,25 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
     try {
       print('Verificando estado de email...');
-      final isVerified = await _authService.isEmailVerified();
-      print('Estado de verificación: $isVerified');
+      
+      // Intentar verificar varias veces
+      bool isVerified = false;
+      for (int i = 0; i < 3; i++) {
+        isVerified = await _authService.isEmailVerified();
+        if (isVerified) break;
+        
+        // Si no está verificado, intentar forzar la verificación
+        if (i == 1) { // En el segundo intento
+          print('Intentando forzar verificación...');
+          await _authService.forceEmailVerification();
+        }
+        
+        await Future.delayed(const Duration(seconds: 1));
+      }
+      
+      print('Estado final de verificación: $isVerified');
       
       if (isVerified) {
-        _verificationTimer?.cancel();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -57,6 +59,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
               backgroundColor: Colors.green,
             ),
           );
+          // Esperar un momento antes de redirigir
+          await Future.delayed(const Duration(seconds: 1));
           Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         }
       } else {
@@ -172,7 +176,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'La verificación se comprobará automáticamente cada 5 segundos.',
+                  'Una vez verificado, haz clic en el botón "Verificar Estado".',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white70,

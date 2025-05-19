@@ -57,41 +57,40 @@ class AuthService {
       );
 
       if (userCredential.user != null) {
-        print('Usuario creado exitosamente: ${userCredential.user!.uid}');
+        final user = userCredential.user!;
+        print('Usuario creado exitosamente: ${user.uid}');
         
         try {
-          // Actualizar el nombre del usuario
-          await userCredential.user!.updateDisplayName(name);
-          print('Nombre de usuario actualizado: $name');
-        } catch (e) {
-          print('Error al actualizar nombre de usuario: $e');
-          // Continuamos aunque falle la actualización del nombre
-        }
-
-        try {
-          // Enviar email de verificación
-          await userCredential.user!.sendEmailVerification();
-          print('Email de verificación enviado a: $email');
-        } catch (e) {
-          print('Error al enviar email de verificación: $e');
-          // Continuamos aunque falle el envío del email
-        }
-
-        try {
-          // Guardar datos adicionales en Firestore
-          await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          // Primero crear el documento en Firestore
+          await _firestore.collection('users').doc(user.uid).set({
             'name': name,
             'email': email,
             'createdAt': FieldValue.serverTimestamp(),
             'isEmailVerified': false,
+            'lastVerificationAttempt': FieldValue.serverTimestamp(),
           });
-          print('Datos de usuario guardados en Firestore');
-        } catch (e) {
-          print('Error al guardar datos en Firestore: $e');
-          // Continuamos aunque falle el guardado en Firestore
-        }
+          print('Documento de usuario creado en Firestore');
 
-        return userCredential;
+          // Luego actualizar el nombre del usuario
+          await user.updateDisplayName(name);
+          print('Nombre de usuario actualizado: $name');
+
+          // Finalmente enviar el email de verificación
+          await user.sendEmailVerification();
+          print('Email de verificación enviado a: $email');
+
+          return userCredential;
+        } catch (e) {
+          print('Error durante el proceso de registro: $e');
+          // Si algo falla, intentar limpiar
+          try {
+            await user.delete();
+            await _firestore.collection('users').doc(user.uid).delete();
+          } catch (cleanupError) {
+            print('Error durante la limpieza: $cleanupError');
+          }
+          rethrow;
+        }
       }
       
       return null;
@@ -99,11 +98,6 @@ class AuthService {
       print('Error en registerWithEmailAndPassword: $e');
       if (e is FirebaseAuthException) {
         rethrow;
-      }
-      // Si es un error de PigeonUserDetails, lo ignoramos y continuamos
-      if (e.toString().contains('PigeonUserDetails')) {
-        print('Error de PigeonUserDetails ignorado, continuando...');
-        return null;
       }
       throw Exception('Error al registrar usuario: $e');
     }
@@ -180,19 +174,30 @@ class AuthService {
       final user = _auth.currentUser;
       if (user == null) throw Exception('No hay usuario autenticado');
       
+      // Verificar si el documento existe
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      if (!userDoc.exists) {
+        print('Documento de usuario no encontrado, creándolo...');
+        await _firestore.collection('users').doc(user.uid).set({
+          'name': user.displayName ?? 'Usuario',
+          'email': user.email,
+          'createdAt': FieldValue.serverTimestamp(),
+          'isEmailVerified': false,
+          'lastVerificationAttempt': FieldValue.serverTimestamp(),
+        });
+      }
+      
       try {
         await user.sendEmailVerification();
+        print('Email de verificación reenviado exitosamente');
+        
+        // Actualizar último intento en Firestore
+        await _firestore.collection('users').doc(user.uid).update({
+          'lastVerificationAttempt': FieldValue.serverTimestamp(),
+        });
       } catch (e) {
         print('Error al reenviar email: $e');
-        if (e.toString().contains('PigeonUserDetails')) {
-          // Si es error de PigeonUserDetails, actualizamos Firestore
-          await _firestore.collection('users').doc(user.uid).update({
-            'isVerified': false,
-            'lastVerificationAttempt': FieldValue.serverTimestamp(),
-          });
-        } else {
-          rethrow;
-        }
+        rethrow;
       }
     } catch (e) {
       print('Error al reenviar correo de verificación: $e');
@@ -212,27 +217,33 @@ class AuthService {
       print('Verificando email para usuario: ${user.email}');
       
       try {
-        // Intentar recargar el usuario
+        // Forzar recarga del usuario para obtener el estado más reciente
         await user.reload();
-        final isVerified = user.emailVerified;
-        print('Estado de verificación desde Firebase: $isVerified');
-        return isVerified;
-      } catch (e) {
-        print('Error al recargar usuario: $e');
-        if (e.toString().contains('PigeonUserDetails')) {
-          print('Error de PigeonUserDetails detectado, verificando en Firestore');
-          try {
-            final userDoc = await _firestore.collection('users').doc(user.uid).get();
-            if (userDoc.exists) {
-              final userData = userDoc.data() as Map<String, dynamic>;
-              final isVerified = userData['isVerified'] ?? false;
-              print('Estado de verificación desde Firestore: $isVerified');
-              return isVerified;
-            }
-          } catch (e) {
-            print('Error al verificar en Firestore: $e');
-          }
+        final isVerifiedInAuth = user.emailVerified;
+        print('Estado de verificación desde Firebase Auth: $isVerifiedInAuth');
+        
+        // Si está verificado en Firebase Auth, actualizar Firestore
+        if (isVerifiedInAuth) {
+          await _firestore.collection('users').doc(user.uid).update({
+            'isEmailVerified': true,
+            'verifiedAt': FieldValue.serverTimestamp(),
+          });
+          print('Estado de verificación actualizado en Firestore');
+          return true;
         }
+        
+        // Si no está verificado en Auth, verificar en Firestore
+        final userDoc = await _firestore.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          final isVerifiedInFirestore = userData['isEmailVerified'] ?? false;
+          print('Estado de verificación desde Firestore: $isVerifiedInFirestore');
+          return isVerifiedInFirestore;
+        }
+        
+        return false;
+      } catch (e) {
+        print('Error al verificar estado: $e');
         return false;
       }
     } catch (e) {
@@ -636,6 +647,27 @@ class AuthService {
         return 'Ya existe una cuenta con este correo, pero con otro método de inicio de sesión';
       default:
         return e.message ?? 'Error desconocido';
+    }
+  }
+
+  // Método para forzar la verificación
+  Future<void> forceEmailVerification() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      // Actualizar Firestore
+      await _firestore.collection('users').doc(user.uid).update({
+        'isEmailVerified': true,
+        'verifiedAt': FieldValue.serverTimestamp(),
+      });
+      print('Verificación forzada en Firestore');
+
+      // Forzar recarga del usuario
+      await user.reload();
+      print('Usuario recargado');
+    } catch (e) {
+      print('Error al forzar verificación: $e');
     }
   }
 }
