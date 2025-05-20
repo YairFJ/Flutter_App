@@ -188,6 +188,10 @@ class AuthService {
       }
       
       try {
+        // Configurar el idioma del email
+        await _auth.setLanguageCode('es');
+        
+        // Enviar email de verificación
         await user.sendEmailVerification();
         print('Email de verificación reenviado exitosamente');
         
@@ -216,36 +220,27 @@ class AuthService {
       
       print('Verificando email para usuario: ${user.email}');
       
-      try {
-        // Forzar recarga del usuario para obtener el estado más reciente
-        await user.reload();
-        final isVerifiedInAuth = user.emailVerified;
-        print('Estado de verificación desde Firebase Auth: $isVerifiedInAuth');
-        
-        // Si está verificado en Firebase Auth, actualizar Firestore
-        if (isVerifiedInAuth) {
+      // Forzar recarga del usuario para obtener el estado más reciente
+      await user.reload();
+      final isVerifiedInAuth = user.emailVerified;
+      print('Estado de verificación desde Firebase Auth: $isVerifiedInAuth');
+      
+      // Si está verificado en Firebase Auth, actualizar Firestore
+      if (isVerifiedInAuth) {
+        try {
           await _firestore.collection('users').doc(user.uid).update({
             'isEmailVerified': true,
             'verifiedAt': FieldValue.serverTimestamp(),
           });
           print('Estado de verificación actualizado en Firestore');
           return true;
+        } catch (e) {
+          print('Error al actualizar Firestore: $e');
+          return true; // Si está verificado en Auth, retornamos true aunque falle Firestore
         }
-        
-        // Si no está verificado en Auth, verificar en Firestore
-        final userDoc = await _firestore.collection('users').doc(user.uid).get();
-        if (userDoc.exists) {
-          final userData = userDoc.data() as Map<String, dynamic>;
-          final isVerifiedInFirestore = userData['isEmailVerified'] ?? false;
-          print('Estado de verificación desde Firestore: $isVerifiedInFirestore');
-          return isVerifiedInFirestore;
-        }
-        
-        return false;
-      } catch (e) {
-        print('Error al verificar estado: $e');
-        return false;
       }
+      
+      return false;
     } catch (e) {
       print('Error en isEmailVerified: $e');
       return false;
@@ -668,6 +663,47 @@ class AuthService {
       print('Usuario recargado');
     } catch (e) {
       print('Error al forzar verificación: $e');
+    }
+  }
+
+  // Método para manejar el enlace de verificación
+  Future<bool> handleVerificationLink(String link) async {
+    try {
+      print('Manejando enlace de verificación: $link');
+      
+      // Verificar si el enlace es válido
+      if (await _auth.isSignInWithEmailLink(link)) {
+        print('Enlace de verificación válido');
+        
+        // Obtener el email del enlace
+        String? email = _auth.currentUser?.email;
+        if (email == null) {
+          print('No se pudo obtener el email del usuario actual');
+          return false;
+        }
+        
+        // Completar la verificación
+        await _auth.signInWithEmailLink(email: email, emailLink: link);
+        print('Verificación completada con éxito');
+        
+        // Actualizar el estado en Firestore
+        final user = _auth.currentUser;
+        if (user != null) {
+          await _firestore.collection('users').doc(user.uid).update({
+            'isEmailVerified': true,
+            'verifiedAt': FieldValue.serverTimestamp(),
+          });
+          print('Estado de verificación actualizado en Firestore');
+        }
+        
+        return true;
+      } else {
+        print('Enlace de verificación inválido');
+        return false;
+      }
+    } catch (e) {
+      print('Error al manejar enlace de verificación: $e');
+      return false;
     }
   }
 }

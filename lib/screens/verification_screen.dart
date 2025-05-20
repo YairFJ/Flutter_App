@@ -76,7 +76,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
       }
     } catch (e) {
       print('Error al verificar email: $e');
-      // No mostramos el error al usuario, solo lo registramos
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
