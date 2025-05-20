@@ -7,12 +7,11 @@ import 'dart:math';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:flutter_app/config/sendgrid_config.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final _storage = FlutterSecureStorage();
+  
 
   // Generar código de verificación
   String _generateVerificationCode() {
