@@ -34,7 +34,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       print('Verificando estado de email...');
       
-      // Intentar verificar varias veces
+      // Intentar verificar varias veces con más tiempo entre intentos
       bool isVerified = false;
       for (int i = 0; i < 3; i++) {
         isVerified = await _authService.isEmailVerified();
@@ -46,7 +46,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
           await _authService.forceEmailVerification();
         }
         
-        await Future.delayed(const Duration(seconds: 1));
+        // Esperar más tiempo entre intentos
+        await Future.delayed(const Duration(seconds: 2));
       }
       
       print('Estado final de verificación: $isVerified');
@@ -60,16 +61,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
           );
           // Esperar un momento antes de redirigir
-          await Future.delayed(const Duration(seconds: 1));
+          await Future.delayed(const Duration(seconds: 2));
           Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Email aún no verificado. Por favor, revisa tu bandeja de entrada y spam.'),
+              content: Text('Email aún no verificado. Por favor, asegúrate de haber hecho clic en el enlace del correo y espera unos segundos antes de verificar.'),
               backgroundColor: Colors.orange,
-              duration: Duration(seconds: 3),
+              duration: Duration(seconds: 5),
             ),
           );
         }
@@ -79,9 +80,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Verificando estado de tu cuenta...'),
-            backgroundColor: Colors.blue,
-            duration: Duration(seconds: 2),
+            content: Text('Error al verificar. Por favor, intenta de nuevo.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
           ),
         );
       }
@@ -225,15 +226,28 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         ),
                 ),
                 const SizedBox(height: 20),
-                TextButton(
+                ElevatedButton(
                   onPressed: _isLoading ? null : _resendVerificationEmail,
-                  child: const Text(
-                    'Reenviar correo de verificación',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF96B4D8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 50,
+                      vertical: 15,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text(
+                          'Reenviar correo de verificación',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 20),
                 TextButton(
