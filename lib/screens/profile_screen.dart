@@ -46,6 +46,20 @@ class ProfileScreen extends StatelessWidget {
                     
                     // Actualizar en Firebase Auth
                     await currentUser.updateDisplayName(newName);
+
+                    // Actualizar el nombre en todas las recetas del usuario
+                    final recipesQuery = await FirebaseFirestore.instance
+                        .collection('recipes')
+                        .where('userId', isEqualTo: currentUser.uid)
+                        .get();
+
+                    final batch = FirebaseFirestore.instance.batch();
+                    for (var doc in recipesQuery.docs) {
+                      batch.update(doc.reference, {
+                        'creatorName': newName,
+                      });
+                    }
+                    await batch.commit();
                     
                     if (context.mounted) {
                       Navigator.pop(context);

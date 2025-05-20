@@ -83,6 +83,20 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
 
+          // Actualizar el nombre en todas las recetas del usuario
+          final recipesQuery = await FirebaseFirestore.instance
+              .collection('recipes')
+              .where('userId', isEqualTo: currentUser.uid)
+              .get();
+
+          final batch = FirebaseFirestore.instance.batch();
+          for (var doc in recipesQuery.docs) {
+            batch.update(doc.reference, {
+              'creatorName': _nameController.text.trim(),
+            });
+          }
+          await batch.commit();
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

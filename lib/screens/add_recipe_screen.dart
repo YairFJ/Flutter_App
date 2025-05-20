@@ -5,6 +5,7 @@ import 'package:flutter_app/models/ingredient.dart';
 import 'package:flutter_app/widgets/add_ingredient_dialog.dart';
 import 'package:flutter_app/models/recipe.dart';
 import '../models/ingrediente_tabla.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   final bool isEnglish;
@@ -183,10 +184,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
         );
 
-        // Datos del usuario fijos sin autenticación
-        const userId = "guest_user";
-        const userEmail = "invitado@example.com";
-        const userName = "Usuario Invitado";
+        // Obtener datos del usuario actual
+        final currentUser = FirebaseAuth.instance.currentUser;
+        final userId = currentUser?.uid ?? "guest_user";
+        final userEmail = currentUser?.email ?? "invitado@example.com";
+        final userName = currentUser?.displayName ?? "Usuario";
 
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
