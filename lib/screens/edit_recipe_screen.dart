@@ -43,7 +43,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     'lb', // Libras
     'l', // Litros
     'ml', // Mililitros
-    'porciones'
+    'porc'
   ];
 
   // Expresión regular para validar números positivos

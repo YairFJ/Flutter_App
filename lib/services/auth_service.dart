@@ -2,17 +2,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:io' show Platform;
-import 'dart:async'; // Añadir import para TimeoutException
+import 'dart:async'; 
 import 'dart:math';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:flutter_app/config/sendgrid_config.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final _storage = FlutterSecureStorage();
 
   // Generar código de verificación
   String _generateVerificationCode() {
@@ -220,15 +219,30 @@ class AuthService {
       
       print('Verificando email para usuario: ${user.email}');
       
-      // Forzar recarga del usuario para obtener el estado más reciente
-      await user.reload();
-      final isVerifiedInAuth = user.emailVerified;
+      // Forzar recarga del usuario de manera más agresiva
+      try {
+        await _auth.signOut();
+        await Future.delayed(const Duration(seconds: 1));
+        await _auth.signInWithEmailAndPassword(
+          email: user.email!,
+          password: '', // La contraseña se mantiene en la sesión
+        );
+        await Future.delayed(const Duration(seconds: 1));
+        await user.reload();
+      } catch (e) {
+        print('Error durante la recarga forzada: $e');
+      }
+      
+      final updatedUser = _auth.currentUser;
+      if (updatedUser == null) return false;
+      
+      final isVerifiedInAuth = updatedUser.emailVerified;
       print('Estado de verificación desde Firebase Auth: $isVerifiedInAuth');
       
       // Si está verificado en Firebase Auth, actualizar Firestore
       if (isVerifiedInAuth) {
         try {
-          await _firestore.collection('users').doc(user.uid).update({
+          await _firestore.collection('users').doc(updatedUser.uid).update({
             'isEmailVerified': true,
             'verifiedAt': FieldValue.serverTimestamp(),
           });

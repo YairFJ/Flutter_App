@@ -58,6 +58,7 @@ class _ConversionCalculatorScreenState
 
   // Lista de unidades para RENDIMIENTO
   final List<String> _unidadesRendimiento = [
+    'Persona',
     'Gramo',
     'Kilogramo',
     'Onza',
@@ -1266,7 +1267,7 @@ class _ConversionCalculatorScreenState
                                   isExpanded: true,
                                   style: textTheme.bodyMedium,
                                   decoration: inputDecoration.copyWith(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10), // Ajuste padding
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                                   ),
                                   icon: Icon(Icons.arrow_drop_down, size: 20, color: textTheme.bodyMedium?.color),
                                   items: _unidadesRendimiento.map((String unidad) {
@@ -1281,72 +1282,71 @@ class _ConversionCalculatorScreenState
                                     );
                                   }).toList(),
                                   onChanged: (String? value) {
-                                    // ... (Lógica onChanged existente sin cambios) ...
                                     if (value != null) {
-                                        setState(() {
-                                          String unidadAnterior = _unidadDestino;
-                                          _unidadDestino = value;
+                                      setState(() {
+                                        String unidadAnterior = _unidadDestino;
+                                        _unidadDestino = value;
+                                        
+                                        // Solo convertimos si la unidad realmente cambió
+                                        if (unidadAnterior != value) {
+                                          // Usamos conversión directa al cambiar unidades
+                                          double factorConversion = 1.0;
                                           
-                                          // Solo convertimos si la unidad realmente cambió
-                                          if (unidadAnterior != value) {
-                                            // Usamos conversión directa al cambiar unidades
-                                            double factorConversion = 1.0;
-                                            
-                                            // Intentamos una conversión directa usando el mapa de factores
-                                            if (_factoresRendimiento.containsKey(unidadAnterior) && 
-                                                _factoresRendimiento[unidadAnterior]!.containsKey(value)) {
-                                              factorConversion = _factoresRendimiento[unidadAnterior]![value]!;
-                                            }
-                                            // Si no hay conversión directa, intentamos conversión inversa
-                                            else if (_factoresRendimiento.containsKey(value) && 
-                                                     _factoresRendimiento[value]!.containsKey(unidadAnterior)) {
-                                              factorConversion = 1.0 / _factoresRendimiento[value]![unidadAnterior]!;
-                                            }
-                                            // Si ninguna funciona, intentamos a través de una unidad base
-                                            else {
-                                              // Determinar la unidad base adecuada
-                                              String unidadBase = "";
-                                              if (_esTipoUnidadPeso(unidadAnterior) || _esTipoUnidadPeso(value)) {
-                                                unidadBase = "Gramo";
-                                              } else if (_esTipoUnidadVolumen(unidadAnterior) || _esTipoUnidadVolumen(value)) {
-                                                unidadBase = "Mililitros";
-                                              }
-                                              
-                                              // Verificar si podemos hacer la conversión a través de la unidad base
-                                              if (unidadBase.isNotEmpty) {
-                                                double aBase = _convertirRendimiento(1.0, unidadAnterior, unidadBase);
-                                                double desdeBase = _convertirRendimiento(1.0, unidadBase, value);
-                                                
-                                                if (!aBase.isNaN && !desdeBase.isNaN && aBase > 0 && desdeBase > 0) {
-                                                  factorConversion = aBase * desdeBase;
-                                                }
-                                              }
-                                            }
-                                            
-                                            // Calcular la nueva cantidad usando el factor de conversión
-                                            double nuevaCantidad = _platosDestino * factorConversion;
-                                            
-                                            print("⭐ CAMBIO DE UNIDAD DE RENDIMIENTO:");
-                                            print("  - De: $_platosDestino $unidadAnterior");
-                                            print("  - Factor: $factorConversion");
-                                            print("  - A: $nuevaCantidad $value");
-                                            
-                                            // Verificar que la nueva cantidad sea válida
-                                            if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
-                                              print("⚠️ Valor inválido: $nuevaCantidad. Usando el valor anterior");
-                                              nuevaCantidad = _platosDestino;
-                                            }
-                                            
-                                            // Actualizar los valores con redondeo para evitar errores de punto flotante
-                                            _platosDestino = _redondearPrecision(nuevaCantidad);
-                                            _destinoController.text = _formatearNumero(_platosDestino);
-                                            _resultado = _platosDestino;
-                                            
-                                            // Recalcular todos los ingredientes basándose en el nuevo factor de unidad
-                                            // No se aplica proporcionalidad aquí para no alterar la receta
+                                          // Intentamos una conversión directa usando el mapa de factores
+                                          if (_factoresRendimiento.containsKey(unidadAnterior) && 
+                                              _factoresRendimiento[unidadAnterior]!.containsKey(value)) {
+                                            factorConversion = _factoresRendimiento[unidadAnterior]![value]!;
                                           }
-                                        });
-                                      }
+                                          // Si no hay conversión directa, intentamos conversión inversa
+                                          else if (_factoresRendimiento.containsKey(value) && 
+                                                   _factoresRendimiento[value]!.containsKey(unidadAnterior)) {
+                                            factorConversion = 1.0 / _factoresRendimiento[value]![unidadAnterior]!;
+                                          }
+                                          // Si ninguna funciona, intentamos a través de una unidad base
+                                          else {
+                                            // Determinar la unidad base adecuada
+                                            String unidadBase = "";
+                                            if (_esTipoUnidadPeso(unidadAnterior) || _esTipoUnidadPeso(value)) {
+                                              unidadBase = "Gramo";
+                                            } else if (_esTipoUnidadVolumen(unidadAnterior) || _esTipoUnidadVolumen(value)) {
+                                              unidadBase = "Mililitros";
+                                            }
+                                            
+                                            // Verificar si podemos hacer la conversión a través de la unidad base
+                                            if (unidadBase.isNotEmpty) {
+                                              double aBase = _convertirRendimiento(1.0, unidadAnterior, unidadBase);
+                                              double desdeBase = _convertirRendimiento(1.0, unidadBase, value);
+                                              
+                                              if (!aBase.isNaN && !desdeBase.isNaN && aBase > 0 && desdeBase > 0) {
+                                                factorConversion = aBase * desdeBase;
+                                              }
+                                            }
+                                          }
+                                          
+                                          // Calcular la nueva cantidad usando el factor de conversión
+                                          double nuevaCantidad = _platosDestino * factorConversion;
+                                          
+                                          print("⭐ CAMBIO DE UNIDAD DE RENDIMIENTO:");
+                                          print("  - De: $_platosDestino $unidadAnterior");
+                                          print("  - Factor: $factorConversion");
+                                          print("  - A: $nuevaCantidad $value");
+                                          
+                                          // Verificar que la nueva cantidad sea válida
+                                          if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
+                                            print("⚠️ Valor inválido: $nuevaCantidad. Usando el valor anterior");
+                                            nuevaCantidad = _platosDestino;
+                                          }
+                                          
+                                          // Actualizar los valores con redondeo para evitar errores de punto flotante
+                                          _platosDestino = _redondearPrecision(nuevaCantidad);
+                                          _destinoController.text = _formatearNumero(_platosDestino);
+                                          _resultado = _platosDestino;
+                                          
+                                          // Recalcular todos los ingredientes basándose en el nuevo factor de unidad
+                                          // No se aplica proporcionalidad aquí para no alterar la receta
+                                        }
+                                      });
+                                    }
                                   },
                                 ),
                               ),
