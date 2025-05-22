@@ -58,7 +58,6 @@ class _ConversionCalculatorScreenState
 
   // Lista de unidades para RENDIMIENTO
   final List<String> _unidadesRendimiento = [
-    'Persona',
     'Gramo',
     'Kilogramo',
     'Onza',
@@ -85,7 +84,7 @@ class _ConversionCalculatorScreenState
     'Pinta',
     'Cuarto galon',
     'Galon',
-    // 'Unidad', // <-- Eliminado de las opciones seleccionables
+    //'Unidad',
   ];
 
   // Mapa de conversión de unidades antiguas a nuevas
@@ -114,8 +113,7 @@ class _ConversionCalculatorScreenState
     'cuarto galon': 'Cuarto galon', // <-- Añadido
     'galon': 'Galon',        // <-- Añadido
     // Unidades de Rendimiento (Persona, Porción, etc.)
-    'persona': 'Persona',
-    'personas': 'Persona',
+    
     'porcion': 'Porción',
     'porciones': 'Porción',
     'racion': 'Ración',
@@ -422,7 +420,6 @@ class _ConversionCalculatorScreenState
 
   // Mapa de plurales para las unidades
   final Map<String, String> _unidadesPlural = {
-    'Persona': 'Personas',
     'Porción': 'Porciones',
     'Ración': 'Raciones',
     'Plato': 'Platos',

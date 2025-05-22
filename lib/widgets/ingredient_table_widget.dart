@@ -38,6 +38,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
     'pinta',
     'c-galon',
     'galon',
+    'u',
   ];
 
   final Map<String, Map<String, String>> _unidadesCompletas = {

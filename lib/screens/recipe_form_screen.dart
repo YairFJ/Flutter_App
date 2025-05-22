@@ -46,6 +46,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     'Pinta': 'pinta',
     'Cuarto galon': 'cuarto galon',
     'Galon': 'galon',
+    'Unidad': 'u',
   };
 
   // Lista de todas las unidades disponibles
