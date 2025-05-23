@@ -18,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isPasswordVisible = false;
+  bool _isEnglish = false;
 
   @override
   void initState() {
@@ -52,6 +53,12 @@ class _LoginPageState extends State<LoginPage> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _toggleLanguage() {
+    setState(() {
+      _isEnglish = !_isEnglish;
+    });
   }
 
   Future<void> _login() async {
@@ -89,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _handleForgotPassword() async {
     if (_emailController.text.isEmpty) {
-      _showError('Por favor, ingresa tu correo electrónico');
+      _showError(_isEnglish ? 'Please enter your email' : 'Por favor, ingresa tu correo electrónico');
       return;
     }
 
@@ -103,10 +110,10 @@ class _LoginPageState extends State<LoginPage> {
       if (error != null) {
         _showError(error);
       } else {
-        _showSuccess('Se ha enviado un enlace de recuperación a tu correo');
+        _showSuccess(_isEnglish ? 'A recovery link has been sent to your email' : 'Se ha enviado un enlace de recuperación a tu correo');
       }
     } catch (e) {
-      _showError('Error inesperado: $e');
+      _showError(_isEnglish ? 'Unexpected error: $e' : 'Error inesperado: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -137,8 +144,8 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         // Mostrar mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('INICIO DE SESIÓN CORRECTO'),
+          SnackBar(
+            content: Text(_isEnglish ? 'SUCCESSFUL LOGIN' : 'INICIO DE SESIÓN CORRECTO'),
             backgroundColor: Colors.green,
           ),
         );
@@ -154,27 +161,32 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (e is FirebaseAuthException) {
-          String mensaje = 'Error de inicio de sesión';
+          String mensaje = _isEnglish ? 'Login error' : 'Error de inicio de sesión';
 
           // Personalizar mensaje según el código de error
           switch (e.code) {
             case 'invalid-credential':
-              mensaje =
-                  'Credenciales inválidas. Verifica la configuración de tu app.';
+              mensaje = _isEnglish 
+                ? 'Invalid credentials. Please check your app configuration.'
+                : 'Credenciales inválidas. Verifica la configuración de tu app.';
               break;
             case 'user-not-found':
-              mensaje = 'No se encontró usuario con estas credenciales.';
+              mensaje = _isEnglish 
+                ? 'No user found with these credentials.'
+                : 'No se encontró usuario con estas credenciales.';
               break;
             case 'unknown-error':
-              mensaje = 'Error desconocido. Por favor, intenta más tarde.';
+              mensaje = _isEnglish 
+                ? 'Unknown error. Please try again later.'
+                : 'Error desconocido. Por favor, intenta más tarde.';
               break;
             default:
-              mensaje = e.message ?? 'Error al iniciar sesión con Google';
+              mensaje = e.message ?? (_isEnglish ? 'Error signing in with Google' : 'Error al iniciar sesión con Google');
           }
 
-          _showError('INICIO DE SESIÓN INCORRECTO: $mensaje');
+          _showError(_isEnglish ? 'LOGIN ERROR: $mensaje' : 'INICIO DE SESIÓN INCORRECTO: $mensaje');
         } else {
-          _showError('INICIO DE SESIÓN INCORRECTO: $e');
+          _showError(_isEnglish ? 'LOGIN ERROR: $e' : 'INICIO DE SESIÓN INCORRECTO: $e');
         }
       }
     }
@@ -189,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
       final userCredential = await _authService.signInWithApple();
 
       if (userCredential != null && userCredential.user != null) {
-        _showSuccess('INICIO DE SESIÓN CORRECTO');
+        _showSuccess(_isEnglish ? 'SUCCESSFUL LOGIN' : 'INICIO DE SESIÓN CORRECTO');
 
         // Esperar un momento para mostrar el mensaje
         await Future.delayed(const Duration(seconds: 1));
@@ -199,11 +211,14 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         }
       } else {
-        _showError(
-            'INICIO DE SESIÓN INCORRECTO: El inicio de sesión con Apple no está disponible');
+        _showError(_isEnglish 
+          ? 'LOGIN ERROR: Apple sign in is not available'
+          : 'INICIO DE SESIÓN INCORRECTO: El inicio de sesión con Apple no está disponible');
       }
     } catch (e) {
-      _showError('INICIO DE SESIÓN INCORRECTO: $e');
+      _showError(_isEnglish 
+        ? 'LOGIN ERROR: $e'
+        : 'INICIO DE SESIÓN INCORRECTO: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -243,7 +258,39 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 50),
+                const SizedBox(height: 20),
+                
+                // Botón de idioma
+                Align(
+                  alignment: Alignment.topRight,
+                  child: GestureDetector(
+                    onTap: _toggleLanguage,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          _isEnglish ? 'lib/images/British.png' : 'lib/images/Spain.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
 
                 // logo
                 const Icon(
@@ -255,9 +302,9 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 40),
 
                 // welcome back, you've been missed!
-                const Text(
-                  '¡Bienvenido!',
-                  style: TextStyle(
+                Text(
+                  _isEnglish ? 'Welcome!' : '¡Bienvenido!',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -271,11 +318,11 @@ class _LoginPageState extends State<LoginPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: MyTextField(
                     controller: _emailController,
-                    hintText: 'Correo electrónico',
+                    hintText: _isEnglish ? 'Email' : 'Correo electrónico',
                     obscureText: false,
                     keyboardType: TextInputType.emailAddress,
                     validator: (val) =>
-                        val!.isEmpty ? 'Ingresa tu correo' : null,
+                        val!.isEmpty ? (_isEnglish ? 'Enter your email' : 'Ingresa tu correo') : null,
                   ),
                 ),
 
@@ -286,7 +333,7 @@ class _LoginPageState extends State<LoginPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: MyTextField(
                     controller: _passwordController,
-                    hintText: 'Contraseña',
+                    hintText: _isEnglish ? 'Password' : 'Contraseña',
                     obscureText: !_isPasswordVisible,
                     suffix: IconButton(
                       icon: Icon(
@@ -302,7 +349,7 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
                     validator: (val) =>
-                        val!.isEmpty ? 'Ingresa tu contraseña' : null,
+                        val!.isEmpty ? (_isEnglish ? 'Enter your password' : 'Ingresa tu contraseña') : null,
                   ),
                 ),
 
@@ -316,9 +363,9 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       GestureDetector(
                         onTap: _handleForgotPassword,
-                        child: const Text(
-                          '¿Olvidaste tu contraseña?',
-                          style: TextStyle(
+                        child: Text(
+                          _isEnglish ? 'Forgot password?' : '¿Olvidaste tu contraseña?',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                           ),
@@ -339,7 +386,7 @@ class _LoginPageState extends State<LoginPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 25.0),
                         child: MyButton(
                           onTap: _login,
-                          text: 'Iniciar sesión',
+                          text: _isEnglish ? 'Sign In' : 'Iniciar sesión',
                         ),
                       ),
 
@@ -356,11 +403,11 @@ class _LoginPageState extends State<LoginPage> {
                           color: Colors.white,
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
-                          'O continuar con',
-                          style: TextStyle(color: Colors.white),
+                          _isEnglish ? 'Or continue with' : 'O continuar con',
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       Expanded(
@@ -403,18 +450,18 @@ class _LoginPageState extends State<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      '¿No tienes una cuenta?',
-                      style: TextStyle(color: Colors.white),
+                    Text(
+                      _isEnglish ? 'Don\'t have an account?' : '¿No tienes una cuenta?',
+                      style: const TextStyle(color: Colors.white),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(context, '/register');
                       },
-                      child: const Text(
-                        'REGISTRARTE',
-                        style: TextStyle(
+                      child: Text(
+                        _isEnglish ? 'SIGN UP' : 'REGISTRARTE',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),

@@ -4,6 +4,7 @@ import 'package:flutter_app/components/my_textfield.dart';
 import 'package:flutter_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/screens/verification_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SquareTile extends StatelessWidget {
   final String imagePath;
@@ -39,12 +40,32 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+  bool _isEnglish = false;
   
   // Controladores para los campos de texto
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguagePreference();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadLanguagePreference();
+  }
+
+  Future<void> _loadLanguagePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isEnglish = prefs.getBool('isEnglish') ?? false;
+    });
+  }
 
   @override
   void dispose() {
@@ -238,9 +259,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 const SizedBox(height: 30),
 
-                const Text(
-                  'Crear Cuenta',
-                  style: TextStyle(
+                Text(
+                  _isEnglish ? 'Create Account' : 'Crear Cuenta',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -252,36 +273,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 // Campos de registro
                 MyTextField(
                   controller: _nameController,
-                  hintText: 'Nombre completo',
+                  hintText: _isEnglish ? 'Full Name' : 'Nombre completo',
                   obscureText: false,
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: const Icon(Icons.person),
                 ),
 
                 const SizedBox(height: 10),
 
                 MyTextField(
                   controller: _emailController,
-                  hintText: 'Correo electrónico',
+                  hintText: _isEnglish ? 'Email' : 'Correo electrónico',
                   obscureText: false,
-                  prefixIcon: Icon(Icons.email),
+                  prefixIcon: const Icon(Icons.email),
                 ),
 
                 const SizedBox(height: 10),
 
                 MyTextField(
                   controller: _passwordController,
-                  hintText: 'Contraseña',
+                  hintText: _isEnglish ? 'Password' : 'Contraseña',
                   obscureText: true,
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: const Icon(Icons.lock),
                 ),
 
                 const SizedBox(height: 10),
 
                 MyTextField(
                   controller: _confirmPasswordController,
-                  hintText: 'Confirmar contraseña',
+                  hintText: _isEnglish ? 'Confirm Password' : 'Confirmar contraseña',
                   obscureText: true,
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: const Icon(Icons.lock),
                 ),
 
                 const SizedBox(height: 25),
@@ -289,7 +310,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 // Botón de registro
                 MyButton(
                   onTap: _handleManualSignUp,
-                  text: 'Registrarse',
+                  text: _isEnglish ? 'Sign Up' : 'Registrarse',
                   isLoading: _isLoading,
                 ),
 
@@ -323,16 +344,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      '¿Ya tienes una cuenta?',
-                      style: TextStyle(color: Colors.white),
+                    Text(
+                      _isEnglish ? 'Already have an account?' : '¿Ya tienes una cuenta?',
+                      style: const TextStyle(color: Colors.white),
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Text(
-                        'Iniciar sesión',
-                        style: TextStyle(
+                      child: Text(
+                        _isEnglish ? 'Login' : 'Iniciar sesión',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),

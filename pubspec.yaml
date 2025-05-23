@@ -79,6 +79,8 @@ flutter:
   assets:
     - lib/images/apple.png
     - lib/images/google.png
+    - lib/images/British.png
+    - lib/images/Spain.png
     - lib/sounds/alarm.mp3
     - .env
     - assets/icon/
