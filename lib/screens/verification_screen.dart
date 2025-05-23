@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
+import 'package:flutter_app/components/my_button.dart';
+import 'package:flutter_app/components/my_textfield.dart';
 
 class VerificationScreen extends StatefulWidget {
   const VerificationScreen({super.key});
@@ -11,20 +13,46 @@ class VerificationScreen extends StatefulWidget {
 }
 
 class _VerificationScreenState extends State<VerificationScreen> {
-  final AuthService _authService = AuthService();
+  final _codeController = TextEditingController();
+  final _authService = AuthService();
   bool _isLoading = false;
   String? _errorMessage;
-  String? _userEmail;
+  int _remainingTime = 600; // 10 minutos en segundos
+  bool _canResend = true; // Cambiado a true por defecto
 
   @override
   void initState() {
     super.initState();
-    _userEmail = FirebaseAuth.instance.currentUser?.email;
-    print('Iniciando pantalla de verificación para: $_userEmail');
+    _startTimer();
   }
 
-  Future<void> _checkVerification() async {
+  void _startTimer() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          if (_remainingTime > 0) {
+            _remainingTime--;
+            _startTimer();
+          }
+        });
+      }
+    });
+  }
+
+  String _formatTime() {
+    final minutes = (_remainingTime / 60).floor();
+    final seconds = _remainingTime % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _verifyCode() async {
     if (_isLoading) return;
+
+    final code = _codeController.text.trim();
+    if (code.isEmpty) {
+      setState(() => _errorMessage = 'Por favor, ingresa el código de verificación');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -32,71 +60,34 @@ class _VerificationScreenState extends State<VerificationScreen> {
     });
 
     try {
-      print('Verificando estado de email...');
-      
-      // Intentar verificar varias veces con más tiempo entre intentos
-      bool isVerified = false;
-      for (int i = 0; i < 3; i++) {
-        isVerified = await _authService.isEmailVerified();
-        if (isVerified) break;
-        
-        // Si no está verificado, intentar forzar la verificación
-        if (i == 1) { // En el segundo intento
-          print('Intentando forzar verificación...');
-          await _authService.forceEmailVerification();
-        }
-        
-        // Esperar más tiempo entre intentos
-        await Future.delayed(const Duration(seconds: 2));
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('No hay usuario autenticado');
       }
-      
-      print('Estado final de verificación: $isVerified');
-      
+
+      final isVerified = await _authService.verifyCode(user.uid, code);
       if (isVerified) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('¡Cuenta verificada exitosamente!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Esperar un momento antes de redirigir
-          await Future.delayed(const Duration(seconds: 2));
+          print('Código verificado, redirigiendo a HomeScreen');
+          // Forzar la verificación en Firestore
+          await _authService.forceEmailVerification();
+          // Redirigir a HomeScreen
           Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         }
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Email aún no verificado. Por favor, asegúrate de haber hecho clic en el enlace del correo y espera unos segundos antes de verificar.'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 5),
-            ),
-          );
-        }
+        setState(() => _errorMessage = 'Código incorrecto');
       }
     } catch (e) {
-      print('Error al verificar email: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al verificar. Por favor, intenta de nuevo.'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
+      setState(() => _errorMessage = e.toString());
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  Future<void> _resendVerificationEmail() async {
-    if (_isLoading) return;
+  Future<void> _resendCode() async {
+    if (_isLoading) return; // Solo verificamos si está cargando
 
     setState(() {
       _isLoading = true;
@@ -104,27 +95,39 @@ class _VerificationScreenState extends State<VerificationScreen> {
     });
 
     try {
-      print('Reenviando email de verificación...');
-      await _authService.resendVerificationEmail();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('No hay usuario autenticado');
+      }
+
+      await _authService.resendVerificationCode(user.email!, user.uid);
+      
+      setState(() {
+        _remainingTime = 600; // Reiniciamos el tiempo
+      });
+      _startTimer();
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Correo de verificación reenviado. Por favor, revisa tu bandeja de entrada y spam.'),
+            content: Text('Nuevo código enviado'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
-      print('Error al reenviar email: $e');
-      setState(() {
-        _errorMessage = 'Error al reenviar el correo. Por favor, intenta de nuevo.';
-      });
+      if (mounted) {
+        setState(() => _errorMessage = e.toString());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al reenviar código: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -134,142 +137,88 @@ class _VerificationScreenState extends State<VerificationScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF96B4D8),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(25.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 50),
-                const Icon(
-                  Icons.mark_email_read,
-                  size: 100,
+        child: Padding(
+          padding: const EdgeInsets.all(25.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.mark_email_unread,
+                size: 100,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 30),
+              const Text(
+                'Verificación de Email',
+                style: TextStyle(
                   color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 30),
-                const Text(
-                  'Verificación de Email',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Hemos enviado un código de verificación a tu correo electrónico. Por favor, ingrésalo a continuación.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 30),
+              MyTextField(
+                controller: _codeController,
+                hintText: 'Código de verificación',
+                obscureText: false,
+                prefixIcon: const Icon(Icons.lock_outline),
+              ),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 20),
-                if (_userEmail != null) ...[
-                  Text(
-                    'Correo: $_userEmail',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-                const Text(
-                  'Por favor, verifica tu correo electrónico haciendo clic en el enlace que te enviamos.',
-                  textAlign: TextAlign.center,
+              const SizedBox(height: 20),
+              Text(
+                'Tiempo restante: ${_formatTime()}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 30),
+              MyButton(
+                onTap: _verifyCode,
+                text: 'Verificar',
+                isLoading: _isLoading,
+              ),
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: _isLoading ? null : _resendCode, // Solo deshabilitamos si está cargando
+                style: TextButton.styleFrom(
+                  disabledForegroundColor: Colors.white.withOpacity(0.5),
+                ),
+                child: Text(
+                  'Reenviar código',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: _isLoading ? Colors.white.withOpacity(0.5) : Colors.white,
                     fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Una vez verificado, haz clic en el botón "Verificar Estado".',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _errorMessage!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _checkVerification,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF96B4D8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 50,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text(
-                          'Verificar Estado',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _resendVerificationEmail,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF96B4D8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 50,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text(
-                          'Reenviar correo de verificación',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () async {
-                    await _authService.signOut();
-                    if (mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-                    }
-                  },
-                  child: const Text(
-                    'Cerrar sesión',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
   }
 } 
