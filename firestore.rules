@@ -6,35 +6,56 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
+    
+    // Función para verificar si el usuario es el propietario del documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Función para verificar si los campos de verificación son los únicos que se están actualizando
+    function isVerificationUpdate() {
+      let allowedFields = ['isEmailVerified', 'verified', 'needsVerification', 'verifiedAt', 'verificationCode', 'verificationCodeTimestamp', 'lastVerificationAttempt'];
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
+    }
 
     // Reglas para la colección de usuarios
     match /users/{userId} {
-      allow read, write: if isAuthenticated();
+      // Permitir lectura si el usuario está autenticado y es el propietario
+      allow read: if isOwner(userId);
+      
+      // Permitir escritura si el usuario está autenticado y es el propietario
+      allow write: if isOwner(userId);
+      
+      // Permitir creación de documentos para usuarios no autenticados (registro)
+      allow create: if true;
+      
+      // Permitir actualización de verificación
+      allow update: if isOwner(userId) || isVerificationUpdate();
     }
 
     // Reglas para la colección de recetas
     match /recipes/{recipeId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
     }
 
-    // Reglas para la colección de verificaciones pendientes
-    match /pending_verifications/{email} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Reglas para la colección de grupos y sus subcolecciones
+    // Reglas para la colección de grupos
     match /groups/{groupId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
       
-      // Reglas para la subcolección de recetas dentro de grupos
-      match /recipes/{recipeId} {
-        allow read, write: if isAuthenticated();
-      }
-      
-      // Reglas para la subcolección de miembros dentro de grupos
+      // Reglas para la subcolección de miembros
       match /members/{memberId} {
-        allow read, write: if isAuthenticated();
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && get(/databases/$(database)/documents/groups/$(groupId)).data.creatorId == request.auth.uid;
       }
+    }
+
+    // Reglas por defecto para otras colecciones
+    match /{document=**} {
+      allow read, write: if false; // Denegar acceso por defecto
     }
   }
 }

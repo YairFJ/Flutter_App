@@ -114,17 +114,29 @@ class AuthWrapper extends StatelessWidget {
         if (!user.emailVerified &&
             !user.providerData.any((provider) => provider.providerId == 'google.com')) {
           
-          // Verificar si el usuario acaba de registrarse
-          final needsVerification = user.metadata.creationTime != null &&
-              DateTime.now().difference(user.metadata.creationTime!).inMinutes < 5;
-          
-          if (needsVerification) {
-            print('AuthWrapper: Usuario recién registrado, redirigiendo a verificación');
-            return const VerificationScreen();
-          } else {
-            print('AuthWrapper: Usuario no verificado pero no recién registrado, redirigiendo a login');
-            return const LoginPage();
-          }
+          // Verificar en Firestore si el usuario está verificado
+          return StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                final userData = snapshot.data!.data() as Map<String, dynamic>?;
+                final isVerified = userData?['isEmailVerified'] as bool? ?? false;
+                
+                if (isVerified) {
+                  print('AuthWrapper: Usuario verificado en Firestore, accediendo a HomeScreen');
+                  return HomeScreen(
+                    userId: user.uid,
+                    userEmail: user.email ?? 'No disponible',
+                    userName: user.displayName ?? 'Usuario',
+                    toggleTheme: Provider.of<ThemeService>(context, listen: false).toggleTheme,
+                  );
+                }
+              }
+              
+              print('AuthWrapper: Usuario no verificado, redirigiendo a verificación');
+              return const VerificationScreen();
+            },
+          );
         }
 
         print('AuthWrapper: Usuario autenticado y verificado, accediendo a HomeScreen');
