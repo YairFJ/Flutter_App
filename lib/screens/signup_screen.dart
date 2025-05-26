@@ -41,6 +41,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
   bool _isEnglish = false;
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
   
   // Controladores para los campos de texto
   final _nameController = TextEditingController();
@@ -292,8 +294,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 MyTextField(
                   controller: _passwordController,
                   hintText: _isEnglish ? 'Password' : 'Contraseña',
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
                   prefixIcon: const Icon(Icons.lock),
+                  suffix: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
 
                 const SizedBox(height: 10),
@@ -301,8 +314,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 MyTextField(
                   controller: _confirmPasswordController,
                   hintText: _isEnglish ? 'Confirm Password' : 'Confirmar contraseña',
-                  obscureText: true,
+                  obscureText: !_isConfirmPasswordVisible,
                   prefixIcon: const Icon(Icons.lock),
+                  suffix: IconButton(
+                    icon: Icon(
+                      _isConfirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
 
                 const SizedBox(height: 25),
@@ -316,27 +340,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                 const SizedBox(height: 30),
 
-                // google + apple sign in buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // google button
-                    GestureDetector(
-                      onTap: _isLoading ? null : _handleGoogleSignIn,
-                      child: const SquareTile(
-                        imagePath: 'lib/images/google.png',
-                      ),
-                    ),
-                    const SizedBox(width: 25),
-                    // apple button
-                    GestureDetector(
-                      onTap: _isLoading ? null : _handleAppleSignIn,
-                      child: const SquareTile(
-                        imagePath: 'lib/images/apple.png',
-                      ),
-                    ),
-                  ],
-                ),
+                
 
                 const SizedBox(height: 30),
 
