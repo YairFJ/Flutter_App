@@ -94,11 +94,17 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          // Loader de pantalla completa
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(child: Text('Error: \\${snapshot.error}'));
         }
 
         final user = snapshot.data;
@@ -118,10 +124,18 @@ class AuthWrapper extends StatelessWidget {
           return StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
             builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                // Loader de pantalla completa mientras se resuelve Firestore
+                return Scaffold(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  body: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
               if (snapshot.hasData) {
                 final userData = snapshot.data!.data() as Map<String, dynamic>?;
                 final isVerified = userData?['isEmailVerified'] as bool? ?? false;
-                
                 if (isVerified) {
                   print('AuthWrapper: Usuario verificado en Firestore, accediendo a HomeScreen');
                   return HomeScreen(
@@ -132,7 +146,6 @@ class AuthWrapper extends StatelessWidget {
                   );
                 }
               }
-              
               print('AuthWrapper: Usuario no verificado, redirigiendo a verificación');
               return const VerificationScreen();
             },
