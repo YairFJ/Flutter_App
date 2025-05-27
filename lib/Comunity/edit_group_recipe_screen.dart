@@ -376,12 +376,6 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEnglish ? 'Edit Recipe' : 'Editar Receta'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _updateRecipe,
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
