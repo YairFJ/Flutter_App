@@ -139,7 +139,7 @@ class _RecipesPageState extends State<RecipesPage> {
         ? recipes
             .where((recipe) =>
                 recipe.category.isEmpty ||
-                !RecipeCategories.categories.contains(recipe.category))
+                recipe.category == RecipeCategories.sinCategoria)
             .toList()
         : recipes.where((recipe) => recipe.category == category).toList();
 

@@ -456,7 +456,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                category,
+                                RecipeCategories.getTranslatedCategory(category, isEnglish),
                                 style: TextStyle(
                                   color:
                                       isDarkMode ? Colors.white : Colors.black,

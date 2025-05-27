@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
+import '../constants/categories.dart';
 //import '../models/ingredient.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_recipe_screen.dart';
@@ -184,7 +185,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               const Icon(Icons.category, size: 20),
                               const SizedBox(width: 4),
                               Text(
-                                widget.recipe.category,
+                                RecipeCategories.getTranslatedCategory(widget.recipe.category, isEnglish),
                                 style: TextStyle(
                                   color: isDarkMode ? Colors.white : Colors.black,
                                 ),
