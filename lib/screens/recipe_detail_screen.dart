@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 //import '../models/ingredient.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'edit_recipe_screen.dart';
 import 'conversion_calculator_screen.dart';
 import 'package:printing/printing.dart';
@@ -93,8 +94,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    // Sin autenticación, cualquier usuario puede editar cualquier receta
-    final isOwner = true;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final isOwner = currentUser?.uid == widget.recipe.userId;
 
     return Scaffold(
       appBar: AppBar(

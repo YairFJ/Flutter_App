@@ -281,58 +281,60 @@ class MyRecipesScreen extends StatelessWidget {
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? const Color.fromRGBO(
-                                      28, 28, 34, 1) // Modo oscuro
-                                  : Colors.white, // Modo claro
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                size: 20,
-                                color: Colors.blue,
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        EditRecipeScreen(
-                                          recipe: recipe,
-                                          isEnglish: isEnglish,
-                                        ),
+                      child: currentUser?.uid == recipe.userId
+                          ? Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color.fromRGBO(
+                                            28, 28, 34, 1) // Modo oscuro
+                                        : Colors.white, // Modo claro
+                                    shape: BoxShape.circle,
                                   ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? const Color.fromRGBO(
-                                      28, 28, 34, 1) // Modo oscuro
-                                  : Colors.white.withOpacity(0.9), // Modo claro
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                              onPressed: () => _deleteRecipe(context, recipe),
-                            ),
-                          ),
-                        ],
-                      ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      size: 20,
+                                      color: Colors.blue,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              EditRecipeScreen(
+                                                recipe: recipe,
+                                                isEnglish: isEnglish,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color.fromRGBO(
+                                            28, 28, 34, 1) // Modo oscuro
+                                        : Colors.white.withOpacity(0.9), // Modo claro
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      size: 20,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () => _deleteRecipe(context, recipe),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
                     ),
                   ],
                 ),
