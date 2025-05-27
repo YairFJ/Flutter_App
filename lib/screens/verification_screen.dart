@@ -69,10 +69,30 @@ class _VerificationScreenState extends State<VerificationScreen> {
       if (isVerified) {
         if (mounted) {
           print('Código verificado, redirigiendo a HomeScreen');
-          // Forzar la verificación en Firestore
+          // Forzar la verificación en Firestore antes del modal
           await _authService.forceEmailVerification();
-          // Redirigir a HomeScreen
-          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          // Mostrar modal de éxito
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              backgroundColor: const Color(0xFF96B4D8),
+              title: const Text('¡Usuario verificado!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              content: const Text('Tu cuenta ha sido verificada exitosamente.', style: TextStyle(color: Colors.white)),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Cierra el modal
+                    Future.delayed(Duration.zero, () {
+                      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false); // Navega al Home
+                    });
+                  },
+                  child: const Text('Aceptar', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          );
         }
       } else {
         setState(() => _errorMessage = 'Código incorrecto');
@@ -208,6 +228,28 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     fontSize: 16,
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        await FirebaseAuth.instance.signOut();
+                        if (mounted) {
+                          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                        }
+                      },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.white, width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.transparent,
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                child: const Text('Salir de la verificación'),
               ),
             ],
           ),
