@@ -28,10 +28,7 @@ class RecipeCategories {
   };
 
   static List<String> categories = [
-    // Comidas principales
-    /*'Desayunos',
-    'Almuerzos',
-    'Cenas',*/
+    
     'Aderezos',
     'Arroz y cereales',
     'Carne',
@@ -44,9 +41,7 @@ class RecipeCategories {
     'Vegano',
     'Vegetariano',
     'Verduras',
-
-    // Categoría para recetas sin clasificar
-    sinCategoria,
+    'Sin Categoría',
   ];
 
   static String getTranslatedCategory(String category, bool isEnglish) {

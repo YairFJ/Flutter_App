@@ -280,20 +280,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
       }
 
       try {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(isEnglish ? 'Saving recipe...' : 'Guardando receta...'),
-              ],
-            ),
-          ),
-        );
+       
 
         final steps = _stepControllers
             .map((controller) => controller.text.trim())
@@ -489,7 +476,7 @@ class _EditGroupRecipeScreenState extends State<EditGroupRecipeScreen> {
               items: RecipeCategories.categories
                   .map((category) => DropdownMenuItem(
                         value: category,
-                        child: Text(category),
+                        child: Text(RecipeCategories.getTranslatedCategory(category, isEnglish)),
                       ))
                   .toList(),
               onChanged: (value) {
