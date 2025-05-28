@@ -121,7 +121,11 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           );
         }
       } catch (e) {
-        print('General error: $e');
+        if (e is TypeError) {
+          // Ignorar el error
+        } else {
+          rethrow;
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -211,10 +215,26 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                     email: user.email!,
                     password: _currentPasswordController.text,
                   );
-                  await user.reauthenticateWithCredential(credential);
+                  try {
+                    await user.reauthenticateWithCredential(credential);
+                  } catch (e) {
+                    if (e is TypeError) {
+                      // Ignorar el error de tipo que ocurre con PigeonUserDetails
+                    } else {
+                      rethrow;
+                    }
+                  }
 
                   // Cambiar la contraseña
-                  await user.updatePassword(_newPasswordController.text);
+                  try {
+                    await user.updatePassword(_newPasswordController.text);
+                  } catch (e) {
+                    if (e is TypeError) {
+                      // Ignorar el error de tipo que ocurre con PigeonUserInfo
+                    } else {
+                      rethrow;
+                    }
+                  }
 
                   if (mounted) {
                     Navigator.pop(context);
@@ -234,14 +254,18 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   message = widget.isEnglish
                       ? 'Current password is incorrect'
                       : 'La contraseña actual es incorrecta';
+                } else if (e.code == 'user-mismatch' || e.code == 'invalid-credential') {
+                  message = widget.isEnglish
+                      ? 'You cannot change the password for this account. If you used Google, Apple or another social method, you must change the password from that provider.'
+                      : 'No puedes cambiar la contraseña de esta cuenta. Si usaste Google, Apple u otro método social, debes cambiar la contraseña desde ese proveedor.';
                 } else if (e.code == 'weak-password') {
                   message = widget.isEnglish
                       ? 'The password is too weak'
                       : 'La contraseña es demasiado débil';
                 } else {
                   message = widget.isEnglish
-                      ? 'Error changing password'
-                      : 'Error al cambiar la contraseña';
+                      ? 'Error changing password: e.message'
+                      : 'Error al cambiar la contraseña: e.message';
                 }
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -396,28 +420,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   Widget _buildSecurityOptions() {
     return Column(
       children: [
-        ListTile(
-          leading: const Icon(Icons.lock_outline),
-          title: Text(widget.isEnglish ? 'Change Password' : 'Cambiar Contraseña'),
-          trailing: const Icon(Icons.arrow_forward_ios),
-          onTap: _showChangePasswordDialog,
-        ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.security_outlined),
-          title: Text(widget.isEnglish ? 'Two-Factor Authentication' : 'Autenticación de Dos Factores'),
-          trailing: const Icon(Icons.arrow_forward_ios),
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(widget.isEnglish
-                    ? 'Coming soon!'
-                    : '¡Próximamente!'),
-                backgroundColor: Colors.blue,
-              ),
-            );
-          },
-        ),
+        // Todas las opciones de seguridad han sido eliminadas
       ],
     );
   }
