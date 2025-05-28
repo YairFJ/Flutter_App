@@ -108,10 +108,19 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
   }
 
   void _calcularConversion() {
-    if (_cantidadController.text.isEmpty) return;
+    if (_cantidadController.text.isEmpty) {
+      setState(() {
+        _resultado = 0.0;
+      });
+      return;
+    }
 
     try {
       double cantidad = double.parse(_cantidadController.text);
+      
+      if (cantidad < 0) {
+        throw Exception('La cantidad no puede ser negativa');
+      }
       
       if (_categoriaSeleccionada == 'Temperatura') {
         setState(() {
@@ -124,7 +133,15 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
         });
       }
     } catch (e) {
-      // Manejar error de conversión
+      setState(() {
+        _resultado = 0.0;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error en la conversión: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -161,17 +178,115 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
   double _obtenerFactorConversion(String desde, String hasta) {
     if (desde == hasta) return 1;
 
-    if (_factoresConversion.containsKey(desde) &&
-        _factoresConversion[desde]!.containsKey(hasta)) {
-      return _factoresConversion[desde]![hasta]!;
+    // Conversión de Peso
+    if (_esTipoUnidadPeso(desde) && _esTipoUnidadPeso(hasta)) {
+      // Primero convertir a gramos
+      double cantidadEnGramos;
+      switch (desde) {
+        case 'g':
+          cantidadEnGramos = 1;
+          break;
+        case 'kg':
+          cantidadEnGramos = 1000;
+          break;
+        case 'oz':
+          cantidadEnGramos = 28.3495;
+          break;
+        case 'lb':
+          cantidadEnGramos = 453.592;
+          break;
+        default:
+          cantidadEnGramos = 1;
+      }
+
+      // Luego convertir de gramos a la unidad destino
+      switch (hasta) {
+        case 'g':
+          return cantidadEnGramos;
+        case 'kg':
+          return cantidadEnGramos / 1000;
+        case 'oz':
+          return cantidadEnGramos / 28.3495;
+        case 'lb':
+          return cantidadEnGramos / 453.592;
+        default:
+          return 1;
+      }
     }
 
-    if (_factoresConversion.containsKey(hasta) &&
-        _factoresConversion[hasta]!.containsKey(desde)) {
-      return 1 / _factoresConversion[hasta]![desde]!;
+    // Conversión de Volumen
+    if (_esTipoUnidadVolumen(desde) && _esTipoUnidadVolumen(hasta)) {
+      // Primero convertir a mililitros
+      double cantidadEnMl;
+      switch (desde) {
+        case 'ml':
+          cantidadEnMl = 1;
+          break;
+        case 'l':
+          cantidadEnMl = 1000;
+          break;
+        case 'tz':
+          cantidadEnMl = 240;
+          break;
+        case 'cda':
+          cantidadEnMl = 15;
+          break;
+        case 'cdta':
+          cantidadEnMl = 5;
+          break;
+        default:
+          cantidadEnMl = 1;
+      }
+
+      // Luego convertir de mililitros a la unidad destino
+      switch (hasta) {
+        case 'ml':
+          return cantidadEnMl;
+        case 'l':
+          return cantidadEnMl / 1000;
+        case 'tz':
+          return cantidadEnMl / 240;
+        case 'cda':
+          return cantidadEnMl / 15;
+        case 'cdta':
+          return cantidadEnMl / 5;
+        default:
+          return 1;
+      }
     }
 
-    return 1;
+    // Conversión de Temperatura
+    if (_categoriaSeleccionada == 'Temperatura') {
+      // Primero convertir a Celsius
+      double cantidadEnCelsius;
+      switch (desde) {
+        case '°C':
+          cantidadEnCelsius = 1;
+          break;
+        case '°F':
+          cantidadEnCelsius = (1 - 32) * 5 / 9;
+          break;
+        case 'K':
+          cantidadEnCelsius = 1 - 273.15;
+          break;
+        default:
+          cantidadEnCelsius = 1;
+      }
+
+      // Luego convertir de Celsius a la unidad destino
+      switch (hasta) {
+        case '°C':
+          return cantidadEnCelsius;
+        case '°F':
+          return (cantidadEnCelsius * 9 / 5) + 32;
+        case 'K':
+          return cantidadEnCelsius + 273.15;
+        default:
+          return 1;
+      }
+    }
+
+    throw Exception('No se encontró factor de conversión entre $desde y $hasta');
   }
 
   void _cambiarCategoria(String categoria) {
@@ -406,6 +521,14 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
       ),
       onPressed: () => _cambiarCategoria(categoria),
     );
+  }
+
+  bool _esTipoUnidadPeso(String unidad) {
+    return ['g', 'kg', 'oz', 'lb'].contains(unidad);
+  }
+
+  bool _esTipoUnidadVolumen(String unidad) {
+    return ['ml', 'l', 'tz', 'cda', 'cdta'].contains(unidad);
   }
 } 
 
