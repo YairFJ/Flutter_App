@@ -429,7 +429,7 @@ class _ConversionCalculatorScreenState
   @override
   void initState() {
     super.initState();
-    isEnglish = widget.isEnglish; // Inicializar en initState
+    isEnglish = widget.isEnglish;
     try {
       print("Iniciando configuración...");
       print("Serving Size: ${widget.recipe.servingSize}");
@@ -439,12 +439,19 @@ class _ConversionCalculatorScreenState
       if (parts.length >= 2) {
         _platosOrigen = double.tryParse(parts[0].replaceAll(',', '.')) ?? 1.0;
         _valorOriginalRendimiento = _platosOrigen;
-        _platosOrigenOriginal = _platosOrigen; // Guardar el valor original
+        _platosOrigenOriginal = _platosOrigen;
         
         String unidadOriginalTemp = parts[1].toLowerCase();
-        _unidadOriginal = _convertirUnidadAntigua[unidadOriginalTemp] ?? 'Persona';
-        _unidadDestino = _unidadOriginal;
-        _unidadActual = _unidadOriginal;
+        String unidadNormalizada = _convertirUnidadAntigua[unidadOriginalTemp] ?? 'Porción';
+        
+        // Asegurarnos que la unidad normalizada esté en la lista de unidades de rendimiento
+        if (!_unidadesRendimiento.contains(unidadNormalizada)) {
+          unidadNormalizada = 'Porción';
+        }
+        
+        _unidadOriginal = unidadNormalizada;
+        _unidadDestino = unidadNormalizada;
+        _unidadActual = unidadNormalizada;
         
         print("Valores iniciales:");
         print("  - Platos origen: $_platosOrigen");
@@ -461,9 +468,9 @@ class _ConversionCalculatorScreenState
         }
       } else {
         print("No se encontraron partes suficientes en el serving size, usando valores predeterminados");
-        _unidadOriginal = 'Persona';
-        _unidadDestino = 'Persona';
-        _unidadActual = 'Persona';
+        _unidadOriginal = 'Porción';
+        _unidadDestino = 'Porción';
+        _unidadActual = 'Porción';
         _platosOrigen = 1.0;
         _valorOriginalRendimiento = 1.0;
         _platosOrigenOriginal = 1.0;
