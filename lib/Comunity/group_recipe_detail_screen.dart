@@ -3,7 +3,9 @@ import '../models/recipe.dart';
 import '../models/group.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'edit_group_recipe_screen.dart';
+import 'group_recipe_form_screen.dart';
+import '../constants/categories.dart';
+
 import '../screens/conversion_calculator_screen.dart';
 
 class GroupRecipeDetailScreen extends StatefulWidget {
@@ -84,14 +86,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
     }
   }
 
-  String _getPluralSuffix(String servingSize) {
-    try {
-      int size = int.parse(servingSize);
-      return size == 1 ? 'porción' : 'porciones';
-    } catch (e) {
-      return 'porciones';
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +122,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                 final updatedRecipe = await Navigator.push<Recipe>(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => EditGroupRecipeScreen(
+                    builder: (context) => GroupRecipeFormScreen(
                       recipe: widget.recipe,
                       group: widget.group,
                       isEnglish: isEnglish,
@@ -182,7 +177,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                         children: [
                           const Icon(Icons.category, size: 20),
                           const SizedBox(width: 4),
-                          Text(widget.recipe.category),
+                          Text(RecipeCategories.getTranslatedCategory(widget.recipe.category, isEnglish)),
                         ],
                       ),
                     ],
@@ -214,8 +209,8 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
                         const SizedBox(width: 8),
                         Text(
                           isEnglish 
-                            ? 'Yield: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}'
-                            : 'Rendimiento: ${widget.recipe.servingSize} ${_getPluralSuffix(widget.recipe.servingSize)}',
+                            ? 'Yield: ${widget.recipe.servingSize} '
+                            : 'Rendimiento: ${widget.recipe.servingSize} ',
                           style: const TextStyle(
                             fontSize: 16,
                           ),

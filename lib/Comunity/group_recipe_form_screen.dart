@@ -7,6 +7,7 @@ import '../models/ingrediente_tabla.dart';
 import '../models/group.dart';
 import '../constants/categories.dart';
 import '../widgets/add_ingredient_dialog.dart';
+import 'group_recipe_detail_screen.dart';
 
 class GroupRecipeFormScreen extends StatefulWidget {
   final Group group;
@@ -35,7 +36,6 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
   final List<TextEditingController> _stepControllers = [];
   String _selectedCategory = '';
   String? _imageUrl;
-  bool _isPrivate = false;
   List<Ingredient> _ingredients = [];
   String _servingUnit = 'gr';
   bool isEnglish = false;
@@ -76,7 +76,6 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
     }
 
     _selectedCategory = widget.recipe?.category ?? '';
-    _isPrivate = widget.recipe?.isPrivate ?? false;
     _ingredients = List.from(widget.recipe?.ingredients ?? []);
     _imageUrl = widget.recipe?.imageUrl;
 
@@ -293,6 +292,18 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
           Navigator.pop(context); // Cierra el diálogo de carga
           Navigator.pop(context); // Vuelve a la pantalla anterior
 
+          // Navegar a la pantalla de detalle con la receta actualizada
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GroupRecipeDetailScreen(
+                recipe: recipe,
+                group: widget.group,
+                isEnglish: isEnglish,
+              ),
+            ),
+          );
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(isEnglish ? 'Recipe saved successfully' : 'Receta guardada con éxito'),
@@ -481,31 +492,6 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                 const SizedBox(height: 24),
                 _buildStepsList(),
                 const SizedBox(height: 24),
-                SwitchListTile(
-                  title: Text(
-                    isEnglish ? 'Private Recipe' : 'Receta Privada',
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  subtitle: Text(
-                    _isPrivate
-                        ? isEnglish ? 'Only you can see this recipe' : 'Solo tú podrás ver esta receta'
-                        : isEnglish ? 'Everyone can see this recipe' : 'Todos podrán ver esta receta',
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
-                  value: _isPrivate,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _isPrivate = value;
-                    });
-                  },
-                  activeColor: Theme.of(context).primaryColor,
-                ),
-                const Divider(),
                 ElevatedButton(
                   onPressed: _saveRecipe,
                   style: ElevatedButton.styleFrom(
@@ -514,7 +500,9 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
                     backgroundColor: Theme.of(context).primaryColor,
                   ),
                   child: Text(
-                    isEnglish ? 'Save Recipe' : 'Guardar Receta',
+                    widget.recipe == null 
+                      ? (isEnglish ? 'Save Recipe' : 'Guardar Receta')
+                      : (isEnglish ? 'Save Changes' : 'Guardar Cambios'),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
