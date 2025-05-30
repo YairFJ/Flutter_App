@@ -366,7 +366,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             bottom: 40.0,
             child: ElevatedButton(
               onPressed: () async {
-                final pdfBytes = await generateRecipePdf(widget.recipe);
+                final pdfBytes = await generateRecipePdf(widget.recipe, isEnglish: isEnglish);
                 await Printing.sharePdf(
                   bytes: pdfBytes,
                   filename: '${widget.recipe.title}.pdf',

@@ -329,7 +329,7 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
             bottom: 20.0,
             child: ElevatedButton(
               onPressed: () async {
-                final pdfBytes = await generateRecipePdf(widget.recipe);
+                final pdfBytes = await generateRecipePdf(widget.recipe, isEnglish: isEnglish);
                 await Printing.sharePdf(
                   bytes: pdfBytes,
                   filename: '${widget.recipe.title}.pdf',

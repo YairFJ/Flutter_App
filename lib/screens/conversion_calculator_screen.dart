@@ -1078,7 +1078,8 @@ class _ConversionCalculatorScreenState
       unidad: _unidadDestino,
       detalles: widget.recipe.description ?? '',
       pasos: widget.recipe.steps,
-      tituloReceta: widget.recipe.title, // Añadir el título de la receta original
+      tituloReceta: widget.recipe.title,
+      isEnglish: widget.isEnglish,
     );
     final output = await getTemporaryDirectory();
     final file = File('${output.path}/conversion_receta.pdf');
@@ -1086,7 +1087,7 @@ class _ConversionCalculatorScreenState
     if (context.mounted) {
       await Share.shareXFiles(
         [XFile(file.path)],
-        subject: 'Conversión de Receta',
+        subject: widget.isEnglish ? 'Recipe Conversion' : 'Conversión de Receta',
       );
     }
   }
@@ -1120,13 +1121,13 @@ class _ConversionCalculatorScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calculadora de Conversiones'),
+        title: Text(widget.isEnglish ? 'Conversion Calculator' : 'Calculadora de Conversiones'),
         elevation: 1, // Sombra sutil
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: _mostrarTablaEquivalencias,
-            tooltip: 'Ver tabla de equivalencias',
+            tooltip: widget.isEnglish ? 'View equivalences table' : 'Ver tabla de equivalencias',
           ),
         
         ],
@@ -1135,8 +1136,8 @@ class _ConversionCalculatorScreenState
         padding: const EdgeInsets.all(16.0), // Padding general
         children: [
           Text(
-            'CALCULADORA DE CONVERSIÓN',
-            style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600), // Estilo de título
+            widget.isEnglish ? 'CONVERSION CALCULATOR' : 'CALCULADORA DE CONVERSIÓN',
+            style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -1144,7 +1145,7 @@ class _ConversionCalculatorScreenState
           // --- Sección Rendimiento con Card ---
           Card(
             elevation: 2,
-            margin: const EdgeInsets.only(bottom: 24), // Espacio después de la card
+            margin: const EdgeInsets.only(bottom: 24),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -1152,16 +1153,16 @@ class _ConversionCalculatorScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'RENDIMIENTO',
-                    style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600), // Título de sección
+                    widget.isEnglish ? 'YIELD' : 'RENDIMIENTO',
+                    style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 16),
                   // Encabezados de la tabla
                   Row(
                     children: [
-                      Expanded(child: Text('ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text('UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(flex: 2, child: Text('NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text(widget.isEnglish ? 'ORIGINAL' : 'ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text(widget.isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(flex: 2, child: Text(widget.isEnglish ? 'NEW' : 'NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -1366,15 +1367,15 @@ class _ConversionCalculatorScreenState
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                       decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer, // Usar color del tema
-                        borderRadius: BorderRadius.circular(30), // Más redondeado
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(30),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Resultado: ',
+                            widget.isEnglish ? 'Result: ' : 'Resultado: ',
                             style: textTheme.titleMedium?.copyWith(
                               color: colorScheme.onPrimaryContainer,
                             ),
@@ -1397,8 +1398,8 @@ class _ConversionCalculatorScreenState
 
           // --- Inicio Sección Tabla Ingredientes con Card ---
           Text(
-            'TABLA DE INGREDIENTES',
-            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600), // Título de sección
+            widget.isEnglish ? 'INGREDIENTS TABLE' : 'TABLA DE INGREDIENTES',
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
           Card(
@@ -1419,9 +1420,9 @@ class _ConversionCalculatorScreenState
                   ),
                   child: Row(
                     children: [
-                      Expanded(flex: 2, child: Text('INGREDIENTE', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text('CANTIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text('UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(flex: 2, child: Text(widget.isEnglish ? 'INGREDIENT' : 'INGREDIENTE', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text(widget.isEnglish ? 'QUANTITY' : 'CANTIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      Expanded(child: Text(widget.isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
                     ],
                   ),
                 ),
@@ -1603,7 +1604,7 @@ class _ConversionCalculatorScreenState
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Compartir PDF',
+                      widget.isEnglish ? 'Share PDF' : 'Compartir PDF',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
@@ -1660,56 +1661,72 @@ class _ConversionCalculatorScreenState
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Tabla de Equivalencias',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          title: Text(
+            widget.isEnglish ? 'Equivalences Table' : 'Tabla de Equivalencias',
+            style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildEquivalenciasSection('UNIDADES DE PESO', [
-                  '1 Kilogramo (kg) = 1000 Gramos (g)',
-                  '1 Gramo (g) = 1000 Miligramos (mg)',
-                  '1 Libra (lb) = 453.6 Gramos (g)',
-                  '1 Libra (lb) = 16 Onzas (oz)',
-                  '1 Onza (oz) = 28.35 Gramos (g)',
-                ]),
+                _buildEquivalenciasSection(
+                  widget.isEnglish ? 'WEIGHT UNITS' : 'UNIDADES DE PESO',
+                  [
+                    '1 Kilogramo (kg) = 1000 Gramos (g)',
+                    '1 Gramo (g) = 1000 Miligramos (mg)',
+                    '1 Libra (lb) = 453.6 Gramos (g)',
+                    '1 Libra (lb) = 16 Onzas (oz)',
+                    '1 Onza (oz) = 28.35 Gramos (g)',
+                  ]
+                ),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('UNIDADES DE VOLUMEN', [
-                  '1 Litro (L) = 1000 Mililitros (ml)',
-                  '1 Litro (L) = 100 Centilitros (cl)',
-                  '1 Centilitro (cl) = 10 Mililitros (ml)',
-                  '1 Taza = 240 Mililitros (ml)',
-                  '1 Cucharada (cda) = 15 Mililitros (ml)',
-                  '1 Cucharadita (cdta) = 5 Mililitros (ml)',
-                  '1 Taza = 16 Cucharadas (cda)',
-                  '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
-                  '1 Onza líquida = 29.57 Mililitros (ml)',
-                  '1 Pinta = 473.2 Mililitros (ml)',
-                  '1 Cuarto galón = 946.4 Mililitros (ml)',
-                  '1 Galón = 3.785 Litros (L)',
-                ]),
+                _buildEquivalenciasSection(
+                  widget.isEnglish ? 'VOLUME UNITS' : 'UNIDADES DE VOLUMEN',
+                  [
+                    '1 Litro (L) = 1000 Mililitros (ml)',
+                    '1 Litro (L) = 100 Centilitros (cl)',
+                    '1 Centilitro (cl) = 10 Mililitros (ml)',
+                    '1 Taza = 240 Mililitros (ml)',
+                    '1 Cucharada (cda) = 15 Mililitros (ml)',
+                    '1 Cucharadita (cdta) = 5 Mililitros (ml)',
+                    '1 Taza = 16 Cucharadas (cda)',
+                    '1 Cucharada (cda) = 3 Cucharaditas (cdta)',
+                    '1 Onza líquida = 29.57 Mililitros (ml)',
+                    '1 Pinta = 473.2 Mililitros (ml)',
+                    '1 Cuarto galón = 946.4 Mililitros (ml)',
+                    '1 Galón = 3.785 Litros (L)',
+                  ]
+                ),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('PORCIONES', [
-                  '1 Porción = 250 Gramos (g)',
-                  '1 Porción = 0.25 Kilogramos (kg)',
-                  '1 Porción = 250 Mililitros (ml)',
-                  '1 Porción = 8.8 Onzas (oz)',
-                  '1 Porción = 0.55 Libras (lb)',
-                  '1 Kilogramo (kg) = 4 Porciones',
-                  '1 Litro (L) = 4 Porciones',
-                ]),
+                _buildEquivalenciasSection(
+                  widget.isEnglish ? 'PORTIONS' : 'PORCIONES',
+                  [
+                    '1 Porción = 250 Gramos (g)',
+                    '1 Porción = 0.25 Kilogramos (kg)',
+                    '1 Porción = 250 Mililitros (ml)',
+                    '1 Porción = 8.8 Onzas (oz)',
+                    '1 Porción = 0.55 Libras (lb)',
+                    '1 Kilogramo (kg) = 4 Porciones',
+                    '1 Litro (L) = 4 Porciones',
+                  ]
+                ),
                 const SizedBox(height: 12),
-                _buildEquivalenciasSection('PESO-VOLUMEN (aprox.)', [
-                  '1 Gramo (g) = 1 Mililitro (ml) de agua',
-                  '1 Kilogramo (kg) = 1 Litro (L) de agua',
-                  '1 Libra (lb) = 454 Mililitros (ml) de agua',
-                  '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
-                ]),
+                _buildEquivalenciasSection(
+                  widget.isEnglish ? 'WEIGHT-VOLUME (approx.)' : 'PESO-VOLUMEN (aprox.)',
+                  [
+                    '1 Gramo (g) = 1 Mililitro (ml) de agua',
+                    '1 Kilogramo (kg) = 1 Litro (L) de agua',
+                    '1 Libra (lb) = 454 Mililitros (ml) de agua',
+                    '1 Onza (oz) = 28.4 Mililitros (ml) de agua',
+                  ]
+                ),
                 const SizedBox(height: 8),
-                const Text('Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
-                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                Text(
+                  widget.isEnglish 
+                    ? 'Note: Weight to volume conversions are approximate and valid mainly for water.'
+                    : 'Nota: Las conversiones entre peso y volumen son aproximadas y válidas principalmente para agua.',
+                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -1718,12 +1735,54 @@ class _ConversionCalculatorScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cerrar'),
+              child: Text(widget.isEnglish ? 'Close' : 'Cerrar'),
             ),
           ],
         );
       },
     );
+  }
+
+  // Modificar los mensajes de error y éxito
+  void _mostrarMensajeError(String mensaje) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(widget.isEnglish 
+          ? 'Error: $mensaje'
+          : 'Error: $mensaje'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _mostrarMensajeExito(String mensaje) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(widget.isEnglish 
+          ? 'Success: $mensaje'
+          : 'Éxito: $mensaje'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  // Modificar los mensajes de validación
+  void _validarRendimiento() {
+    if (_platosDestino <= 0) {
+      _mostrarMensajeError(widget.isEnglish 
+        ? 'The new yield must be greater than 0'
+        : 'El nuevo rendimiento debe ser mayor que 0');
+      return;
+    }
+  }
+
+  void _validarIngrediente(String nombre) {
+    if (_platosDestino <= 0) {
+      _mostrarMensajeError(widget.isEnglish 
+        ? 'Invalid quantity for ingredient: $nombre'
+        : 'Cantidad inválida para el ingrediente: $nombre');
+      return;
+    }
   }
 
   Widget _buildEquivalenciasSection(String title, List<String> equivalencias) {
