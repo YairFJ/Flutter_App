@@ -7,6 +7,10 @@ import 'dart:math';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:flutter_app/config/sendgrid_config.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:logging/logging.dart';
+
+final _logger = Logger('AuthService');
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -37,14 +41,15 @@ class AuthService {
     required String name,
   }) async {
     try {
-      print('Iniciando registro con email y contraseña...');
+      _logger.info('Iniciando registro con email y contraseña...');
       
       // Verificar si el email ya está en uso
       final methods = await _auth.fetchSignInMethodsForEmail(email);
       if (methods.isNotEmpty) {
+        _logger.warning('El email $email ya está en uso');
         throw FirebaseAuthException(
           code: 'email-already-in-use',
-          message: 'El correo electrónico ya está en uso',
+          message: 'Este correo electrónico ya está registrado',
         );
       }
 
@@ -56,7 +61,7 @@ class AuthService {
 
       if (userCredential.user != null) {
         final user = userCredential.user!;
-        print('Usuario creado exitosamente: ${user.uid}');
+        _logger.info('Usuario creado exitosamente: ${user.uid}');
         
         try {
           // Generar código de verificación
@@ -77,25 +82,25 @@ class AuthService {
             'verified': false,
           }, SetOptions(merge: true));
           
-          print('Documento de usuario creado en Firestore');
+          _logger.info('Documento de usuario creado en Firestore');
 
           // Actualizar el nombre del usuario
           await user.updateDisplayName(name);
-          print('Nombre de usuario actualizado: $name');
+          _logger.info('Nombre de usuario actualizado: $name');
 
           // Enviar el código de verificación usando Firebase
           await sendVerificationCodeEmail(email, user.uid, name: name);
-          print('Código de verificación enviado a: $email');
+          _logger.info('Código de verificación enviado a: $email');
 
           return userCredential;
         } catch (e) {
-          print('Error durante el proceso de registro: $e');
+          _logger.severe('Error durante el proceso de registro: $e');
           // Si algo falla, intentar limpiar
           try {
             await user.delete();
             await _firestore.collection('users').doc(user.uid).delete();
           } catch (cleanupError) {
-            print('Error durante la limpieza: $cleanupError');
+            _logger.warning('Error durante la limpieza: $cleanupError');
           }
           rethrow;
         }
@@ -103,8 +108,15 @@ class AuthService {
       
       return null;
     } catch (e) {
-      print('Error en registerWithEmailAndPassword: $e');
+      _logger.severe('Error en registerWithEmailAndPassword: $e');
       if (e is FirebaseAuthException) {
+        // Asegurarnos de que el mensaje sea amigable para el usuario
+        if (e.code == 'email-already-in-use') {
+          throw FirebaseAuthException(
+            code: e.code,
+            message: 'Este correo electrónico ya está registrado',
+          );
+        }
         rethrow;
       }
       throw Exception('Error al registrar usuario: $e');
@@ -584,96 +596,159 @@ class AuthService {
   // Stream de cambios en el estado de autenticación
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Método simplificado para iniciar sesión con Google
-  Future<User?> signInWithGoogle() async {
+  // Método para vincular cuentas
+  Future<UserCredential?> _linkAccounts(UserCredential googleCredential, String email) async {
     try {
-      print('Auth Service: Iniciando método simplificado de inicio de sesión con Google');
-
-      // Verificar si ya hay un usuario autenticado con Google
-      final currentUser = _auth.currentUser;
-      if (currentUser != null) {
-        if (currentUser.providerData
-            .any((provider) => provider.providerId == 'google.com')) {
-          print('Auth Service: Usuario ya autenticado con Google, devolviendo usuario actual');
-          return currentUser;
+      // Obtener los métodos de inicio de sesión para el email
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
+      
+      if (methods.contains('password')) {
+        // Si existe una cuenta con email/password, intentar vincular
+        final user = googleCredential.user;
+        if (user != null) {
+          // Obtener la contraseña del usuario desde Firestore
+          final userDoc = await _firestore.collection('users').doc(user.uid).get();
+          if (userDoc.exists) {
+            final userData = userDoc.data() as Map<String, dynamic>;
+            final password = userData['password'] as String?;
+            
+            if (password != null) {
+              // Crear credenciales de email/password
+              final emailCredential = EmailAuthProvider.credential(
+                email: email,
+                password: password,
+              );
+              
+              // Vincular las cuentas
+              await user.linkWithCredential(emailCredential);
+              return googleCredential;
+            }
+          }
         }
       }
+      return googleCredential;
+    } catch (e) {
+      print('Error al vincular cuentas: $e');
+      return googleCredential;
+    }
+  }
 
-      final googleSignIn = GoogleSignIn();
-      await googleSignIn.signOut();
-      await _auth.signOut();
+  // Modificar el método de inicio de sesión con Google
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return null;
 
-      final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        print('Auth Service: Usuario canceló el inicio de sesión');
-        return null;
-      }
-
-      print('Auth Service: Cuenta seleccionada: ${googleUser.email}');
-      final googleAuth = await googleUser.authentication;
-
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
       try {
+        // Intentar iniciar sesión con Google
         final userCredential = await _auth.signInWithCredential(credential);
-        final user = userCredential.user;
-
-        if (user != null) {
-          print('Auth Service: Inicio de sesión exitoso: ${user.email}');
-          try {
-            await _firestore.collection('users').doc(user.uid).set({
-              'name': user.displayName ?? 'Usuario de Google',
-              'email': user.email ?? '',
-              'lastLogin': FieldValue.serverTimestamp(),
-              'provider': 'google',
-              'verified': true,
-            }, SetOptions(merge: true));
-          } catch (e) {
-            print('Auth Service: Error al actualizar Firestore: $e');
+        
+        if (userCredential.user != null) {
+          final email = userCredential.user!.email;
+          if (email != null) {
+            // Verificar si existe una cuenta con email/password
+            final methods = await _auth.fetchSignInMethodsForEmail(email);
+            
+            if (methods.contains('password')) {
+              // Si existe una cuenta con email/password, intentar vincular
+              try {
+                // Obtener la contraseña del usuario desde Firestore
+                final userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
+                if (userDoc.exists) {
+                  final userData = userDoc.data() as Map<String, dynamic>;
+                  final password = userData['password'] as String?;
+                  
+                  if (password != null) {
+                    // Crear credenciales de email/password
+                    final emailCredential = EmailAuthProvider.credential(
+                      email: email,
+                      password: password,
+                    );
+                    
+                    // Vincular las cuentas
+                    await userCredential.user!.linkWithCredential(emailCredential);
+                    _logger.info('Cuentas vinculadas exitosamente');
+                  }
+                }
+              } catch (e) {
+                _logger.warning('Error al vincular cuentas: $e');
+                // Continuar con el inicio de sesión de Google aunque falle la vinculación
+              }
+            }
           }
         }
-        return user;
+
+        return userCredential;
       } catch (e) {
-        print('Auth Service: Error durante signInWithCredential: $e');
+        // Ignorar específicamente el error de PigeonUserDetails
         if (e.toString().contains('PigeonUserDetails')) {
-          print('Auth Service: Error de PigeonUserDetails detectado, intentando recuperar sesión');
+          // Si hay un usuario actual, intentar recuperar la sesión
           final currentUser = _auth.currentUser;
           if (currentUser != null) {
-            print('Auth Service: Sesión recuperada exitosamente');
-            return currentUser;
+            // Intentar iniciar sesión nuevamente con las credenciales de Google
+            return await _auth.signInWithCredential(credential);
           }
         }
         rethrow;
       }
     } catch (e) {
-      print('Auth Service: Error durante la autenticación con Google: $e');
-      try {
-        await _auth.signOut();
-      } catch (_) {}
+      _logger.severe('Error en signInWithGoogle: $e');
       rethrow;
     }
   }
 
-  // Inicio de sesión con Apple (simulado para Android)
+  // Inicio de sesión con Apple
   Future<UserCredential?> signInWithApple() async {
     try {
-      // Esta implementación es un marcador de posición
-      // Para una implementación real, necesitarías el apple_sign_in package
+      // Obtener las credenciales de Apple
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
 
-      // En Android, podemos mostrar un mensaje que no está disponible
-      if (Platform.isAndroid) {
-        throw Exception('Inicio de sesión con Apple no disponible en Android');
+      // Crear credencial de OAuth para Firebase
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      // Iniciar sesión en Firebase con las credenciales de Apple
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        oauthCredential,
+      );
+
+      // Si el usuario existe, actualizar su información en Firestore
+      if (userCredential.user != null) {
+        final user = userCredential.user!;
+        final displayName = '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'.trim();
+        
+        // Actualizar el nombre del usuario si está disponible
+        if (displayName.isNotEmpty && user.displayName != displayName) {
+          await user.updateDisplayName(displayName);
+        }
+
+        // Guardar información adicional en Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'email': user.email,
+          'displayName': displayName.isNotEmpty ? displayName : user.displayName,
+          'isEmailVerified': true,
+          'lastLogin': FieldValue.serverTimestamp(),
+          'provider': 'apple.com',
+        }, SetOptions(merge: true));
       }
 
-      // Para iOS, implementarías la autenticación real con Apple
-      // Esta es una simulación
-      return null;
+      return userCredential;
     } catch (e) {
-      print('Error al iniciar sesión con Apple: $e');
-      return null;
+      print('Error en signInWithApple: $e');
+      rethrow;
     }
   }
 
@@ -681,7 +756,17 @@ class AuthService {
   Future<String?> sendVerificationEmail() async {
     try {
       final user = _auth.currentUser;
+      
+      // Si no hay usuario autenticado, verificar si el email está en uso
       if (user == null) {
+        // Obtener el email del último intento de registro
+        final lastEmail = await _getLastRegistrationEmail();
+        if (lastEmail != null) {
+          final methods = await _auth.fetchSignInMethodsForEmail(lastEmail);
+          if (methods.isNotEmpty) {
+            return 'Este correo electrónico ya está registrado';
+          }
+        }
         return 'No hay usuario autenticado';
       }
 
@@ -692,8 +777,8 @@ class AuthService {
         // Forzar recarga del usuario
         await user.reload();
         
-        print('Enviando email de verificación a: ${user.email}');
-        print('Estado de verificación actual: ${user.emailVerified}');
+        _logger.info('Enviando email de verificación a: ${user.email}');
+        _logger.info('Estado de verificación actual: ${user.emailVerified}');
         
         // Para evitar el error de PigeonUserInfo/PigeonUserDetails, intentamos un método más simple
         try {
@@ -709,19 +794,19 @@ class AuthService {
           
           // Enviar email con las configuraciones personalizadas
           await user.sendEmailVerification(actionCodeSettings);
-          print('Email de verificación enviado exitosamente con configuración personalizada');
+          _logger.info('Email de verificación enviado exitosamente con configuración personalizada');
         } catch (e) {
-          print('Error con configuración personalizada: $e');
+          _logger.warning('Error con configuración personalizada: $e');
           // Si falla con la configuración personalizada, intentar el método básico
           await user.sendEmailVerification();
-          print('Email de verificación enviado exitosamente con método básico');
+          _logger.info('Email de verificación enviado exitosamente con método básico');
         }
         
         return null;
       } catch (e) {
         if (e.toString().contains('PigeonUserInfo') || 
             e.toString().contains('PigeonUserDetails')) {
-          print('Error conocido de Pigeon detectado, intentando solución alternativa');
+          _logger.warning('Error conocido de Pigeon detectado, intentando solución alternativa');
           // Si es error de Pigeon, marcar como verificado en Firestore para desarrollo
           if (_isEmulator()) {
             await _firestore.collection('users').doc(user.uid).update({
@@ -735,13 +820,32 @@ class AuthService {
         rethrow;
       }
     } on FirebaseAuthException catch (e) {
-      print('Error de Firebase Auth al enviar email:');
-      print('Código: ${e.code}');
-      print('Mensaje: ${e.message}');
+      _logger.severe('Error de Firebase Auth al enviar email: ${e.code} - ${e.message}');
       return getErrorMessage(e);
     } catch (e) {
-      print('Error inesperado al enviar email: $e');
+      _logger.severe('Error inesperado al enviar email: $e');
       return 'Error inesperado: $e';
+    }
+  }
+
+  // Método para obtener el último email usado en el registro
+  Future<String?> _getLastRegistrationEmail() async {
+    try {
+      // Buscar en la colección de usuarios el último registro
+      final querySnapshot = await _firestore
+          .collection('users')
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final userData = querySnapshot.docs.first.data();
+        return userData['email'] as String?;
+      }
+      return null;
+    } catch (e) {
+      _logger.warning('Error al obtener último email de registro: $e');
+      return null;
     }
   }
 
@@ -765,7 +869,7 @@ class AuthService {
       case 'wrong-password':
         return 'Contraseña incorrecta';
       case 'invalid-email':
-        return 'El formato del correo no es válido';
+        return 'El formato del correo electrónico no es válido';
       case 'email-already-in-use':
         return 'Este correo ya está registrado';
       case 'weak-password':
@@ -777,11 +881,11 @@ class AuthService {
       case 'operation-not-allowed':
         return 'Operación no permitida';
       case 'invalid-credential':
-        return 'Credenciales inválidas';
+        return 'Contraseña incorrecta';
       case 'account-exists-with-different-credential':
         return 'Ya existe una cuenta con este correo, pero con otro método de inicio de sesión';
       default:
-        return e.message ?? 'Error desconocido';
+        return 'Error al iniciar sesión. Por favor, intenta nuevamente';
     }
   }
 

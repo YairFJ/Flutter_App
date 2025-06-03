@@ -6,6 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/services/auth_service.dart';
 import 'package:flutter_app/services/language_service.dart';
 import 'package:provider/provider.dart';
+import 'package:logging/logging.dart';
+
+final _logger = Logger('LoginPage');
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -74,22 +77,26 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    print('Intentando iniciar sesión con: $email');
+    _logger.info('Intentando iniciar sesión con: $email');
 
     setState(() => _isLoading = true);
 
     try {
-      print('Llamando a signInWithEmailAndPassword');
+      _logger.info('Llamando a signInWithEmailAndPassword');
       await _authService.signInWithEmailAndPassword(
         email,
         password,
       );
 
-      print('Inicio de sesión exitoso');
+      _logger.info('Inicio de sesión exitoso');
       _showSuccess(isEnglish ? 'SUCCESSFUL LOGIN' : 'INICIO DE SESIÓN CORRECTO');
     } catch (e) {
-      print('Excepción durante inicio de sesión: $e');
-      _showError(isEnglish ? 'LOGIN ERROR: $e' : 'INICIO DE SESIÓN INCORRECTO: $e');
+      _logger.severe('Excepción durante inicio de sesión: $e');
+      if (e is FirebaseAuthException) {
+        _showError(_authService.getErrorMessage(e));
+      } else {
+        _showError(isEnglish ? 'LOGIN ERROR' : 'ERROR DE INICIO DE SESIÓN');
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -147,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      print('Google SignIn exitoso: ${user.email}');
+      _logger.info('Google SignIn exitoso: ${user.user?.email}');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

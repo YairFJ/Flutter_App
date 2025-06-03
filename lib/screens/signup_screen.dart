@@ -5,6 +5,9 @@ import 'package:flutter_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_app/screens/verification_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:logging/logging.dart';
+
+final _logger = Logger('SignUpScreen');
 
 class SquareTile extends StatelessWidget {
   final String imagePath;
@@ -95,7 +98,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return;
       }
 
-      print('Autenticación con Google exitosa: ${user.email}');
+      _logger.info('Autenticación con Google exitosa: ${user.user?.email}');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -186,7 +189,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
 
     try {
-      print('Iniciando registro de usuario...');
+      _logger.info('Iniciando registro de usuario...');
       
       // Redirigir inmediatamente a la pantalla de verificación
       if (mounted) {
@@ -203,13 +206,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         name: _nameController.text.trim(),
       );
 
-      print('Registro exitoso');
+      _logger.info('Registro exitoso');
     } catch (e) {
-      print('Error en registro: $e');
+      _logger.severe('Error en registro: $e');
       if (e is FirebaseAuthException) {
         _showError(_authService.getErrorMessage(e));
       } else {
-        _showError('Error al registrar usuario: $e');
+        _showError('Error al registrar usuario');
       }
     } finally {
       if (mounted) {
