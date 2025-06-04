@@ -739,7 +739,6 @@ class _ConversionCalculatorScreenState
   void _actualizarUnidad(int index, String nuevaUnidad) {
     print("\n🔄 ACTUALIZANDO UNIDAD DEL INGREDIENTE #$index");
     
-    // ... (Validación de índice igual)
     if (index < 0 || index >= _ingredientesTabla.length) {
       print("❌ Índice inválido: $index");
       return;
@@ -748,7 +747,6 @@ class _ConversionCalculatorScreenState
     final ingrediente = _ingredientesTabla[index];
     final unidadAnterior = ingrediente.unidad;
     
-    // ... (Comprobación si unidad cambió igual)
     if (unidadAnterior == nuevaUnidad) {
       print("ℹ️ La unidad no cambió");
       return;
@@ -757,49 +755,50 @@ class _ConversionCalculatorScreenState
     print("Unidad anterior: $unidadAnterior");
     print("Nueva unidad seleccionada: $nuevaUnidad");
     
-    // Guardar el valor base antes de la conversión
-    double? valorBaseOriginal;
-    if (_esTipoUnidadPeso(unidadAnterior)) {
-      valorBaseOriginal = ingrediente.valorBaseGramos;
-    } else if (_esTipoUnidadVolumen(unidadAnterior)) {
-      valorBaseOriginal = ingrediente.valorBaseMililitros;
+    // Obtener la cantidad actual antes de la conversión
+    double cantidadActual = ingrediente.cantidad;
+    
+    // Si el ingrediente fue modificado manualmente, usamos su cantidad actual
+    if (ingrediente.modificadoManualmente) {
+      print("ℹ️ Ingrediente modificado manualmente, usando cantidad actual: $cantidadActual");
+    } else {
+      // Si no fue modificado manualmente, usamos la cantidad original
+      cantidadActual = ingrediente.cantidadOriginal;
+      print("ℹ️ Usando cantidad original: $cantidadActual");
     }
     
-    double cantidadActual = ingrediente.cantidad;
     double nuevaCantidad;
-
+    
     if (_esConversionValida(unidadAnterior, nuevaUnidad)) {
-      // Si tenemos un valor base, usarlo para la conversión
-      if (valorBaseOriginal != null) {
-        if (_esTipoUnidadPeso(nuevaUnidad)) {
-          nuevaCantidad = _convertirDesdeUnidadBase(valorBaseOriginal, nuevaUnidad, 'peso');
-        } else if (_esTipoUnidadVolumen(nuevaUnidad)) {
-          nuevaCantidad = _convertirDesdeUnidadBase(valorBaseOriginal, nuevaUnidad, 'volumen');
-        } else {
-          nuevaCantidad = _convertirRendimiento(cantidadActual, unidadAnterior, nuevaUnidad);
-        }
-      } else {
-        nuevaCantidad = _convertirRendimiento(cantidadActual, unidadAnterior, nuevaUnidad);
-      }
+      // Realizar la conversión usando la cantidad actual
+      nuevaCantidad = _convertirRendimiento(cantidadActual, unidadAnterior, nuevaUnidad);
+      print("Conversión realizada: $cantidadActual $unidadAnterior -> $nuevaCantidad $nuevaUnidad");
     } else {
-        print("  ⚠️ Conversión no válida entre '$unidadAnterior' y '$nuevaUnidad'. Manteniendo cantidad anterior.");
-        nuevaCantidad = cantidadActual;
+      print("⚠️ Conversión no válida entre '$unidadAnterior' y '$nuevaUnidad'. Manteniendo cantidad anterior.");
+      nuevaCantidad = cantidadActual;
     }
-
+    
+    // Validar el resultado
     if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
       print("⚠️ Resultado de conversión inválido: $nuevaCantidad. Manteniendo cantidad anterior.");
-      nuevaCantidad = ingrediente.cantidad;
+      nuevaCantidad = cantidadActual;
     }
     
     nuevaCantidad = _redondearPrecision(nuevaCantidad);
     
     setState(() {
-      ingrediente.modificadoManualmente = true;
+      // Mantener el estado de modificado manualmente
+      bool eraModificadoManualmente = ingrediente.modificadoManualmente;
+      
+      // Actualizar la unidad y la cantidad
       ingrediente.unidad = nuevaUnidad;
       ingrediente.cantidad = nuevaCantidad;
       ingrediente.cantidadController.text = _formatearNumero(nuevaCantidad);
       
-      // Actualizar el valor base después de la conversión
+      // Restaurar el estado de modificado manualmente
+      ingrediente.modificadoManualmente = eraModificadoManualmente;
+      
+      // Actualizar los valores base según el tipo de unidad
       if (_esTipoUnidadPeso(nuevaUnidad)) {
         ingrediente.valorBaseGramos = _convertirAUnidadBase(nuevaCantidad, nuevaUnidad, 'peso');
         ingrediente.valorBaseMililitros = null;

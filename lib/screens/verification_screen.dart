@@ -62,7 +62,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        throw Exception('No hay usuario autenticado');
+        setState(() => _errorMessage = 'Este correo electrónico ya está registrado');
+        return;
       }
 
       final isVerified = await _authService.verifyCode(user.uid, code);
@@ -98,7 +99,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
         setState(() => _errorMessage = 'Código incorrecto');
       }
     } catch (e) {
-      setState(() => _errorMessage = e.toString());
+      String errorMessage = 'Error al verificar el código';
+      if (e.toString().contains('email-already-in-use')) {
+        errorMessage = 'Este correo electrónico ya está registrado';
+      } else if (e.toString().contains('No hay usuario autenticado')) {
+        errorMessage = 'Este correo electrónico ya está registrado';
+      }
+      setState(() => _errorMessage = errorMessage);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -107,7 +114,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<void> _resendCode() async {
-    if (_isLoading) return; // Solo verificamos si está cargando
+    if (_isLoading) return;
 
     setState(() {
       _isLoading = true;
@@ -117,7 +124,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        throw Exception('No hay usuario autenticado');
+        setState(() => _errorMessage = 'Este correo electrónico ya está registrado');
+        return;
       }
 
       await _authService.resendVerificationCode(user.email!, user.uid);
@@ -136,11 +144,18 @@ class _VerificationScreenState extends State<VerificationScreen> {
         );
       }
     } catch (e) {
+      String errorMessage = 'Error al reenviar el código';
+      if (e.toString().contains('email-already-in-use')) {
+        errorMessage = 'Este correo electrónico ya está registrado';
+      } else if (e.toString().contains('No hay usuario autenticado')) {
+        errorMessage = 'Este correo electrónico ya está registrado';
+      }
+      
       if (mounted) {
-        setState(() => _errorMessage = e.toString());
+        setState(() => _errorMessage = errorMessage);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al reenviar código: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
@@ -222,7 +237,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   disabledForegroundColor: Colors.white.withOpacity(0.5),
                 ),
                 child: Text(
-                  'Reenviar código',
+                  'Enviar código',
                   style: TextStyle(
                     color: _isLoading ? Colors.white.withOpacity(0.5) : Colors.white,
                     fontSize: 16,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:logging/logging.dart';
 import 'firebase_options.dart';
 import 'pages/login_page.dart';
 import 'screens/signup_screen.dart';
@@ -20,6 +21,11 @@ import 'services/theme_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    debugPrint('${record.level.name}: ${record.time}: ${record.message}');
+  });
+  
   WidgetsFlutterBinding.ensureInitialized();
   await DefaultFirebaseOptions.loadEnv();
   await Firebase.initializeApp(
