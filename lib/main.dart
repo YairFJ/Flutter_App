@@ -288,12 +288,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              isEnglish ? Icons.language : Icons.translate,
-              color: Colors.white,
+            icon: Text(
+              isEnglish ? 'EN' : 'ES',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             onPressed: toggleLanguage,
-            tooltip: isEnglish ? 'Cambiar a Español' : 'Switch to English',
           ),
           IconButton(
             icon: Icon(

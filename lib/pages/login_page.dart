@@ -277,7 +277,7 @@ class _LoginPageState extends State<LoginPage> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
@@ -289,9 +289,15 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
-                          child: Image.asset(
-                            isEnglish ? 'lib/images/British.png' : 'lib/images/Spain.png',
-                            fit: BoxFit.cover,
+                          child: Center(
+                            child: Text(
+                              isEnglish ? 'EN' : 'ES',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ),
