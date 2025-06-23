@@ -59,10 +59,30 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
     'galon': {'es': 'Galón', 'en': 'Gallon'},
   };
 
+  // Agregar listas de FocusNode para cada campo
+  final List<FocusNode> _nombreFocusNodes = [];
+  final List<FocusNode> _cantidadFocusNodes = [];
+
   @override
   void initState() {
     super.initState();
     _ingredientes = widget.ingredientes.toList();
+    // Inicializar los FocusNode
+    for (var i = 0; i < _ingredientes.length; i++) {
+      _nombreFocusNodes.add(FocusNode());
+      _cantidadFocusNodes.add(FocusNode());
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final node in _nombreFocusNodes) {
+      node.dispose();
+    }
+    for (final node in _cantidadFocusNodes) {
+      node.dispose();
+    }
+    super.dispose();
   }
 
   void _actualizarIngredientes() {
@@ -181,6 +201,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
   }
 
   Widget _buildIngredientRow(IngredienteTabla ingrediente) {
+    final idx = _ingredientes.indexOf(ingrediente);
     return Container(
       decoration: BoxDecoration(
         border: Border(
@@ -197,16 +218,17 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
               padding: const EdgeInsets.all(4.0),
               child: TextField(
                 controller: ingrediente.nombreController,
+                focusNode: _nombreFocusNodes[idx],
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   isDense: true,
                   hintText: widget.isEnglish ? 'Enter ingredient' : 'Ingrese ingrediente',
                 ),
-                onChanged: (value) {
-                  ingrediente.nombre = value;
-                  _actualizarIngredientes();
-                },
+                onChanged: null, // No actualizar en cada cambio
+                onEditingComplete: null,
+                onSubmitted: null,
+                // Usar listener de focus
               ),
             ),
           ),
@@ -215,6 +237,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
               padding: const EdgeInsets.all(4.0),
               child: TextField(
                 controller: ingrediente.cantidadController,
+                focusNode: _cantidadFocusNodes[idx],
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
@@ -229,16 +252,10 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                     });
                   }
                 },
-                onChanged: (value) {
-                  if (value.isNotEmpty) {
-                    try {
-                      ingrediente.cantidad = double.parse(value.replaceAll(',', '.'));
-                      _actualizarIngredientes();
-                    } catch (e) {
-                      // Manejar error de conversión si es necesario
-                    }
-                  }
-                },
+                onChanged: null, // No actualizar en cada cambio
+                onEditingComplete: null,
+                onSubmitted: null,
+                // Usar listener de focus
               ),
             ),
           ),
@@ -275,5 +292,42 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
         ],
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Agregar listeners a los FocusNode si no existen
+    for (var i = 0; i < _ingredientes.length; i++) {
+      if (_nombreFocusNodes[i].hasListeners == false) {
+        _nombreFocusNodes[i].addListener(() {
+          if (!_nombreFocusNodes[i].hasFocus) {
+            // Guardar el nombre solo al perder el foco
+            _ingredientes[i].nombre = _ingredientes[i].nombreController.text.trim();
+            _actualizarIngredientes();
+          }
+        });
+      }
+      if (_cantidadFocusNodes[i].hasListeners == false) {
+        _cantidadFocusNodes[i].addListener(() {
+          if (!_cantidadFocusNodes[i].hasFocus) {
+            // Validar y guardar la cantidad solo al perder el foco
+            String value = _ingredientes[i].cantidadController.text;
+            double cantidad = 0.0;
+            try {
+              cantidad = double.parse(value.replaceAll(',', '.'));
+              if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
+                cantidad = 1.0;
+              }
+            } catch (e) {
+              cantidad = 1.0;
+            }
+            _ingredientes[i].cantidad = cantidad;
+            _ingredientes[i].cantidadController.text = cantidad.toString();
+            _actualizarIngredientes();
+          }
+        });
+      }
+    }
   }
 }

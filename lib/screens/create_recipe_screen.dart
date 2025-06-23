@@ -24,6 +24,17 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   bool _isLoading = false;
   int _servings = 1;
   bool isEnglish = false;
+  late List<FocusNode> _nombreFocusNodes;
+  late List<FocusNode> _cantidadFocusNodes;
+  late List<FocusNode> _unidadFocusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+    _nombreFocusNodes = List.generate(_ingredients.length, (_) => FocusNode());
+    _cantidadFocusNodes = List.generate(_ingredients.length, (_) => FocusNode());
+    _unidadFocusNodes = List.generate(_ingredients.length, (_) => FocusNode());
+  }
 
   void _addIngredient() {
     setState(() {
@@ -161,12 +172,59 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
 
   @override
   void dispose() {
+    for (final node in _nombreFocusNodes) {
+      node.dispose();
+    }
+    for (final node in _cantidadFocusNodes) {
+      node.dispose();
+    }
+    for (final node in _unidadFocusNodes) {
+      node.dispose();
+    }
     _titleController.dispose();
     _descriptionController.dispose();
     _instructionsController.dispose();
     _servingsController.dispose();
     _preparationTimeController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    for (int i = 0; i < _nombreFocusNodes.length; i++) {
+      _nombreFocusNodes[i].addListener(() {
+        if (!_nombreFocusNodes[i].hasFocus) {
+          final controller = TextEditingController(text: _ingredients[i]['name'] ?? '');
+          _ingredients[i]['name'] = controller.text.trim();
+          setState(() {});
+        }
+      });
+      _cantidadFocusNodes[i].addListener(() {
+        if (!_cantidadFocusNodes[i].hasFocus) {
+          final controller = TextEditingController(text: _ingredients[i]['amount'] ?? '0,0');
+          String value = controller.text;
+          double cantidad = 0.0;
+          try {
+            cantidad = double.parse(value.replaceAll(',', '.'));
+            if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
+              cantidad = 1.0;
+            }
+          } catch (e) {
+            cantidad = 1.0;
+          }
+          _ingredients[i]['amount'] = cantidad.toString();
+          setState(() {});
+        }
+      });
+      _unidadFocusNodes[i].addListener(() {
+        if (!_unidadFocusNodes[i].hasFocus) {
+          final controller = TextEditingController(text: _ingredients[i]['unit'] ?? '');
+          _ingredients[i]['unit'] = controller.text.trim();
+          setState(() {});
+        }
+      });
+    }
   }
 
   @override
@@ -239,18 +297,20 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                       children: [
                         Expanded(
                           child: TextFormField(
+                            controller: TextEditingController(text: _ingredients[idx]['name'] ?? ''),
+                            focusNode: _nombreFocusNodes[idx],
                             decoration: InputDecoration(
                               labelText: isEnglish ? 'Ingredient' : 'Ingrediente',
                             ),
-                            onChanged: (value) {
-                              _ingredients[idx]['name'] = value;
-                            },
+                            onChanged: null,
+                            onEditingComplete: null,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextFormField(
-                            controller: TextEditingController(text: '0,0'),
+                            controller: TextEditingController(text: _ingredients[idx]['amount'] ?? '0,0'),
+                            focusNode: _cantidadFocusNodes[idx],
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
                             decoration: InputDecoration(
@@ -280,13 +340,14 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextFormField(
+                            controller: TextEditingController(text: _ingredients[idx]['unit'] ?? ''),
+                            focusNode: _unidadFocusNodes[idx],
                             decoration: const InputDecoration(
                               labelText: 'Unidad',
                               hintText: 'gr, ml, unidad',
                             ),
-                            onChanged: (value) {
-                              _ingredients[idx]['unit'] = value;
-                            },
+                            onChanged: null,
+                            onEditingComplete: null,
                           ),
                         ),
                         IconButton(
