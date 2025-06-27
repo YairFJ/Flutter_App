@@ -1,13 +1,30 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../models/recipe.dart';
 import '../screens/recipe_detail_screen.dart';
 
-class FavoriteRecipesScreen extends StatelessWidget {
+class FavoriteRecipesScreen extends StatefulWidget {
   final bool isEnglish;
   
   const FavoriteRecipesScreen({super.key, this.isEnglish = false});
+
+  @override
+  State<FavoriteRecipesScreen> createState() => _FavoriteRecipesScreenState();
+}
+
+class _FavoriteRecipesScreenState extends State<FavoriteRecipesScreen> {
+  // Variables para gestionar mensajes de favoritos con análisis temporal
+  Timer? _favoriteActionTimer;
+  int _addToFavoritesCount = 0;
+  int _removeFromFavoritesCount = 0;
+  
+  @override
+  void dispose() {
+    _favoriteActionTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _toggleFavorite(BuildContext context, Recipe recipe) async {
     try {
@@ -29,20 +46,23 @@ class FavoriteRecipesScreen extends StatelessWidget {
         favoritedBy.remove(currentUser.uid);
         await recipeRef.update({'favoritedBy': favoritedBy});
         
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEnglish ? 'Recipe removed from favorites' : 'Receta eliminada de favoritos'),
-              backgroundColor: Colors.grey,
-            ),
-          );
-        }
+        _removeFromFavoritesCount++;
+        print('DEBUG: Eliminada receta de favoritos. Contador: $_removeFromFavoritesCount');
+        _scheduleBatchMessage();
+      } else {
+        // Agregar a favoritos
+        favoritedBy.add(currentUser.uid);
+        await recipeRef.update({'favoritedBy': favoritedBy});
+        
+        _addToFavoritesCount++;
+        print('DEBUG: Agregada receta a favoritos. Contador: $_addToFavoritesCount');
+        _scheduleBatchMessage();
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEnglish ? 'Error updating favorites' : 'Error al actualizar favoritos'),
+            content: Text(widget.isEnglish ? 'Error updating favorites' : 'Error al actualizar favoritos'),
             backgroundColor: Colors.red,
           ),
         );
@@ -50,17 +70,82 @@ class FavoriteRecipesScreen extends StatelessWidget {
     }
   }
 
+  void _scheduleBatchMessage() {
+    // Cancelar timer anterior si existe
+    _favoriteActionTimer?.cancel();
+    
+    // Programar nuevo timer para mostrar mensaje después de 0.5 segundos
+    _favoriteActionTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _showBatchMessage();
+      }
+    });
+  }
+
+  void _showBatchMessage() {
+    print('DEBUG: _showBatchMessage ejecutado en FavoriteRecipesScreen');
+    print('DEBUG: _addToFavoritesCount: $_addToFavoritesCount');
+    print('DEBUG: _removeFromFavoritesCount: $_removeFromFavoritesCount');
+    
+    String message = '';
+    Color backgroundColor = Colors.green;
+    
+    if (_addToFavoritesCount > 0 && _removeFromFavoritesCount > 0) {
+      // Acciones mixtas
+      message = widget.isEnglish
+          ? '$_addToFavoritesCount recipes added and $_removeFromFavoritesCount removed from favorites'
+          : '$_addToFavoritesCount recetas agregadas y $_removeFromFavoritesCount eliminadas de favoritos';
+    } else if (_addToFavoritesCount > 1) {
+      // Múltiples agregadas
+      message = widget.isEnglish
+          ? '$_addToFavoritesCount recipes added to favorites'
+          : '$_addToFavoritesCount recetas agregadas a favoritos';
+    } else if (_removeFromFavoritesCount > 1) {
+      // Múltiples eliminadas
+      message = widget.isEnglish
+          ? '$_removeFromFavoritesCount recipes removed from favorites'
+          : '$_removeFromFavoritesCount recetas eliminadas de favoritos';
+    } else if (_addToFavoritesCount == 1) {
+      // Una sola agregada
+      message = widget.isEnglish
+          ? 'Recipe added to favorites'
+          : 'Receta agregada a favoritos';
+    } else if (_removeFromFavoritesCount == 1) {
+      // Una sola eliminada
+      message = widget.isEnglish
+          ? 'Recipe removed from favorites'
+          : 'Receta eliminada de favoritos';
+      backgroundColor = Colors.grey;
+    }
+    
+    if (message.isNotEmpty) {
+      print('DEBUG: Mostrando mensaje en FavoriteRecipesScreen: $message');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: backgroundColor,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+    
+    // Resetear contadores
+    _addToFavoritesCount = 0;
+    _removeFromFavoritesCount = 0;
+    print('DEBUG: Contadores reseteados en FavoriteRecipesScreen');
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return Center(child: Text(isEnglish ? 'No authenticated user' : 'No hay usuario autenticado'));
+    if (currentUser == null) return Center(child: Text(widget.isEnglish ? 'No authenticated user' : 'No hay usuario autenticado'));
 
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas'),
+        title: Text(widget.isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas'),
         backgroundColor: const Color(0xFF96B4D8),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -70,7 +155,7 @@ class FavoriteRecipesScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text(isEnglish ? 'Error loading recipes' : 'Error al cargar las recetas'));
+            return Center(child: Text(widget.isEnglish ? 'Error loading recipes' : 'Error al cargar las recetas'));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -84,7 +169,7 @@ class FavoriteRecipesScreen extends StatelessWidget {
 
           if (recipes.isEmpty) {
             return Center(
-              child: Text(isEnglish ? 'You don\'t have favorite recipes' : 'No tienes recetas favoritas'),
+              child: Text(widget.isEnglish ? 'You don\'t have favorite recipes' : 'No tienes recetas favoritas'),
             );
           }
 
@@ -114,7 +199,7 @@ class FavoriteRecipesScreen extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => RecipeDetailScreen(
                               recipe: recipe,
-                              isEnglish: isEnglish,
+                              isEnglish: widget.isEnglish,
                             ),
                           ),
                         );
