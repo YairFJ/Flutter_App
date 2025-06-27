@@ -98,7 +98,6 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
           ),
         ),
       );
-      return;
     }
     widget.onIngredientsChanged(_ingredientes);
   }
@@ -189,6 +188,9 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                     cantidadOriginal: 0.0,
                     unidadOriginal: 'gr',
                   ));
+                  // Agregar FocusNodes correspondientes
+                  _nombreFocusNodes.add(FocusNode());
+                  _cantidadFocusNodes.add(FocusNode());
                   _actualizarIngredientes();
                 });
               },
@@ -225,10 +227,11 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                   isDense: true,
                   hintText: widget.isEnglish ? 'Enter ingredient' : 'Ingrese ingrediente',
                 ),
-                onChanged: null, // No actualizar en cada cambio
+                onChanged: (value) {
+                  _ingredientes[idx].nombre = value;
+                },
                 onEditingComplete: null,
                 onSubmitted: null,
-                // Usar listener de focus
               ),
             ),
           ),
@@ -252,7 +255,18 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                     });
                   }
                 },
-                onChanged: null, // No actualizar en cada cambio
+                onChanged: (value) {
+                  double cantidad = 0.0;
+                  try {
+                    cantidad = double.parse(value.replaceAll(',', '.'));
+                    if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
+                      cantidad = 1.0;
+                    }
+                  } catch (e) {
+                    cantidad = 1.0;
+                  }
+                  _ingredientes[idx].cantidad = cantidad;
+                },
                 onEditingComplete: null,
                 onSubmitted: null,
                 // Usar listener de focus
@@ -302,8 +316,8 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
       if (_nombreFocusNodes[i].hasListeners == false) {
         _nombreFocusNodes[i].addListener(() {
           if (!_nombreFocusNodes[i].hasFocus) {
-            // Guardar el nombre solo al perder el foco
-            _ingredientes[i].nombre = _ingredientes[i].nombreController.text.trim();
+            // Solo llamar a _actualizarIngredientes() al perder el foco
+            // El valor ya se actualizó con onChanged
             _actualizarIngredientes();
           }
         });
@@ -311,19 +325,8 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
       if (_cantidadFocusNodes[i].hasListeners == false) {
         _cantidadFocusNodes[i].addListener(() {
           if (!_cantidadFocusNodes[i].hasFocus) {
-            // Validar y guardar la cantidad solo al perder el foco
-            String value = _ingredientes[i].cantidadController.text;
-            double cantidad = 0.0;
-            try {
-              cantidad = double.parse(value.replaceAll(',', '.'));
-              if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
-                cantidad = 1.0;
-              }
-            } catch (e) {
-              cantidad = 1.0;
-            }
-            _ingredientes[i].cantidad = cantidad;
-            _ingredientes[i].cantidadController.text = cantidad.toString();
+            // Solo llamar a _actualizarIngredientes() al perder el foco
+            // El valor ya se actualizó con onChanged
             _actualizarIngredientes();
           }
         });

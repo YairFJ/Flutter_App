@@ -105,18 +105,25 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
+                      // Sincroniza los valores de los controladores con el modelo
+                      for (var ing in _tempIngredients) {
+                        ing.nombre = ing.nombreController.text.trim();
+                        ing.cantidad = double.tryParse(ing.cantidadController.text.replaceAll(',', '.')) ?? 0.0;
+                      }
+                      
+                      // Solo guarda ingredientes que no estaban en la lista original
                       final newIngredients = _tempIngredients.where((newIng) {
+                        if (newIng.nombre.trim().isEmpty) return false;
                         return !_ingredients.any((existingIng) =>
-                            existingIng.nombre == newIng.nombre &&
-                            existingIng.unidad == newIng.unidad);
+                          existingIng.nombre == newIng.nombre &&
+                          existingIng.unidad == newIng.unidad);
                       }).toList();
 
                       if (newIngredients.isNotEmpty) {
                         final ingredientsToReturn = newIngredients.map((ing) {
                           return Ingredient(
                             name: ing.nombre,
-                            quantity: double.parse(ing.cantidadController.text
-                                .replaceAll(',', '.')),
+                            quantity: ing.cantidad,
                             unit: ing.unidad,
                           );
                         }).toList();
@@ -127,8 +134,8 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                           SnackBar(
                             content: Text(
                               isEnglish 
-                                ? 'This ingredient already exists.'
-                                : 'Este ingrediente ya existe.'
+                                ? 'Please enter at least one new ingredient.'
+                                : 'Por favor ingresa al menos un ingrediente nuevo.'
                             ),
                             backgroundColor: Colors.red,
                           ),
