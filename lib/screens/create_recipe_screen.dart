@@ -149,14 +149,15 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
     } else {
       // Mensaje de error si los ingredientes no son válidos
       if (!hasValidIngredients) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEnglish 
-              ? 'All ingredients must have a quantity greater than 0'
-              : 'Todos los ingredientes deben tener una cantidad mayor que 0'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        // SnackBar comentado temporalmente
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text(isEnglish 
+        //       ? 'All ingredients must have a quantity greater than 0'
+        //       : 'Todos los ingredientes deben tener una cantidad mayor que 0'),
+        //     backgroundColor: Colors.red,
+        //   ),
+        // );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
