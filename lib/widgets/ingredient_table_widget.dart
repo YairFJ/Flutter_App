@@ -195,7 +195,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 });
               },
               icon: const Icon(Icons.add),
-              label: Text(widget.isEnglish ? 'Add ingredient' : 'Agregar ingrediente'),
+              label: Text(widget.isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
             ),
           ),
       ],
