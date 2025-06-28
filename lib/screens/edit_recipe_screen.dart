@@ -217,12 +217,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
     if (ingredients != null) {
       setState(() {
-        _ingredients.addAll(ingredients.where((newIngredient) {
-          return !_ingredients.any((existing) =>
-              existing.name == newIngredient.name &&
-              existing.quantity == newIngredient.quantity &&
-              existing.unit == newIngredient.unit);
-        }));
+        _ingredients.clear();
+        _ingredients.addAll(ingredients);
       });
     }
   }
@@ -498,7 +494,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _addIngredient,
-          child: Text(isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente'),
+          child: Text(isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
         ),
       ],
     );

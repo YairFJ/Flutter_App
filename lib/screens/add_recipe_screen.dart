@@ -265,6 +265,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     if (ingredients != null) {
       setState(() {
+        _ingredients.clear();
         _ingredients.addAll(ingredients);
       });
     }
@@ -532,7 +533,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ElevatedButton(
           onPressed: _addIngredient,
           child: Text(
-            isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente',
+            isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes',
           ),
         ),
       ],
