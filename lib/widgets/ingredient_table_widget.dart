@@ -184,7 +184,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                     nombre: '',
                     cantidad: 0.0,
                     unidad: 'gr',
-                    cantidadController: TextEditingController(text: '0.0'),
+                    cantidadController: TextEditingController(text: ''),
                     cantidadOriginal: 0.0,
                     unidadOriginal: 'gr',
                   ));
