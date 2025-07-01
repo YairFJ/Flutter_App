@@ -172,8 +172,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF96B4D8),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(25.0),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 25.0,
+            right: 25.0,
+            top: 25.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 25.0,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -206,6 +211,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 hintText: 'Código de verificación',
                 obscureText: false,
                 prefixIcon: const Icon(Icons.lock_outline),
+                keyboardType: TextInputType.number,
               ),
               if (_errorMessage != null)
                 Padding(

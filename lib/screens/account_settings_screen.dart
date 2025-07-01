@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -399,6 +400,12 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       keyboardType: keyboardType,
       maxLines: maxLines,
       validator: validator,
+      inputFormatters: [
+        if (label.contains('Email') || label.contains('Correo'))
+          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]'))
+        else
+          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+      ],
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),

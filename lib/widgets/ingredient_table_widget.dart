@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/ingrediente_tabla.dart';
 
 class IngredientTableWidget extends StatefulWidget {
@@ -227,6 +228,9 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                   isDense: true,
                   hintText: widget.isEnglish ? 'Enter ingredient' : 'Ingrese ingrediente',
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+                ],
                 onChanged: (value) {
                   _ingredientes[idx].nombre = value;
                 },
@@ -248,6 +252,9 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                   isDense: true,
                   hintText: widget.isEnglish ? 'Amount' : 'Cantidad',
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
                 onTap: () {
                   if (ingrediente.cantidadController.text == '0,0') {
                     setState(() {
@@ -262,7 +269,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                     if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
                       cantidad = 1.0;
                     }
-                  } catch (e) {
+                  } catch (c) {
                     cantidad = 1.0;
                   }
                   _ingredientes[idx].cantidad = cantidad;

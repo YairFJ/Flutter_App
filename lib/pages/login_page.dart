@@ -343,6 +343,7 @@ class _LoginPageState extends State<LoginPage> {
                     hintText: isEnglish ? 'Email' : 'Correo electrónico',
                     obscureText: false,
                     keyboardType: TextInputType.emailAddress,
+                    isEmailField: true,
                     validator: (val) =>
                         val!.isEmpty ? (isEnglish ? 'Enter your email' : 'Ingresa tu correo') : null,
                   ),

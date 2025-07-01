@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
@@ -64,6 +65,9 @@ class _RecipesPageState extends State<RecipesPage> {
                     )
                   : null,
             ),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+            ],
             onChanged: (value) {
               setState(() {
                 _searchQuery = value.toLowerCase();
