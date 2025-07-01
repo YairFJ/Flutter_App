@@ -89,7 +89,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
     bool hayIngredienteVacio =
         _ingredientes.any((ing) => ing.nombre.trim().isEmpty);
     if (hayIngredienteVacio) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      /*ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             widget.isEnglish
@@ -97,7 +97,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 : 'No se pueden guardar ingredientes vacíos. Complete o elimine los campos vacíos.',
           ),
         ),
-      );
+      );*/
     }
     widget.onIngredientsChanged(_ingredientes);
   }
@@ -195,7 +195,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 });
               },
               icon: const Icon(Icons.add),
-              label: Text(widget.isEnglish ? 'Add ingredient' : 'Agregar ingrediente'),
+              label: Text(widget.isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
             ),
           ),
       ],

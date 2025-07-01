@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/group.dart';
+import '../models/ingredient.dart';
+import '../models/ingrediente_tabla.dart';
+import '../widgets/add_ingredient_dialog.dart';
 
 class CreateRecipeScreen extends StatefulWidget {
   final Group group;
+  final bool isEnglish;
 
-  const CreateRecipeScreen({super.key, required this.group});
+  const CreateRecipeScreen({
+    super.key,
+    required this.group,
+    required this.isEnglish,
+  });
 
   @override
   State<CreateRecipeScreen> createState() => _CreateRecipeScreenState();
@@ -14,32 +22,71 @@ class CreateRecipeScreen extends StatefulWidget {
 
 class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _instructionsController = TextEditingController();
-  final TextEditingController _servingsController = TextEditingController();
-  final TextEditingController _preparationTimeController =
-      TextEditingController();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _instructionsController = TextEditingController();
+  final _servingsController = TextEditingController();
+  final _preparationTimeController = TextEditingController();
   final List<Map<String, String>> _ingredients = [];
+  int _servings = 4;
   bool _isLoading = false;
-  int _servings = 1;
-  bool isEnglish = false;
-  late List<FocusNode> _nombreFocusNodes;
-  late List<FocusNode> _cantidadFocusNodes;
-  late List<FocusNode> _unidadFocusNodes;
+  late bool isEnglish;
+
+  // Lista de unidades disponibles
+  final List<String> _todasLasUnidades = [
+    'gr',
+    'kg', 
+    'mg',
+    'oz',
+    'lb',
+    'ml',
+    'l',
+    'cl',
+    'cda',
+    'cdta',
+    'tz',
+    'oz liq',
+    'pinta',
+    'c-galon',
+    'galon',
+    'u',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _nombreFocusNodes = List.generate(_ingredients.length, (_) => FocusNode());
-    _cantidadFocusNodes = List.generate(_ingredients.length, (_) => FocusNode());
-    _unidadFocusNodes = List.generate(_ingredients.length, (_) => FocusNode());
+    isEnglish = widget.isEnglish;
   }
 
-  void _addIngredient() {
-    setState(() {
-      _ingredients.add({'name': '', 'amount': '0', 'unit': ''});
-    });
+  Future<void> _addIngredient() async {
+    final ingredients = await showDialog<List<Ingredient>>(
+      context: context,
+      builder: (context) => AddIngredientDialog(
+        ingredientes: _ingredients
+            .map((ing) => IngredienteTabla(
+                  nombre: ing['name'] ?? '',
+                  cantidad: double.tryParse(ing['amount'] ?? '0') ?? 0.0,
+                  unidad: ing['unit'] ?? '',
+                  cantidadController: TextEditingController(text: ing['amount'] ?? '0'),
+                  cantidadOriginal: double.tryParse(ing['amount'] ?? '0') ?? 0.0,
+                  unidadOriginal: ing['unit'] ?? '',
+                ))
+            .toList(),
+        unidades: _todasLasUnidades,
+        isEnglish: isEnglish,
+      ),
+    );
+
+    if (ingredients != null) {
+      setState(() {
+        _ingredients.clear();
+        _ingredients.addAll(ingredients.map((ing) => {
+          'name': ing.name,
+          'amount': ing.quantity.toString(),
+          'unit': ing.unit,
+        }));
+      });
+    }
   }
 
   void _showServingsDialog() {
@@ -149,14 +196,15 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
     } else {
       // Mensaje de error si los ingredientes no son válidos
       if (!hasValidIngredients) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEnglish 
-              ? 'All ingredients must have a quantity greater than 0'
-              : 'Todos los ingredientes deben tener una cantidad mayor que 0'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        // SnackBar comentado temporalmente
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text(isEnglish 
+        //       ? 'All ingredients must have a quantity greater than 0'
+        //       : 'Todos los ingredientes deben tener una cantidad mayor que 0'),
+        //     backgroundColor: Colors.red,
+        //   ),
+        // );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -172,59 +220,12 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
 
   @override
   void dispose() {
-    for (final node in _nombreFocusNodes) {
-      node.dispose();
-    }
-    for (final node in _cantidadFocusNodes) {
-      node.dispose();
-    }
-    for (final node in _unidadFocusNodes) {
-      node.dispose();
-    }
     _titleController.dispose();
     _descriptionController.dispose();
     _instructionsController.dispose();
     _servingsController.dispose();
     _preparationTimeController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    for (int i = 0; i < _nombreFocusNodes.length; i++) {
-      _nombreFocusNodes[i].addListener(() {
-        if (!_nombreFocusNodes[i].hasFocus) {
-          final controller = TextEditingController(text: _ingredients[i]['name'] ?? '');
-          _ingredients[i]['name'] = controller.text.trim();
-          setState(() {});
-        }
-      });
-      _cantidadFocusNodes[i].addListener(() {
-        if (!_cantidadFocusNodes[i].hasFocus) {
-          final controller = TextEditingController(text: _ingredients[i]['amount'] ?? '0,0');
-          String value = controller.text;
-          double cantidad = 0.0;
-          try {
-            cantidad = double.parse(value.replaceAll(',', '.'));
-            if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
-              cantidad = 1.0;
-            }
-          } catch (e) {
-            cantidad = 1.0;
-          }
-          _ingredients[i]['amount'] = cantidad.toString();
-          setState(() {});
-        }
-      });
-      _unidadFocusNodes[i].addListener(() {
-        if (!_unidadFocusNodes[i].hasFocus) {
-          final controller = TextEditingController(text: _ingredients[i]['unit'] ?? '');
-          _ingredients[i]['unit'] = controller.text.trim();
-          setState(() {});
-        }
-      });
-    }
   }
 
   @override
@@ -298,7 +299,6 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: TextEditingController(text: _ingredients[idx]['name'] ?? ''),
-                            focusNode: _nombreFocusNodes[idx],
                             decoration: InputDecoration(
                               labelText: isEnglish ? 'Ingredient' : 'Ingrediente',
                             ),
@@ -310,7 +310,6 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: TextEditingController(text: _ingredients[idx]['amount'] ?? '0,0'),
-                            focusNode: _cantidadFocusNodes[idx],
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
                             decoration: InputDecoration(
@@ -341,7 +340,6 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: TextEditingController(text: _ingredients[idx]['unit'] ?? ''),
-                            focusNode: _unidadFocusNodes[idx],
                             decoration: const InputDecoration(
                               labelText: 'Unidad',
                               hintText: 'gr, ml, unidad',
@@ -367,7 +365,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
               const SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: _addIngredient,
-                child: Text(isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente'),
+                child: Text(isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
               ),
 
               const SizedBox(height: 16.0),

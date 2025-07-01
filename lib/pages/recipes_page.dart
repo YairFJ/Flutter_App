@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../constants/categories.dart';
 import '../screens/recipe_detail_screen.dart';
+import 'dart:async';
 
 class RecipesPage extends StatefulWidget {
   final bool isEnglish;
@@ -18,10 +19,17 @@ class _RecipesPageState extends State<RecipesPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool get isEnglish => widget.isEnglish;
+  
+  // Variables para gestionar mensajes de favoritos con análisis temporal
+  Timer? _favoriteActionTimer;
+  int _addToFavoritesCount = 0;
+  int _removeFromFavoritesCount = 0;
+  bool _hasShownBatchMessage = false;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _favoriteActionTimer?.cancel();
     super.dispose();
   }
 
@@ -274,7 +282,6 @@ class _RecipesPageState extends State<RecipesPage> {
                                     ),
                                     onPressed: () async {
                                       await _toggleFavorite(context, recipe);
-                                      setState(() {}); // Actualizar el estado local
                                     },
                                   ),
                                 ],
@@ -348,33 +355,24 @@ class _RecipesPageState extends State<RecipesPage> {
 
     try {
       if (recipe.favoritedBy.contains(currentUser.uid)) {
+        // Eliminar de favoritos
         await recipeRef.update({
           'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
         });
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEnglish
-                  ? 'Recipe removed from favorites'
-                  : 'Receta eliminada de favoritos'),
-              backgroundColor: Colors.grey,
-            ),
-          );
-        }
+        
+        _removeFromFavoritesCount++;
+        print('DEBUG: Eliminada receta. Contador: $_removeFromFavoritesCount');
+        _scheduleBatchMessage();
+        
       } else {
+        // Agregar a favoritos
         await recipeRef.update({
           'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
         });
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEnglish
-                  ? 'Recipe saved to favorites'
-                  : 'Receta guardada en favoritos'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
+        
+        _addToFavoritesCount++;
+        print('DEBUG: Agregada receta. Contador: $_addToFavoritesCount');
+        _scheduleBatchMessage();
       }
     } catch (e) {
       if (context.mounted) {
@@ -388,5 +386,70 @@ class _RecipesPageState extends State<RecipesPage> {
         );
       }
     }
+  }
+
+  void _scheduleBatchMessage() {
+    // Cancelar timer anterior si existe
+    _favoriteActionTimer?.cancel();
+    
+    // Programar nuevo timer para mostrar mensaje después de 0.5 segundos
+    _favoriteActionTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _showBatchMessage();
+      }
+    });
+  }
+
+  void _showBatchMessage() {
+    print('DEBUG: _showBatchMessage ejecutado');
+    print('DEBUG: _addToFavoritesCount: $_addToFavoritesCount');
+    print('DEBUG: _removeFromFavoritesCount: $_removeFromFavoritesCount');
+    
+    String message = '';
+    Color backgroundColor = Colors.green;
+    
+    if (_addToFavoritesCount > 0 && _removeFromFavoritesCount > 0) {
+      // Acciones mixtas
+      message = isEnglish
+          ? '$_addToFavoritesCount recipes added and $_removeFromFavoritesCount removed from favorites'
+          : '$_addToFavoritesCount recetas agregadas y $_removeFromFavoritesCount eliminadas de favoritos';
+    } else if (_addToFavoritesCount > 1) {
+      // Múltiples agregadas
+      message = isEnglish
+          ? '$_addToFavoritesCount recipes added to favorites'
+          : '$_addToFavoritesCount recetas agregadas a favoritos';
+    } else if (_removeFromFavoritesCount > 1) {
+      // Múltiples eliminadas
+      message = isEnglish
+          ? '$_removeFromFavoritesCount recipes removed from favorites'
+          : '$_removeFromFavoritesCount recetas eliminadas de favoritos';
+    } else if (_addToFavoritesCount == 1) {
+      // Una sola agregada
+      message = isEnglish
+          ? 'Recipe added to favorites'
+          : 'Receta agregada a favoritos';
+    } else if (_removeFromFavoritesCount == 1) {
+      // Una sola eliminada
+      message = isEnglish
+          ? 'Recipe removed from favorites'
+          : 'Receta eliminada de favoritos';
+      backgroundColor = Colors.grey;
+    }
+    
+    if (message.isNotEmpty) {
+      print('DEBUG: Mostrando mensaje: $message');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: backgroundColor,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+    
+    // Resetear contadores
+    _addToFavoritesCount = 0;
+    _removeFromFavoritesCount = 0;
+    print('DEBUG: Contadores reseteados');
   }
 }
