@@ -205,113 +205,105 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
 
   Widget _buildIngredientRow(IngredienteTabla ingrediente) {
     final idx = _ingredientes.indexOf(ingrediente);
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade300),
-          left: BorderSide(color: Colors.grey.shade300),
-          right: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: TextField(
-                controller: ingrediente.nombreController,
-                focusNode: _nombreFocusNodes[idx],
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                  isDense: true,
-                  hintText: widget.isEnglish ? 'Enter ingredient' : 'Ingrese ingrediente',
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
-                ],
-                onChanged: (value) {
-                  _ingredientes[idx].nombre = value;
-                },
-                onEditingComplete: null,
-                onSubmitted: null,
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: TextField(
+              controller: ingrediente.nombreController,
+              focusNode: _nombreFocusNodes[idx],
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                isDense: true,
+                hintText: widget.isEnglish ? 'Enter ingredient' : 'Ingrese ingrediente',
               ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+              ],
+              onChanged: (value) {
+                _ingredientes[idx].nombre = value;
+              },
+              onEditingComplete: null,
+              onSubmitted: null,
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: TextField(
-                controller: ingrediente.cantidadController,
-                focusNode: _cantidadFocusNodes[idx],
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                  isDense: true,
-                  hintText: widget.isEnglish ? 'Amount' : 'Cantidad',
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                ],
-                onTap: () {
-                  if (ingrediente.cantidadController.text == '0,0') {
-                    setState(() {
-                      ingrediente.cantidadController.clear();
-                    });
-                  }
-                },
-                onChanged: (value) {
-                  double cantidad = 0.0;
-                  try {
-                    cantidad = double.parse(value.replaceAll(',', '.'));
-                    if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
-                      cantidad = 1.0;
-                    }
-                  } catch (c) {
+        ),
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: TextField(
+              controller: ingrediente.cantidadController,
+              focusNode: _cantidadFocusNodes[idx],
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                isDense: true,
+                hintText: widget.isEnglish ? 'Amount' : 'Cantidad',
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              onTap: () {
+                if (ingrediente.cantidadController.text == '0,0') {
+                  setState(() {
+                    ingrediente.cantidadController.clear();
+                  });
+                }
+              },
+              onChanged: (value) {
+                double cantidad = 0.0;
+                try {
+                  cantidad = double.parse(value.replaceAll(',', '.'));
+                  if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
                     cantidad = 1.0;
                   }
-                  _ingredientes[idx].cantidad = cantidad;
-                },
-                onEditingComplete: null,
-                onSubmitted: null,
-                // Usar listener de focus
-              ),
+                } catch (c) {
+                  cantidad = 1.0;
+                }
+                _ingredientes[idx].cantidad = cantidad;
+              },
+              onEditingComplete: null,
+              onSubmitted: null,
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: DropdownButtonFormField<String>(
-                value: _unidadesDisponibles.contains(ingrediente.unidad) ? ingrediente.unidad : 'Gramo',
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                  isDense: true,
-                ),
-                items: _unidadesDisponibles.map((String unidad) {
-                  return DropdownMenuItem<String>(
-                    value: unidad,
-                    child: Tooltip(
-                      message: _unidadesCompletas[unidad]?[widget.isEnglish ? 'en' : 'es'] ?? unidad,
-                      child: Text(unidad),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (String? value) {
-                  if (value != null) {
-                    setState(() {
-                      ingrediente.unidad = value;
-                      _actualizarIngredientes();
-                    });
-                  }
-                },
+        ),
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: DropdownButtonFormField<String>(
+              value: _unidadesDisponibles.contains(ingrediente.unidad) ? ingrediente.unidad : 'gr',
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 4),
+                isDense: true,
               ),
+              items: _unidadesDisponibles.map((String unidad) {
+                return DropdownMenuItem<String>(
+                  value: unidad,
+                  child: Tooltip(
+                    message: _unidadesCompletas[unidad]?[widget.isEnglish ? 'en' : 'es'] ?? unidad,
+                    child: Text(unidad, style: const TextStyle(fontSize: 13)),
+                  ),
+                );
+              }).toList(),
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    ingrediente.unidad = value;
+                    _actualizarIngredientes();
+                  });
+                }
+              },
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

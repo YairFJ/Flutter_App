@@ -196,136 +196,142 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(4.0),
-                child: Column(
-                  children: [
-                    // Títulos de columnas
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[800]
-                            : Colors.grey[200],
-                        border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey.shade600
-                              : Colors.grey.shade300,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              isEnglish ? 'INGREDIENT' : 'INGREDIENTE',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              isEnglish ? 'AMOUNT' : 'CANTIDAD',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              isEnglish ? 'UNIT' : 'UNIDAD',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    // Lista de ingredientes
-                    Expanded(
-                      child: _ingredientes.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.add_circle_outline,
-                                    size: 48,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    isEnglish 
-                                        ? 'No ingredients added yet' 
-                                        : 'Aún no hay ingredientes',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                              itemCount: _ingredientes.length,
-                              itemBuilder: (context, index) {
-                                final ingrediente = _ingredientes[index];
-                                return _buildViewModeIngredient(ingrediente, index);
-                              },
-                            ),
-                    ),
-                    const SizedBox(height: 4),
-                    // Botones de acción
-                    Row(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: 420, // Puedes ajustar este valor según el mínimo necesario
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _agregarIngrediente,
-                            icon: const Icon(Icons.add, size: 16),
-                            label: Text(
-                              isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente',
-                              style: const TextStyle(fontSize: 13),
+                        // Títulos de columnas
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[800]
+                                : Colors.grey[200],
+                            border: Border.all(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey.shade600
+                                  : Colors.grey.shade300,
                             ),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  isEnglish ? 'INGREDIENT' : 'INGREDIENTE',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.white
+                                        : Colors.black,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  isEnglish ? 'AMOUNT' : 'CANTIDAD',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.white
+                                        : Colors.black,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  isEnglish ? 'UNIT' : 'UNIDAD',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.white
+                                        : Colors.black,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(height: 2),
+                        // Lista de ingredientes
                         Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _guardarCambios,
-                            icon: const Icon(Icons.save, size: 16),
-                            label: Text(
-                              isEnglish ? 'Save Changes' : 'Guardar Cambios',
-                              style: const TextStyle(fontSize: 13),
+                          child: _ingredientes.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_circle_outline,
+                                        size: 48,
+                                        color: Colors.grey[400],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        isEnglish 
+                                            ? 'No ingredients added yet' 
+                                            : 'Aún no hay ingredientes',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  itemCount: _ingredientes.length,
+                                  itemBuilder: (context, index) {
+                                    final ingrediente = _ingredientes[index];
+                                    return _buildViewModeIngredient(ingrediente, index);
+                                  },
+                                ),
+                        ),
+                        const SizedBox(height: 4),
+                        // Botones de acción
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _agregarIngrediente,
+                                icon: const Icon(Icons.add, size: 16),
+                                label: Text(
+                                  isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                ),
+                              ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _guardarCambios,
+                                icon: const Icon(Icons.save, size: 16),
+                                label: Text(
+                                  isEnglish ? 'Save Changes' : 'Guardar Cambios',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
