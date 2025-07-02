@@ -15,14 +15,8 @@ class FavoriteRecipesScreen extends StatefulWidget {
 }
 
 class _FavoriteRecipesScreenState extends State<FavoriteRecipesScreen> {
-  // Variables para gestionar mensajes de favoritos con análisis temporal
-  Timer? _favoriteActionTimer;
-  int _addToFavoritesCount = 0;
-  int _removeFromFavoritesCount = 0;
-  
   @override
   void dispose() {
-    _favoriteActionTimer?.cancel();
     super.dispose();
   }
 
@@ -42,97 +36,19 @@ class _FavoriteRecipesScreenState extends State<FavoriteRecipesScreen> {
       List<String> favoritedBy = List<String>.from(recipeDoc.data()?['favoritedBy'] ?? []);
 
       if (favoritedBy.contains(currentUser.uid)) {
-        // Quitar de favoritos
-        favoritedBy.remove(currentUser.uid);
-        await recipeRef.update({'favoritedBy': favoritedBy});
-        
-        _removeFromFavoritesCount++;
-        print('DEBUG: Eliminada receta de favoritos. Contador: $_removeFromFavoritesCount');
-        _scheduleBatchMessage();
+        // Quitar de favoritos de forma atómica
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
+        });
       } else {
-        // Agregar a favoritos
-        favoritedBy.add(currentUser.uid);
-        await recipeRef.update({'favoritedBy': favoritedBy});
-        
-        _addToFavoritesCount++;
-        print('DEBUG: Agregada receta a favoritos. Contador: $_addToFavoritesCount');
-        _scheduleBatchMessage();
+        // Agregar a favoritos de forma atómica
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
+        });
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.isEnglish ? 'Error updating favorites' : 'Error al actualizar favoritos'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Eliminado el mensaje de error para no mostrar nada al usuario
     }
-  }
-
-  void _scheduleBatchMessage() {
-    // Cancelar timer anterior si existe
-    _favoriteActionTimer?.cancel();
-    
-    // Programar nuevo timer para mostrar mensaje después de 0.5 segundos
-    _favoriteActionTimer = Timer(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        _showBatchMessage();
-      }
-    });
-  }
-
-  void _showBatchMessage() {
-    print('DEBUG: _showBatchMessage ejecutado en FavoriteRecipesScreen');
-    print('DEBUG: _addToFavoritesCount: $_addToFavoritesCount');
-    print('DEBUG: _removeFromFavoritesCount: $_removeFromFavoritesCount');
-    
-    String message = '';
-    Color backgroundColor = Colors.green;
-    
-    if (_addToFavoritesCount > 0 && _removeFromFavoritesCount > 0) {
-      // Acciones mixtas
-      message = widget.isEnglish
-          ? '$_addToFavoritesCount recipes added and $_removeFromFavoritesCount removed from favorites'
-          : '$_addToFavoritesCount recetas agregadas y $_removeFromFavoritesCount eliminadas de favoritos';
-    } else if (_addToFavoritesCount > 1) {
-      // Múltiples agregadas
-      message = widget.isEnglish
-          ? '$_addToFavoritesCount recipes added to favorites'
-          : '$_addToFavoritesCount recetas agregadas a favoritos';
-    } else if (_removeFromFavoritesCount > 1) {
-      // Múltiples eliminadas
-      message = widget.isEnglish
-          ? '$_removeFromFavoritesCount recipes removed from favorites'
-          : '$_removeFromFavoritesCount recetas eliminadas de favoritos';
-    } else if (_addToFavoritesCount == 1) {
-      // Una sola agregada
-      message = widget.isEnglish
-          ? 'Recipe added to favorites'
-          : 'Receta agregada a favoritos';
-    } else if (_removeFromFavoritesCount == 1) {
-      // Una sola eliminada
-      message = widget.isEnglish
-          ? 'Recipe removed from favorites'
-          : 'Receta eliminada de favoritos';
-      backgroundColor = Colors.grey;
-    }
-    
-    if (message.isNotEmpty) {
-      print('DEBUG: Mostrando mensaje en FavoriteRecipesScreen: $message');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: backgroundColor,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-    
-    // Resetear contadores
-    _addToFavoritesCount = 0;
-    _removeFromFavoritesCount = 0;
-    print('DEBUG: Contadores reseteados en FavoriteRecipesScreen');
   }
 
   @override
