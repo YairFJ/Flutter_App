@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/group.dart';
 import 'group_detail_screen.dart';
 import 'create_group_screen.dart';
@@ -46,6 +47,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   border: const OutlineInputBorder(),
                   helperText: isEnglish ? 'Request the code from the community administrator' : 'Solicita el código al administrador de la comunidad',
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                ],
               ),
             ],
           ),
@@ -205,6 +209,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
                       )
                     : null,
               ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+              ],
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value.toLowerCase();

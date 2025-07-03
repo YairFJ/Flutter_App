@@ -290,6 +290,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   hintText: _isEnglish ? 'Email' : 'Correo electrónico',
                   obscureText: false,
                   prefixIcon: const Icon(Icons.email),
+                  isEmailField: true,
                 ),
 
                 const SizedBox(height: 10),

@@ -201,6 +201,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
 
     if (ingredients != null) {
       setState(() {
+        _ingredients.clear();
         _ingredients.addAll(ingredients);
       });
     }
@@ -556,7 +557,7 @@ class _GroupRecipeFormScreenState extends State<GroupRecipeFormScreen> {
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _addIngredient,
-          child: Text(isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente'),
+          child: Text(isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
         ),
       ],
     );

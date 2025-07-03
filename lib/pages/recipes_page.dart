@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../constants/categories.dart';
 import '../screens/recipe_detail_screen.dart';
+import 'dart:async';
 
 class RecipesPage extends StatefulWidget {
   final bool isEnglish;
@@ -18,7 +20,7 @@ class _RecipesPageState extends State<RecipesPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool get isEnglish => widget.isEnglish;
-
+  
   @override
   void dispose() {
     _searchController.dispose();
@@ -56,6 +58,9 @@ class _RecipesPageState extends State<RecipesPage> {
                     )
                   : null,
             ),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+            ],
             onChanged: (value) {
               setState(() {
                 _searchQuery = value.toLowerCase();
@@ -274,7 +279,6 @@ class _RecipesPageState extends State<RecipesPage> {
                                     ),
                                     onPressed: () async {
                                       await _toggleFavorite(context, recipe);
-                                      setState(() {}); // Actualizar el estado local
                                     },
                                   ),
                                 ],
@@ -348,33 +352,15 @@ class _RecipesPageState extends State<RecipesPage> {
 
     try {
       if (recipe.favoritedBy.contains(currentUser.uid)) {
+        // Eliminar de favoritos
         await recipeRef.update({
           'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
         });
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEnglish
-                  ? 'Recipe removed from favorites'
-                  : 'Receta eliminada de favoritos'),
-              backgroundColor: Colors.grey,
-            ),
-          );
-        }
       } else {
+        // Agregar a favoritos
         await recipeRef.update({
           'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
         });
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEnglish
-                  ? 'Recipe saved to favorites'
-                  : 'Receta guardada en favoritos'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
       }
     } catch (e) {
       if (context.mounted) {

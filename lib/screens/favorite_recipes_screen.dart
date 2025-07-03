@@ -1,13 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../models/recipe.dart';
 import '../screens/recipe_detail_screen.dart';
 
-class FavoriteRecipesScreen extends StatelessWidget {
+class FavoriteRecipesScreen extends StatefulWidget {
   final bool isEnglish;
   
   const FavoriteRecipesScreen({super.key, this.isEnglish = false});
+
+  @override
+  State<FavoriteRecipesScreen> createState() => _FavoriteRecipesScreenState();
+}
+
+class _FavoriteRecipesScreenState extends State<FavoriteRecipesScreen> {
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   Future<void> _toggleFavorite(BuildContext context, Recipe recipe) async {
     try {
@@ -25,42 +36,32 @@ class FavoriteRecipesScreen extends StatelessWidget {
       List<String> favoritedBy = List<String>.from(recipeDoc.data()?['favoritedBy'] ?? []);
 
       if (favoritedBy.contains(currentUser.uid)) {
-        // Quitar de favoritos
-        favoritedBy.remove(currentUser.uid);
-        await recipeRef.update({'favoritedBy': favoritedBy});
-        
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEnglish ? 'Recipe removed from favorites' : 'Receta eliminada de favoritos'),
-              backgroundColor: Colors.grey,
-            ),
-          );
-        }
+        // Quitar de favoritos de forma atómica
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayRemove([currentUser.uid])
+        });
+      } else {
+        // Agregar a favoritos de forma atómica
+        await recipeRef.update({
+          'favoritedBy': FieldValue.arrayUnion([currentUser.uid])
+        });
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEnglish ? 'Error updating favorites' : 'Error al actualizar favoritos'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Eliminado el mensaje de error para no mostrar nada al usuario
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return Center(child: Text(isEnglish ? 'No authenticated user' : 'No hay usuario autenticado'));
+    if (currentUser == null) return Center(child: Text(widget.isEnglish ? 'No authenticated user' : 'No hay usuario autenticado'));
 
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas'),
+        title: Text(widget.isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas'),
         backgroundColor: const Color(0xFF96B4D8),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -70,7 +71,7 @@ class FavoriteRecipesScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text(isEnglish ? 'Error loading recipes' : 'Error al cargar las recetas'));
+            return Center(child: Text(widget.isEnglish ? 'Error loading recipes' : 'Error al cargar las recetas'));
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -84,7 +85,7 @@ class FavoriteRecipesScreen extends StatelessWidget {
 
           if (recipes.isEmpty) {
             return Center(
-              child: Text(isEnglish ? 'You don\'t have favorite recipes' : 'No tienes recetas favoritas'),
+              child: Text(widget.isEnglish ? 'You don\'t have favorite recipes' : 'No tienes recetas favoritas'),
             );
           }
 
@@ -114,7 +115,7 @@ class FavoriteRecipesScreen extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => RecipeDetailScreen(
                               recipe: recipe,
-                              isEnglish: isEnglish,
+                              isEnglish: widget.isEnglish,
                             ),
                           ),
                         );

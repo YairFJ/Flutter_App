@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_app/constants/categories.dart';
 import 'package:flutter_app/models/ingredient.dart';
@@ -265,6 +266,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     if (ingredients != null) {
       setState(() {
+        _ingredients.clear();
         _ingredients.addAll(ingredients);
       });
     }
@@ -304,6 +306,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   validator: _validateTitle,
                   textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -319,6 +324,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   maxLines: 3,
                   validator: _validateDescription,
                   textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -333,6 +341,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   keyboardType: TextInputType.number,
                   validator: _validateCookingTime,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 // Rendimiento
@@ -351,6 +362,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         validator: _validateServingSize,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -532,7 +546,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ElevatedButton(
           onPressed: _addIngredient,
           child: Text(
-            isEnglish ? 'Add Ingredient' : 'Agregar Ingrediente',
+            isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes',
           ),
         ),
       ],

@@ -168,36 +168,39 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } catch (e) {
-      print('Error en Google SignIn: $e');
+      if (e.toString().contains('webAuthenticationOptions argument must be provided on Android')) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        _showError('El inicio de sesión no es compatible con Android en este modo.');
+      } else if (e is FirebaseAuthException) {
+        String mensaje = isEnglish ? 'Login error' : 'Error de inicio de sesión';
+
+        switch (e.code) {
+          case 'invalid-credential':
+            mensaje = isEnglish 
+              ? 'Invalid credentials. Please check your app configuration.'
+              : 'Credenciales inválidas. Verifica la configuración de tu app.';
+            break;
+          case 'user-not-found':
+            mensaje = isEnglish 
+              ? 'No user found with these credentials.'
+              : 'No se encontró usuario con estas credenciales.';
+            break;
+          case 'unknown-error':
+            mensaje = isEnglish 
+              ? 'Unknown error. Please try again later.'
+              : 'Error desconocido. Por favor, intenta más tarde.';
+            break;
+          default:
+            mensaje = e.message ?? (isEnglish ? 'Error signing in with Google' : 'Error al iniciar sesión con Google');
+        }
+
+        _showError(isEnglish ? 'LOGIN ERROR: $mensaje' : 'INICIO DE SESIÓN INCORRECTO: $mensaje');
+      } else {
+        _showError(isEnglish ? 'LOGIN ERROR: $e' : 'INICIO DE SESIÓN INCORRECTO: $e');
+      }
+    } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-        if (e is FirebaseAuthException) {
-          String mensaje = isEnglish ? 'Login error' : 'Error de inicio de sesión';
-
-          switch (e.code) {
-            case 'invalid-credential':
-              mensaje = isEnglish 
-                ? 'Invalid credentials. Please check your app configuration.'
-                : 'Credenciales inválidas. Verifica la configuración de tu app.';
-              break;
-            case 'user-not-found':
-              mensaje = isEnglish 
-                ? 'No user found with these credentials.'
-                : 'No se encontró usuario con estas credenciales.';
-              break;
-            case 'unknown-error':
-              mensaje = isEnglish 
-                ? 'Unknown error. Please try again later.'
-                : 'Error desconocido. Por favor, intenta más tarde.';
-              break;
-            default:
-              mensaje = e.message ?? (isEnglish ? 'Error signing in with Google' : 'Error al iniciar sesión con Google');
-          }
-
-          _showError(isEnglish ? 'LOGIN ERROR: $mensaje' : 'INICIO DE SESIÓN INCORRECTO: $mensaje');
-        } else {
-          _showError(isEnglish ? 'LOGIN ERROR: $e' : 'INICIO DE SESIÓN INCORRECTO: $e');
-        }
       }
     }
   }
@@ -226,9 +229,16 @@ class _LoginPageState extends State<LoginPage> {
           : 'INICIO DE SESIÓN INCORRECTO: El inicio de sesión con Apple no está disponible');
       }
     } catch (e) {
-      _showError(isEnglish 
-        ? 'LOGIN ERROR: $e'
-        : 'INICIO DE SESIÓN INCORRECTO: $e');
+      final errorStr = e.toString();
+      if (errorStr.toLowerCase().contains('webauthenticationoptions')) {
+        _showError(isEnglish 
+          ? 'Apple sign in is not supported on Android devices.'
+          : 'El inicio de sesión con Apple no es compatible con dispositivos Android.');
+      } else {
+        _showError(isEnglish 
+          ? 'LOGIN ERROR: Apple sign in is not available'
+          : 'INICIO DE SESIÓN INCORRECTO: El inicio de sesión con Apple no está disponible');
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -343,6 +353,7 @@ class _LoginPageState extends State<LoginPage> {
                     hintText: isEnglish ? 'Email' : 'Correo electrónico',
                     obscureText: false,
                     keyboardType: TextInputType.emailAddress,
+                    isEmailField: true,
                     validator: (val) =>
                         val!.isEmpty ? (isEnglish ? 'Enter your email' : 'Ingresa tu correo') : null,
                   ),

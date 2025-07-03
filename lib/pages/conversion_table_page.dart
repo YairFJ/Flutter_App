@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ConversionTablePage extends StatefulWidget {
   final bool isEnglish;
@@ -362,6 +363,9 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                         fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
                         filled: true,
                       ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
                       onChanged: (value) => _calcularConversion(),
                     ),
                   ),

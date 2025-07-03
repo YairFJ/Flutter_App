@@ -426,6 +426,10 @@ class _ConversionCalculatorScreenState
     'Unidad': 'Unidades',
   };
 
+  // 1. Agrega listas de FocusNode para los campos de rendimiento y para cada ingrediente
+  late FocusNode _destinoFocusNode;
+  late List<FocusNode> _ingredienteCantidadFocusNodes;
+
   @override
   void initState() {
     super.initState();
@@ -498,13 +502,85 @@ class _ConversionCalculatorScreenState
     } catch (e) {
       print("Error en initState: $e");
     }
+
+    // 2. Inicializa en initState
+    _destinoFocusNode = FocusNode();
+    _ingredienteCantidadFocusNodes = List.generate(_ingredientesTabla.length, (_) => FocusNode());
+  }
+
+  void _syncFocusNodesWithIngredientes() {
+    // Si la cantidad de ingredientes cambió, ajusta la lista de FocusNode
+    if (_ingredienteCantidadFocusNodes.length < _ingredientesTabla.length) {
+      _ingredienteCantidadFocusNodes.addAll(
+        List.generate(_ingredientesTabla.length - _ingredienteCantidadFocusNodes.length, (_) => FocusNode()),
+      );
+    } else if (_ingredienteCantidadFocusNodes.length > _ingredientesTabla.length) {
+      _ingredienteCantidadFocusNodes = _ingredienteCantidadFocusNodes.sublist(0, _ingredientesTabla.length);
+    }
   }
 
   @override
   void dispose() {
+    for (final node in _ingredienteCantidadFocusNodes) {
+      node.dispose();
+    }
+    _destinoFocusNode.dispose();
     _cantidadController.dispose();
     _destinoController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Limpio listeners previos para evitar duplicados
+    for (final node in _ingredienteCantidadFocusNodes) {
+      node.removeListener(() {}); // Limpieza básica
+    }
+    _destinoFocusNode.removeListener(() {});
+
+    _destinoFocusNode.addListener(() {
+      if (!_destinoFocusNode.hasFocus) {
+        String valorTexto = _destinoController.text;
+        double valorNumerico;
+        try {
+          valorNumerico = double.parse(valorTexto.replaceAll(',', '.'));
+          if (valorNumerico <= 0 || valorNumerico.isNaN || valorNumerico.isInfinite) {
+            valorNumerico = 1.0;
+          }
+        } catch (e) {
+          valorNumerico = 1.0;
+        }
+        String valorFormateado = _formatearNumero(valorNumerico);
+        _destinoController.text = valorFormateado;
+        _actualizarRendimientoManualmente(valorFormateado);
+        setState(() {});
+      }
+    });
+
+    for (int i = 0; i < _ingredienteCantidadFocusNodes.length; i++) {
+      _ingredienteCantidadFocusNodes[i].addListener(() {
+        if (!_ingredienteCantidadFocusNodes[i].hasFocus) {
+          // Tomar el valor actual del controlador
+          String value = _ingredientesTabla[i].cantidadController.text;
+          if (value.trim().isEmpty) value = '1';
+          double cantidad = 1.0;
+          try {
+            cantidad = double.parse(value.replaceAll(',', '.'));
+            if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
+              cantidad = 1.0;
+            }
+          } catch (e) {
+            cantidad = 1.0;
+          }
+          _ingredientesTabla[i].cantidad = cantidad;
+          _ingredientesTabla[i].cantidadController.text = _formatearNumero(cantidad);
+          // Llama a la función de actualización proporcional
+          _actualizarRecetaPorIngrediente(i, cantidad.toString());
+          setState(() {});
+        }
+      });
+    }
   }
 
   void _calcularConversion() {
@@ -1118,6 +1194,8 @@ class _ConversionCalculatorScreenState
       fillColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade100,
     );
 
+    _syncFocusNodesWithIngredientes();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isEnglish ? 'Conversion Calculator' : 'Calculadora de Conversiones'),
@@ -1131,491 +1209,436 @@ class _ConversionCalculatorScreenState
         
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0), // Padding general
-        children: [
-          Text(
-            widget.isEnglish ? 'CONVERSION CALCULATOR' : 'CALCULADORA DE CONVERSIÓN',
-            style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-
-          // --- Sección Rendimiento con Card ---
-          Card(
-            elevation: 2,
-            margin: const EdgeInsets.only(bottom: 24),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.isEnglish ? 'YIELD' : 'RENDIMIENTO',
-                    style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 16),
-                  // Encabezados de la tabla
-                  Row(
-                    children: [
-                      Expanded(child: Text(widget.isEnglish ? 'ORIGINAL' : 'ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text(widget.isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(flex: 2, child: Text(widget.isEnglish ? 'NEW' : 'NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Fila de datos de rendimiento
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Cantidad Original (TextField deshabilitado)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 4.0),
-                          child: TextField(
-                            controller: _cantidadController,
-                            enabled: false,
-                            textAlign: TextAlign.center,
-                            style: textTheme.bodyMedium,
-                            decoration: inputDecoration.copyWith(
-                              fillColor: isDarkMode ? Colors.black26 : Colors.grey.shade200,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Unidad Original (Container con texto)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: Container(
-                            height: 40, // Altura consistente
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            decoration: BoxDecoration(
-                              color: isDarkMode ? Colors.black26 : Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              // *** CORREGIDO: Mostrar abreviatura también para la unidad original ***
-                              _unidadesAbreviadas[_unidadOriginal] ?? _unidadOriginal,
-                              // _unidadesAbreviadas[_getUnidadPlural(_unidadOriginal, _platosOrigen)] ??
-                              //     _getUnidadPlural(_unidadOriginal, _platosOrigen),
-                              style: textTheme.bodyMedium,
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Nuevo Rendimiento (Campo + Dropdown)
-                      Expanded(
-                        flex: 2,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 4.0, right: 2.0),
-                                child: TextField(
-                                  controller: _destinoController,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  textAlign: TextAlign.center,
-                                  style: textTheme.bodyMedium,
-                                  decoration: inputDecoration,
-                                  onChanged: (value) { /* Lógica existente */ },
-                                  onEditingComplete: () {
-                                      // ... (Lógica onEditingComplete existente sin cambios) ...
-                                      final controller = _destinoController;
-                                      String valorTexto = controller.text;
-
-                                      print("\n✅ Edición completada para Rendimiento (_buildTextFieldDestino)");
-                                      print("Texto actual en el campo: '$valorTexto'");
-
-                                      double valorNumerico;
-
-                                      try {
-                                          if (valorTexto.isEmpty) {
-                                              print("⚠️ Campo de rendimiento vacío detectado. Usando valor mínimo 0.01");
-                                              valorNumerico = 0.01;
-                                          } else {
-                                              valorNumerico = double.parse(valorTexto.replaceAll(',', '.'));
-                                              if (valorNumerico <= 0 || valorNumerico.isNaN || valorNumerico.isInfinite) {
-                                                  print("⚠️ Valor numérico de rendimiento inválido: $valorNumerico. Usando valor mínimo 0.01");
-                                                  valorNumerico = 0.01;
-                                              }
-                                          }
-                                      } catch (e) {
-                                          print("❌ Error al parsear rendimiento '$valorTexto'. Usando valor mínimo 0.01. Error: $e");
-                                          valorNumerico = 0.01;
-                                      }
-                                      
-                                      String valorFormateado = _formatearNumero(valorNumerico);
-                                      controller.text = valorFormateado;
-                                      print("Valor de rendimiento formateado y actualizado en el campo: $valorFormateado");
-
-                                      _actualizarRendimientoManualmente(valorFormateado);
-                                      
-                                      FocusScope.of(context).unfocus();
-                                    
-                                  },
-                                ),
-                              ),
-                            ),
-                            // Dropdown Unidad Destino
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 2.0),
-                                child: DropdownButtonFormField<String>(
-                                  value: _unidadDestino,
-                                  isExpanded: true,
-                                  style: textTheme.bodyMedium,
-                                  decoration: inputDecoration.copyWith(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                                  ),
-                                  icon: Icon(Icons.arrow_drop_down, size: 20, color: textTheme.bodyMedium?.color),
-                                  items: _unidadesRendimiento.map((String unidad) {
-                                    return DropdownMenuItem<String>(
-                                      value: unidad,
-                                      child: Text(
-                                        _unidadesAbreviadas[unidad] ?? unidad,
-                                        textAlign: TextAlign.center,
-                                        style: textTheme.bodyMedium,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? value) {
-                                    if (value != null) {
-                                      setState(() {
-                                        String unidadAnterior = _unidadDestino;
-                                        _unidadDestino = value;
-                                        
-                                        // Solo convertimos si la unidad realmente cambió
-                                        if (unidadAnterior != value) {
-                                          // Usamos conversión directa al cambiar unidades
-                                          double factorConversion = 1.0;
-                                          
-                                          // Intentamos una conversión directa usando el mapa de factores
-                                          if (_factoresRendimiento.containsKey(unidadAnterior) && 
-                                              _factoresRendimiento[unidadAnterior]!.containsKey(value)) {
-                                            factorConversion = _factoresRendimiento[unidadAnterior]![value]!;
-                                          }
-                                          // Si no hay conversión directa, intentamos conversión inversa
-                                          else if (_factoresRendimiento.containsKey(value) && 
-                                                   _factoresRendimiento[value]!.containsKey(unidadAnterior)) {
-                                            factorConversion = 1.0 / _factoresRendimiento[value]![unidadAnterior]!;
-                                          }
-                                          // Si ninguna funciona, intentamos a través de una unidad base
-                                          else {
-                                            // Determinar la unidad base adecuada
-                                            String unidadBase = "";
-                                            if (_esTipoUnidadPeso(unidadAnterior) || _esTipoUnidadPeso(value)) {
-                                              unidadBase = "Gramo";
-                                            } else if (_esTipoUnidadVolumen(unidadAnterior) || _esTipoUnidadVolumen(value)) {
-                                              unidadBase = "Mililitros";
-                                            }
-                                            
-                                            // Verificar si podemos hacer la conversión a través de la unidad base
-                                            if (unidadBase.isNotEmpty) {
-                                              double aBase = _convertirRendimiento(1.0, unidadAnterior, unidadBase);
-                                              double desdeBase = _convertirRendimiento(1.0, unidadBase, value);
-                                              
-                                              if (!aBase.isNaN && !desdeBase.isNaN && aBase > 0 && desdeBase > 0) {
-                                                factorConversion = aBase * desdeBase;
-                                              }
-                                            }
-                                          }
-                                          
-                                          // Calcular la nueva cantidad usando el factor de conversión
-                                          double nuevaCantidad = _platosDestino * factorConversion;
-                                          
-                                          print("⭐ CAMBIO DE UNIDAD DE RENDIMIENTO:");
-                                          print("  - De: $_platosDestino $unidadAnterior");
-                                          print("  - Factor: $factorConversion");
-                                          print("  - A: $nuevaCantidad $value");
-                                          
-                                          // Verificar que la nueva cantidad sea válida
-                                          if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
-                                            print("⚠️ Valor inválido: $nuevaCantidad. Usando el valor anterior");
-                                            nuevaCantidad = _platosDestino;
-                                          }
-                                          
-                                          // Actualizar los valores con redondeo para evitar errores de punto flotante
-                                          _platosDestino = _redondearPrecision(nuevaCantidad);
-                                          _destinoController.text = _formatearNumero(_platosDestino);
-                                          _resultado = _platosDestino;
-                                          
-                                          // Recalcular todos los ingredientes basándose en el nuevo factor de unidad
-                                          // No se aplica proporcionalidad aquí para no alterar la receta
-                                        }
-                                      });
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Sección Resultado
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.isEnglish ? 'Result: ' : 'Resultado: ',
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                          Text(
-                            '${_formatearNumero(_platosDestino)} ${_unidadesAbreviadas[_unidadDestino] ?? _unidadDestino}',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            Text(
+              widget.isEnglish ? 'CONVERSION CALCULATOR' : 'CALCULADORA DE CONVERSIÓN',
+              style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
             ),
-          ), // Fin Card Rendimiento
+            const SizedBox(height: 24),
 
-          // --- Inicio Sección Tabla Ingredientes con Card ---
-          Text(
-            widget.isEnglish ? 'INGREDIENTS TABLE' : 'TABLA DE INGREDIENTES',
-            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            elevation: 2,
-            margin: const EdgeInsets.only(bottom: 24),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              children: [
-                // Encabezado de la tabla de ingredientes
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
+            // --- Sección Rendimiento con Card ---
+            Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 24),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.isEnglish ? 'YIELD' : 'RENDIMIENTO',
+                      style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(flex: 2, child: Text(widget.isEnglish ? 'INGREDIENT' : 'INGREDIENTE', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text(widget.isEnglish ? 'QUANTITY' : 'CANTIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                      Expanded(child: Text(widget.isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                    ],
-                  ),
-                ),
-                // Filas de ingredientes
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _ingredientesTabla.length,
-                  itemBuilder: (context, index) {
-                    final ingrediente = _ingredientesTabla[index];
-                    // Usar Divider para separación visual entre filas
-                    return Column(
+                    const SizedBox(height: 16),
+                    // Encabezados de la tabla
+                    Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Nombre Ingrediente (TextField deshabilitado)
-                              Expanded(
-                                flex: 2,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 4.0),
-                                  child: TextField(
-                                    controller: ingrediente.nombreController,
-                                    readOnly: true,
-                                    style: textTheme.bodyMedium,
-                                    decoration: inputDecoration.copyWith(
-                                      fillColor: isDarkMode ? Colors.black26 : Colors.grey.shade200,
-                                    ),
-                                  ),
-                                ),
+                        Expanded(child: Text(widget.isEnglish ? 'ORIGINAL' : 'ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                        Expanded(child: Text(widget.isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                        Expanded(flex: 2, child: Text(widget.isEnglish ? 'NEW' : 'NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Fila de datos de rendimiento
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Cantidad Original (TextField deshabilitado)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 4.0),
+                            child: TextField(
+                              controller: _cantidadController,
+                              enabled: false,
+                              textAlign: TextAlign.center,
+                              style: textTheme.bodyMedium,
+                              decoration: inputDecoration.copyWith(
+                                fillColor: isDarkMode ? Colors.black26 : Colors.grey.shade200,
                               ),
-                              // Cantidad Ingrediente (TextField habilitado)
+                            ),
+                          ),
+                        ),
+                        // Unidad Original (Container con texto)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: Container(
+                              height: 40, // Altura consistente
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: isDarkMode ? Colors.black26 : Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                // *** CORREGIDO: Mostrar abreviatura también para la unidad original ***
+                                _unidadesAbreviadas[_unidadOriginal] ?? _unidadOriginal,
+                                // _unidadesAbreviadas[_getUnidadPlural(_unidadOriginal, _platosOrigen)] ??
+                                //     _getUnidadPlural(_unidadOriginal, _platosOrigen),
+                                style: textTheme.bodyMedium,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Nuevo Rendimiento (Campo + Dropdown)
+                        Expanded(
+                          flex: 2,
+                          child: Row(
+                            children: [
                               Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                  padding: const EdgeInsets.only(left: 4.0, right: 2.0),
                                   child: TextField(
-                                    controller: ingrediente.cantidadController,
+                                    controller: _destinoController,
+                                    focusNode: _destinoFocusNode,
                                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-                                    ],
-                                    textAlign: TextAlign.center, // Centrar cantidad
+                                    textAlign: TextAlign.center,
                                     style: textTheme.bodyMedium,
                                     decoration: inputDecoration,
-                                    onChanged: (value) { /* Lógica existente */ },
-                                    onEditingComplete: () {
-                                      // ... (Lógica onEditingComplete existente sin cambios) ...
-                                      final index = _ingredientesTabla.indexOf(ingrediente);
-                                      final controller = ingrediente.cantidadController;
-                                      String valorTexto = controller.text;
-
-                                      print("\n✅ Edición completada para ingrediente #$index");
-                                      print("Texto actual en el campo: '$valorTexto'");
-
-                                      double valorNumerico;
-                                      
-                                      // Intentar parsear el valor
-                                      try {
-                                          if (valorTexto.isEmpty) {
-                                              print("⚠️ Campo vacío detectado. Usando valor mínimo 0.01");
-                                              valorNumerico = 0.01;
-                                          } else {
-                                              valorNumerico = double.parse(valorTexto.replaceAll(',', '.'));
-                                              if (valorNumerico <= 0 || valorNumerico.isNaN || valorNumerico.isInfinite) {
-                                                  print("⚠️ Valor numérico inválido: $valorNumerico. Usando valor mínimo 0.01");
-                                                  valorNumerico = 0.01;
-                                              }
-                                          }
-                                      } catch (e) {
-                                          print("❌ Error al parsear '$valorTexto'. Usando valor mínimo 0.01. Error: $e");
-                                          valorNumerico = 0.01;
-                                      }
-                                      
-                                      // Formatear el valor numérico válido y actualizar el campo de texto
-                                      String valorFormateado = _formatearNumero(valorNumerico);
-                                      controller.text = valorFormateado;
-                                      print("Valor formateado y actualizado en el campo: $valorFormateado");
-
-                                      // Ahora, llamar a la lógica principal de actualización con el valor validado/formateado
-                                      // Usamos el valor formateado para asegurar consistencia
-                                      _actualizarRecetaPorIngrediente(index, valorFormateado);
-                                      
-                                      // Quitar foco para cerrar teclado
-                                      FocusScope.of(context).unfocus();
-                                    },
+                                    onChanged: null,
+                                    onEditingComplete: null,
                                   ),
                                 ),
                               ),
-                              // Unidad Ingrediente (Dropdown o Texto fijo)
+                              // Dropdown Unidad Destino
                               Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 4.0),
-                                  child: (_normalizarUnidad(ingrediente.unidadOriginal) == 'Unidad')
-                                      ? Container(
-                                          height: 40, // Altura consistente
-                                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                                          decoration: BoxDecoration(
-                                            color: isDarkMode ? Colors.black26 : Colors.grey.shade300,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            _unidadesAbreviadas['Unidad'] ?? 'Unidad',
-                                            style: textTheme.bodyMedium?.copyWith(color: Colors.grey), // Estilo deshabilitado
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        )
-                                      : DropdownButtonFormField<String>(
-                                          value: ingrediente.unidad,
-                                          isExpanded: true,
+                                  padding: const EdgeInsets.only(left: 2.0),
+                                  child: DropdownButtonFormField<String>(
+                                    value: _unidadDestino,
+                                    isExpanded: true,
+                                    style: textTheme.bodyMedium,
+                                    decoration: inputDecoration.copyWith(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                    ),
+                                    icon: Icon(Icons.arrow_drop_down, size: 20, color: textTheme.bodyMedium?.color),
+                                    items: _unidadesRendimiento.map((String unidad) {
+                                      return DropdownMenuItem<String>(
+                                        value: unidad,
+                                        child: Text(
+                                          _unidadesAbreviadas[unidad] ?? unidad,
+                                          textAlign: TextAlign.center,
                                           style: textTheme.bodyMedium,
-                                          decoration: inputDecoration.copyWith(
-                                             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10), // Ajuste padding
-                                          ),
-                                          icon: Icon(Icons.arrow_drop_down, size: 20, color: textTheme.bodyMedium?.color),
-                                          items: _unidadesIngredientes.map((String unidad) {
-                                            return DropdownMenuItem<String>(
-                                              value: unidad,
-                                              child: Text(
-                                                _unidadesAbreviadas[unidad] ?? unidad,
-                                                style: textTheme.bodyMedium,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            );
-                                          }).toList(),
-                                          onChanged: (String? value) {
-                                            // ... (Lógica onChanged existente sin cambios) ...
-                                            if (value != null) {
-                                                _actualizarUnidad(
-                                                  _ingredientesTabla.indexOf(ingrediente),
-                                                  value,
-                                                );
-                                              }
-                                          },
+                                          overflow: TextOverflow.ellipsis,
                                         ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? value) {
+                                      if (value != null) {
+                                        setState(() {
+                                          String unidadAnterior = _unidadDestino;
+                                          _unidadDestino = value;
+                                          
+                                          // Solo convertimos si la unidad realmente cambió
+                                          if (unidadAnterior != value) {
+                                            // Usamos conversión directa al cambiar unidades
+                                            double factorConversion = 1.0;
+                                            
+                                            // Intentamos una conversión directa usando el mapa de factores
+                                            if (_factoresRendimiento.containsKey(unidadAnterior) && 
+                                                _factoresRendimiento[unidadAnterior]!.containsKey(value)) {
+                                              factorConversion = _factoresRendimiento[unidadAnterior]![value]!;
+                                            }
+                                            // Si no hay conversión directa, intentamos conversión inversa
+                                            else if (_factoresRendimiento.containsKey(value) && 
+                                                     _factoresRendimiento[value]!.containsKey(unidadAnterior)) {
+                                              factorConversion = 1.0 / _factoresRendimiento[value]![unidadAnterior]!;
+                                            }
+                                            // Si ninguna funciona, intentamos a través de una unidad base
+                                            else {
+                                              // Determinar la unidad base adecuada
+                                              String unidadBase = "";
+                                              if (_esTipoUnidadPeso(unidadAnterior) || _esTipoUnidadPeso(value)) {
+                                                unidadBase = "Gramo";
+                                              } else if (_esTipoUnidadVolumen(unidadAnterior) || _esTipoUnidadVolumen(value)) {
+                                                unidadBase = "Mililitros";
+                                              }
+                                              
+                                              // Verificar si podemos hacer la conversión a través de la unidad base
+                                              if (unidadBase.isNotEmpty) {
+                                                double aBase = _convertirRendimiento(1.0, unidadAnterior, unidadBase);
+                                                double desdeBase = _convertirRendimiento(1.0, unidadBase, value);
+                                                
+                                                if (!aBase.isNaN && !desdeBase.isNaN && aBase > 0 && desdeBase > 0) {
+                                                  factorConversion = aBase * desdeBase;
+                                                }
+                                              }
+                                            }
+                                            
+                                            // Calcular la nueva cantidad usando el factor de conversión
+                                            double nuevaCantidad = _platosDestino * factorConversion;
+                                            
+                                            print("⭐ CAMBIO DE UNIDAD DE RENDIMIENTO:");
+                                            print("  - De: $_platosDestino $unidadAnterior");
+                                            print("  - Factor: $factorConversion");
+                                            print("  - A: $nuevaCantidad $value");
+                                            
+                                            // Verificar que la nueva cantidad sea válida
+                                            if (nuevaCantidad.isNaN || nuevaCantidad.isInfinite || nuevaCantidad <= 0) {
+                                              print("⚠️ Valor inválido: $nuevaCantidad. Usando el valor anterior");
+                                              nuevaCantidad = _platosDestino;
+                                            }
+                                            
+                                            // Actualizar los valores con redondeo para evitar errores de punto flotante
+                                            _platosDestino = _redondearPrecision(nuevaCantidad);
+                                            _destinoController.text = _formatearNumero(_platosDestino);
+                                            _resultado = _platosDestino;
+                                            
+                                            // Recalcular todos los ingredientes basándose en el nuevo factor de unidad
+                                            // No se aplica proporcionalidad aquí para no alterar la receta
+                                          }
+                                        });
+                                      }
+                                    },
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        // Añadir un Divider si no es el último elemento
-                        if (index < _ingredientesTabla.length - 1)
-                          Divider(height: 1, indent: 16, endIndent: 16, color: theme.dividerColor.withOpacity(0.3)),
                       ],
-                    );
-                  },
-                ),
-              ],
-            ),
-          ), // Fin Card Tabla Ingredientes
-
-          // Botón para compartir PDF (estilo igual al ejemplo)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  await _generarPDF();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFB5CAE9),
-                  foregroundColor: const Color.fromARGB(255, 0, 0, 0),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.share,
-                      size: 16,
-                      color: const Color.fromARGB(255, 76, 117, 250),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      widget.isEnglish ? 'Share PDF' : 'Compartir PDF',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black,
+                    const SizedBox(height: 16),
+                    // Sección Resultado
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              widget.isEnglish ? 'Result: ' : 'Resultado: ',
+                              style: textTheme.titleMedium?.copyWith(
+                                color: colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                            Text(
+                              '${_formatearNumero(_platosDestino)} ${_unidadesAbreviadas[_unidadDestino] ?? _unidadDestino}',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ],
+            ), // Fin Card Rendimiento
+
+            // --- Inicio Sección Tabla Ingredientes con Card ---
+            Text(
+              widget.isEnglish ? 'INGREDIENTS TABLE' : 'TABLA DE INGREDIENTES',
+              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 24),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                children: [
+                  // Encabezado de la tabla de ingredientes
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(flex: 2, child: Text(widget.isEnglish ? 'INGREDIENT' : 'INGREDIENTE', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                        Expanded(child: Text(widget.isEnglish ? 'QUANTITY' : 'CANTIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                        Expanded(child: Text(widget.isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                      ],
+                    ),
+                  ),
+                  // Filas de ingredientes
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _ingredientesTabla.length,
+                    itemBuilder: (context, index) {
+                      final ingrediente = _ingredientesTabla[index];
+                      // Usar Divider para separación visual entre filas
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Nombre Ingrediente (TextField deshabilitado)
+                                Expanded(
+                                  flex: 2,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 4.0),
+                                    child: TextField(
+                                      controller: ingrediente.nombreController,
+                                      readOnly: true,
+                                      style: textTheme.bodyMedium,
+                                      decoration: inputDecoration.copyWith(
+                                        fillColor: isDarkMode ? Colors.black26 : Colors.grey.shade200,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Cantidad Ingrediente (TextField habilitado)
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                    child: TextField(
+                                      controller: ingrediente.cantidadController,
+                                      focusNode: _ingredienteCantidadFocusNodes[index],
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                                      ],
+                                      textAlign: TextAlign.center, // Centrar cantidad
+                                      style: textTheme.bodyMedium,
+                                      decoration: inputDecoration,
+                                      onChanged: null,
+                                      onEditingComplete: null,
+                                    ),
+                                  ),
+                                ),
+                                // Unidad Ingrediente (Dropdown o Texto fijo)
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 4.0),
+                                    child: (_normalizarUnidad(ingrediente.unidadOriginal) == 'Unidad')
+                                        ? Container(
+                                            height: 40, // Altura consistente
+                                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                                            decoration: BoxDecoration(
+                                              color: isDarkMode ? Colors.black26 : Colors.grey.shade300,
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              _unidadesAbreviadas['Unidad'] ?? 'Unidad',
+                                              style: textTheme.bodyMedium?.copyWith(color: Colors.grey), // Estilo deshabilitado
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          )
+                                        : DropdownButtonFormField<String>(
+                                            value: ingrediente.unidad,
+                                            isExpanded: true,
+                                            style: textTheme.bodyMedium,
+                                            decoration: inputDecoration.copyWith(
+                                               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10), // Ajuste padding
+                                            ),
+                                            icon: Icon(Icons.arrow_drop_down, size: 20, color: textTheme.bodyMedium?.color),
+                                            items: _unidadesIngredientes.map((String unidad) {
+                                              return DropdownMenuItem<String>(
+                                                value: unidad,
+                                                child: Text(
+                                                  _unidadesAbreviadas[unidad] ?? unidad,
+                                                  style: textTheme.bodyMedium,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (String? value) {
+                                              if (value != null) {
+                                                int idx = _ingredientesTabla.indexOf(ingrediente);
+                                                final ing = _ingredientesTabla[idx];
+                                                // Convertir la cantidad actual a la nueva unidad
+                                                double cantidadConvertida = _convertirRendimiento(
+                                                  ing.cantidad,
+                                                  ing.unidad,
+                                                  value,
+                                                );
+                                                // Actualizar solo la unidad y cantidad de este ingrediente
+                                                setState(() {
+                                                  ing.unidad = value;
+                                                  ing.cantidad = cantidadConvertida;
+                                                  ing.cantidadController.text = _formatearNumero(cantidadConvertida);
+                                                });
+                                                // No recalcular los otros ingredientes ni el rendimiento
+                                              }
+                                            },
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Añadir un Divider si no es el último elemento
+                          if (index < _ingredientesTabla.length - 1)
+                            Divider(height: 1, indent: 16, endIndent: 16, color: theme.dividerColor.withOpacity(0.3)),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ), // Fin Card Tabla Ingredientes
+
+            // Botón para compartir PDF (estilo igual al ejemplo)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    await _generarPDF();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB5CAE9),
+                    foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.share,
+                        size: 16,
+                        color: const Color.fromARGB(255, 76, 117, 250),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.isEnglish ? 'Share PDF' : 'Compartir PDF',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2198,7 +2221,7 @@ class _ConversionCalculatorScreenState
 
   // Método llamado cuando la cantidad de un ingrediente es modificada manualmente
   void _actualizarRecetaPorIngrediente(int index, String nuevaCantidadTexto) {
-    print("\n🔄 ACTUALIZACIÓN PROPORCIONAL POR INGREDIENTE #$index"); // Nombre ajustado
+    print("\n🔄 ACTUALIZACIÓN SIMPLE POR INGREDIENTE #$index");
     print("Valor ingresado: '$nuevaCantidadTexto'");
 
     if (index < 0 || index >= _ingredientesTabla.length) {
@@ -2207,126 +2230,49 @@ class _ConversionCalculatorScreenState
     }
 
     try {
-      final ingredienteModificado = _ingredientesTabla[index];
+      final ingredienteBase = _ingredientesTabla[index];
       double nuevaCantidad = double.parse(nuevaCantidadTexto.replaceAll(',', '.'));
-
       if (nuevaCantidad <= 0 || nuevaCantidad.isNaN || nuevaCantidad.isInfinite) {
         print("⚠️ Cantidad inválida: $nuevaCantidad. Usando 0.01");
         nuevaCantidad = 0.01;
       }
       nuevaCantidad = _redondearPrecision(nuevaCantidad);
-
-      // --- Lógica Restaurada y Corregida ---
-      double cantidadAnterior = ingredienteModificado.cantidad;
-      if (cantidadAnterior <= 0 || cantidadAnterior.isNaN || cantidadAnterior.isInfinite) {
-          print("⚠️ Cantidad anterior inválida para '${ingredienteModificado.nombre}': $cantidadAnterior. No se puede escalar.");
-          // Solo actualizar el ingrediente modificado sin escalar nada más
-          setState(() {
-              ingredienteModificado.cantidad = nuevaCantidad;
-              ingredienteModificado.cantidadController.text = _formatearNumero(nuevaCantidad);
-              ingredienteModificado.modificadoManualmente = true;
-          });
-          return;
-      }
-
-      // Calcular factor de escala RELATIVO al cambio actual
-      double factorEscala = nuevaCantidad / cantidadAnterior;
-      print("Factor de escala relativo calculado: $factorEscala (Nueva: $nuevaCantidad / Anterior: $cantidadAnterior)");
-
-      if (factorEscala.isNaN || factorEscala.isInfinite || factorEscala <= 0) {
-          print("⚠️ Factor de escala relativo inválido: $factorEscala. Abortando.");
-          // Restablecer campo de texto
-          ingredienteModificado.cantidadController.text = _formatearNumero(cantidadAnterior);
-          return;
-      }
+      // Convertir la cantidad original del ingrediente base a su unidad actual
+      double originalBaseConvertido = _convertirRendimiento(
+        ingredienteBase.cantidadOriginal,
+        ingredienteBase.unidadOriginal,
+        ingredienteBase.unidad,
+      );
+      double factorEscala = nuevaCantidad / originalBaseConvertido;
+      print("Factor de escala: $factorEscala (Nueva: $nuevaCantidad / OriginalConvertido: $originalBaseConvertido)");
 
       setState(() {
-          // 1. Actualizar el ingrediente modificado y marcarlo
-          ingredienteModificado.cantidad = nuevaCantidad;
-          ingredienteModificado.cantidadController.text = _formatearNumero(nuevaCantidad);
-          ingredienteModificado.modificadoManualmente = true;
-          print("  ✅ Ingrediente '${ingredienteModificado.nombre}' actualizado a $nuevaCantidad ${ingredienteModificado.unidad} (marcado manual)");
-
-          // 2. Actualizar el rendimiento total (_platosDestino) usando el factor RELATIVO
-          double rendimientoAnterior = _platosDestino;
-          double nuevoRendimiento = rendimientoAnterior * factorEscala;
-          if (nuevoRendimiento <= 0 || nuevoRendimiento.isNaN || nuevoRendimiento.isInfinite) {
-              nuevoRendimiento = 0.01;
-          }
-          _platosDestino = _redondearPrecision(nuevoRendimiento);
-          _destinoController.text = _formatearNumero(_platosDestino);
-          print("  ✅ Rendimiento actualizado de $rendimientoAnterior a $_platosDestino $_unidadDestino");
-
-          // 3. Actualizar los OTROS ingredientes 
-          //    basándose en sus cantidades ACTUALES y el factor RELATIVO.
-          // --- CORRECCIÓN: Aplicar a TODOS los otros ingredientes --- 
-          for (var i = 0; i < _ingredientesTabla.length; i++) {
-              if (i == index) continue; // Saltar el ingrediente que inició el cambio
-
-              final otroIngrediente = _ingredientesTabla[i];
-
-              // --- Escalado basado en VALOR BASE --- 
-              double? valorBaseAnterior = null;
-              String? tipoUnidadOtro = null;
-
-              if (otroIngrediente.valorBaseGramos != null) {
-                 tipoUnidadOtro = 'peso';
-                 valorBaseAnterior = otroIngrediente.valorBaseGramos;
-              } else if (otroIngrediente.valorBaseMililitros != null) {
-                 tipoUnidadOtro = 'volumen';
-                 valorBaseAnterior = otroIngrediente.valorBaseMililitros;
-              }
-
-              if (valorBaseAnterior != null && tipoUnidadOtro != null) {
-                 // Escalar el valor base
-                 double nuevoValorBase = valorBaseAnterior * factorEscala;
-                 nuevoValorBase = _redondearPrecision(nuevoValorBase); // Redondear base
-
-                 if (tipoUnidadOtro == 'peso') {
-                    otroIngrediente.valorBaseGramos = nuevoValorBase;
-                 } else {
-                    otroIngrediente.valorBaseMililitros = nuevoValorBase;
-                 }
-
-                 // Recalcular la cantidad visible desde la nueva base
-                 double cantidadCalculada = _convertirDesdeUnidadBase(nuevoValorBase, otroIngrediente.unidad, tipoUnidadOtro);
-                 if (cantidadCalculada <= 0 || cantidadCalculada.isNaN || cantidadCalculada.isInfinite) {
-                     cantidadCalculada = 0.01;
-                 }
-                 cantidadCalculada = _redondearPrecision(cantidadCalculada);
-
-                 otroIngrediente.cantidad = cantidadCalculada;
-                 otroIngrediente.cantidadController.text = _formatearNumero(cantidadCalculada);
-                 print("  ✅ Ingrediente '${otroIngrediente.nombre}' actualizado (Base: $nuevoValorBase -> Cant: $cantidadCalculada ${otroIngrediente.unidad})");
-              } else {
-                // --- INICIO CAMBIO ---
-                // Escalar usando cantidadOriginal si no hay valor base (para 'Unidad', etc.)
-                print("  ℹ️ Escalando '${otroIngrediente.nombre}' usando cantidad original (sin valor base).");
-                if (otroIngrediente.cantidadOriginal > 0 && !otroIngrediente.cantidadOriginal.isNaN && !otroIngrediente.cantidadOriginal.isInfinite) {
-                   double cantidadCalculada = otroIngrediente.cantidadOriginal * factorEscala;
-                   if (cantidadCalculada <= 0 || cantidadCalculada.isNaN || cantidadCalculada.isInfinite) {
-                       cantidadCalculada = 0.01;
-                   }
-                   cantidadCalculada = _redondearPrecision(cantidadCalculada);
-
-                   // Actualizar cantidad y controlador
-                   otroIngrediente.cantidad = cantidadCalculada;
-                   otroIngrediente.cantidadController.text = _formatearNumero(cantidadCalculada);
-                   // Mantener la unidad original (no hay base para recalcular)
-                   print("  ✅ Ingrediente '${otroIngrediente.nombre}' actualizado a $cantidadCalculada ${otroIngrediente.unidad} (escalado por original)");
-                } else {
-                   print("  ⚠️ No se pudo escalar '${otroIngrediente.nombre}' porque su cantidad original es inválida (${otroIngrediente.cantidadOriginal}).");
-                }
-                // --- FIN CAMBIO ---
-              }
-              // --- Fin Escalado basado en VALOR BASE ---
-          }
+        // Actualizar el ingrediente editado
+        ingredienteBase.cantidad = nuevaCantidad;
+        ingredienteBase.cantidadController.text = _formatearNumero(nuevaCantidad);
+        // Recalcular todos los demás ingredientes proporcionalmente y convirtiendo unidades
+        for (int i = 0; i < _ingredientesTabla.length; i++) {
+          if (i == index) continue;
+          final otro = _ingredientesTabla[i];
+          double originalConvertido = _convertirRendimiento(
+            otro.cantidadOriginal,
+            otro.unidadOriginal,
+            otro.unidad,
+          );
+          double nueva = originalConvertido * factorEscala;
+          if (nueva <= 0 || nueva.isNaN || nueva.isInfinite) nueva = 0.01;
+          nueva = _redondearPrecision(nueva);
+          otro.cantidad = nueva;
+          otro.cantidadController.text = _formatearNumero(nueva);
+        }
+        // Recalcular el rendimiento proporcionalmente
+        double nuevoRendimiento = _platosOrigen * factorEscala;
+        if (nuevoRendimiento <= 0 || nuevoRendimiento.isNaN || nuevoRendimiento.isInfinite) nuevoRendimiento = 0.01;
+        _platosDestino = _redondearPrecision(nuevoRendimiento);
+        _destinoController.text = _formatearNumero(_platosDestino);
       });
-      // --- Fin Lógica Restaurada y Corregida ---
-
     } catch (e) {
       print("❌ Error en _actualizarRecetaPorIngrediente: $e");
-      // Considerar restablecer el campo de texto problemático
       final ingrediente = _ingredientesTabla[index];
       ingrediente.cantidadController.text = _formatearNumero(ingrediente.cantidad);
     }
@@ -2334,97 +2280,71 @@ class _ConversionCalculatorScreenState
 
   // Método llamado cuando se cambia la cantidad del rendimiento manualmente
   void _actualizarRendimientoManualmente(String nuevoValorTexto) {
-     print("\n🔄 ACTUALIZACIÓN MANUAL DEL RENDIMIENTO (Valor: '$nuevoValorTexto' en Unidad: $_unidadDestino)");
-     try {
-       double nuevoValor = double.parse(nuevoValorTexto.replaceAll(',', '.'));
-       if (nuevoValor <= 0) {
-         print("⚠️ Valor inválido: $nuevoValor. Usando 0.01");
-         nuevoValor = 0.01;
-       }
-       nuevoValor = _redondearPrecision(nuevoValor);
-
-       // --- Inicio de la nueva lógica de cálculo de factor ---
-       // Convertir el nuevo valor (que está en _unidadDestino) de vuelta a la _unidadOriginal de la receta
-       double nuevoValorEnUnidadOriginal = _convertirRendimiento(nuevoValor, _unidadDestino, _unidadOriginal);
-
-       if (nuevoValorEnUnidadOriginal.isNaN || nuevoValorEnUnidadOriginal.isInfinite || nuevoValorEnUnidadOriginal <= 0) {
-            print("⚠️ Error al convertir el nuevo valor ($nuevoValor $_unidadDestino) a la unidad original ($_unidadOriginal). Abortando.");
-            _destinoController.text = _formatearNumero(_platosDestino); // Revertir texto del campo
-            return;
-       }
-       print("Nuevo valor convertido a unidad original: $nuevoValorEnUnidadOriginal $_unidadOriginal");
-
-       // Validar el valor y la unidad originales de la receta
-       if (_platosOrigenOriginal <= 0 || _platosOrigenOriginal.isNaN || _platosOrigenOriginal.isInfinite) {
-          print("⚠️ Rendimiento original base ($_platosOrigenOriginal $_unidadOriginal) inválido. No se puede escalar.");
-          // Solo actualizar el valor del rendimiento destino sin escalar ingredientes
-          setState(() {
-             _platosDestino = nuevoValor; // Mantener el valor en la unidad actual
-             _destinoController.text = _formatearNumero(nuevoValor);
-          });
-          return;
-       }
-
-       // Calcular el factor de escala basado en los valores *originales*
-       double factorEscala = nuevoValorEnUnidadOriginal / _platosOrigenOriginal;
-       print("Factor de escala calculado: $factorEscala (Nuevo en Unidad Orig: $nuevoValorEnUnidadOriginal / Base Original: $_platosOrigenOriginal)");
-       // --- Fin de la nueva lógica de cálculo de factor ---
-
-       if (factorEscala.isNaN || factorEscala.isInfinite || factorEscala <= 0) {
-         print("⚠️ Factor de escala inválido: $factorEscala. Abortando.");
-         _destinoController.text = _formatearNumero(_platosDestino); // Revertir texto
-         return;
-       }
-
-       setState(() {
-         // Actualizar el valor del rendimiento destino (en su unidad actual)
-         _platosDestino = nuevoValor;
-         _destinoController.text = _formatearNumero(nuevoValor);
-         print("  ✅ Rendimiento actualizado a $_platosDestino $_unidadDestino");
-
-         // Escalar ingredientes usando el factor calculado, BASADO EN VALORES ORIGINALES
-         for (var ingrediente in _ingredientesTabla) {
-           // Usar cantidadOriginal del ingrediente
-           if (ingrediente.cantidadOriginal <= 0 || ingrediente.cantidadOriginal.isNaN || ingrediente.cantidadOriginal.isInfinite) {
-             print("  ⚠️ Cantidad original inválida para '${ingrediente.nombre}': ${ingrediente.cantidadOriginal}. No se actualiza.");
-             continue;
-           }
-
-           // Calcular cantidad basada en la original
-           double cantidadCalculada = ingrediente.cantidadOriginal * factorEscala;
-           if (cantidadCalculada <= 0 || cantidadCalculada.isNaN || cantidadCalculada.isInfinite) {
-             cantidadCalculada = 0.01;
-           }
-           cantidadCalculada = _redondearPrecision(cantidadCalculada);
-
-           // --- Actualizar cantidad Y RESTABLECER a unidad ORIGINAL ---
-           ingrediente.cantidad = cantidadCalculada;
-           ingrediente.unidad = ingrediente.unidadOriginal; // <-- RESTABLECER UNIDAD
-           ingrediente.cantidadController.text = _formatearNumero(cantidadCalculada);
-           // Resetear flag manual, ya que el cambio de rendimiento anula ajustes previos
-           ingrediente.modificadoManualmente = false; 
-
-           // --- Recalcular y actualizar valor base DESPUÉS de escalar cantidad/unidad originales ---
-           if (_esTipoUnidadPeso(ingrediente.unidadOriginal)) {
-              ingrediente.valorBaseGramos = _convertirAUnidadBase(cantidadCalculada, ingrediente.unidadOriginal, 'peso');
-              ingrediente.valorBaseMililitros = null; // Asegurar que el otro sea null
-           } else if (_esTipoUnidadVolumen(ingrediente.unidadOriginal)) {
-              ingrediente.valorBaseMililitros = _convertirAUnidadBase(cantidadCalculada, ingrediente.unidadOriginal, 'volumen');
-              ingrediente.valorBaseGramos = null; // Asegurar que el otro sea null
-           } else {
-              // Si es 'Unidad' u otra no convertible, limpiar bases
-              ingrediente.valorBaseGramos = null;
-              ingrediente.valorBaseMililitros = null;
-           }
-
-           print("  ✅ Ingrediente '${ingrediente.nombre}' actualizado a $cantidadCalculada ${ingrediente.unidad} (BaseG: ${ingrediente.valorBaseGramos}, BaseMl: ${ingrediente.valorBaseMililitros})"); // Log actualizado
-         }
-       });
-
-     } catch (e) {
-       print("❌ Error al actualizar rendimiento manualmente: $e");
-       _destinoController.text = _formatearNumero(_platosDestino); // Revertir texto
-     }
+    print("\n🔄 ACTUALIZACIÓN MANUAL DEL RENDIMIENTO (Valor: '$nuevoValorTexto' en Unidad: $_unidadDestino)");
+    try {
+      double nuevoValor = double.parse(nuevoValorTexto.replaceAll(',', '.'));
+      if (nuevoValor <= 0) {
+        print("⚠️ Valor inválido: $nuevoValor. Usando 0.01");
+        nuevoValor = 0.01;
+      }
+      nuevoValor = _redondearPrecision(nuevoValor);
+      double nuevoValorEnUnidadOriginal = _convertirRendimiento(nuevoValor, _unidadDestino, _unidadOriginal);
+      if (nuevoValorEnUnidadOriginal.isNaN || nuevoValorEnUnidadOriginal.isInfinite || nuevoValorEnUnidadOriginal <= 0) {
+        print("⚠️ Error al convertir el nuevo valor ($nuevoValor $_unidadDestino) a la unidad original ($_unidadOriginal). Abortando.");
+        _destinoController.text = _formatearNumero(_platosDestino);
+        return;
+      }
+      print("Nuevo valor convertido a unidad original: $nuevoValorEnUnidadOriginal $_unidadOriginal");
+      if (_platosOrigenOriginal <= 0 || _platosOrigenOriginal.isNaN || _platosOrigenOriginal.isInfinite) {
+        print("⚠️ Rendimiento original base ($_platosOrigenOriginal $_unidadOriginal) inválido. No se puede escalar.");
+        setState(() {
+          _platosDestino = nuevoValor;
+          _destinoController.text = _formatearNumero(nuevoValor);
+        });
+        return;
+      }
+      double factorEscala = nuevoValorEnUnidadOriginal / _platosOrigenOriginal;
+      print("Factor de escala calculado: $factorEscala (Nuevo en Unidad Orig: $nuevoValorEnUnidadOriginal / Base Original: $_platosOrigenOriginal)");
+      if (factorEscala.isNaN || factorEscala.isInfinite || factorEscala <= 0) {
+        print("⚠️ Factor de escala inválido: $factorEscala. Abortando.");
+        _destinoController.text = _formatearNumero(_platosDestino);
+        return;
+      }
+      setState(() {
+        _platosDestino = nuevoValor;
+        _destinoController.text = _formatearNumero(nuevoValor);
+        print("  ✅ Rendimiento actualizado a $_platosDestino $_unidadDestino");
+        for (var ingrediente in _ingredientesTabla) {
+          if (ingrediente.cantidadOriginal <= 0 || ingrediente.cantidadOriginal.isNaN || ingrediente.cantidadOriginal.isInfinite) {
+            print("  ⚠️ Cantidad original inválida para '${ingrediente.nombre}': ${ingrediente.cantidadOriginal}. No se actualiza.");
+            continue;
+          }
+          double cantidadCalculada = ingrediente.cantidadOriginal * factorEscala;
+          if (cantidadCalculada <= 0 || cantidadCalculada.isNaN || cantidadCalculada.isInfinite) {
+            cantidadCalculada = 0.01;
+          }
+          cantidadCalculada = _redondearPrecision(cantidadCalculada);
+          ingrediente.cantidad = cantidadCalculada;
+          ingrediente.unidad = ingrediente.unidadOriginal;
+          ingrediente.cantidadController.text = _formatearNumero(cantidadCalculada);
+          ingrediente.modificadoManualmente = false; // <-- Resetear flag manual
+          if (_esTipoUnidadPeso(ingrediente.unidadOriginal)) {
+            ingrediente.valorBaseGramos = _convertirAUnidadBase(cantidadCalculada, ingrediente.unidadOriginal, 'peso');
+            ingrediente.valorBaseMililitros = null;
+          } else if (_esTipoUnidadVolumen(ingrediente.unidadOriginal)) {
+            ingrediente.valorBaseMililitros = _convertirAUnidadBase(cantidadCalculada, ingrediente.unidadOriginal, 'volumen');
+            ingrediente.valorBaseGramos = null;
+          } else {
+            ingrediente.valorBaseGramos = null;
+            ingrediente.valorBaseMililitros = null;
+          }
+          print("  ✅ Ingrediente '${ingrediente.nombre}' actualizado a $cantidadCalculada ${ingrediente.unidad} (BaseG: ${ingrediente.valorBaseGramos}, BaseMl: ${ingrediente.valorBaseMililitros})");
+        }
+      });
+    } catch (e) {
+      print("❌ Error al actualizar rendimiento manualmente: $e");
+      _destinoController.text = _formatearNumero(_platosDestino);
+    }
   }
 
   Widget _buildTextFieldDestino() {
@@ -2433,6 +2353,7 @@ class _ConversionCalculatorScreenState
       height: 40,
       child: TextField(
         controller: _destinoController,
+        focusNode: _destinoFocusNode,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
@@ -2453,30 +2374,8 @@ class _ConversionCalculatorScreenState
             borderRadius: BorderRadius.circular(4),
           ),
         ),
-        onChanged: (value) {
-          // Usar nuestro nuevo método para actualización manual del rendimiento
-          if (value.isNotEmpty) {
-            _actualizarRendimientoManualmente(value);
-          }
-        },
-        // También actualizar onEditingComplete si es necesario
-        onEditingComplete: () {
-          if (_destinoController.text.isEmpty) {
-            _destinoController.text = _formatearNumero(0.01);
-            _actualizarRendimientoManualmente("0.01");
-          } else {
-             try {
-                double valor = double.parse(_destinoController.text.replaceAll(',', '.'));
-                if (valor <= 0) valor = 0.01;
-                _destinoController.text = _formatearNumero(valor); 
-                _actualizarRendimientoManualmente(_destinoController.text); 
-             } catch (e) {
-                print("Error al actualizar rendimiento manualmente en onEditingComplete: $e");
-                _destinoController.text = _formatearNumero(_platosDestino); 
-             }
-          }
-          FocusScope.of(context).unfocus(); 
-        },
+        onChanged: null,
+        onEditingComplete: null,
       ),
     );
   }

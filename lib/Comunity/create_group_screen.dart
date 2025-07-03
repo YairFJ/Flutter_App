@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -88,8 +89,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       appBar: AppBar(
         title: Text(isEnglish ? 'Create Community' : 'Crear Comunidad'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: 16.0,
+          right: 16.0,
+          top: 16.0,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -107,6 +113,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   }
                   return null;
                 },
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+                ],
               ),
               const SizedBox(height: 16.0),
               TextFormField(
@@ -116,6 +125,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+                ],
               ),
               const SizedBox(height: 16.0),
               SwitchListTile(

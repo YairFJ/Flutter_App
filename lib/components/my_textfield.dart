@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class MyTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -8,6 +9,7 @@ class MyTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final Widget? suffix;
   final Widget? prefixIcon;
+  final bool isEmailField;
 
   const MyTextField({
     super.key,
@@ -18,6 +20,7 @@ class MyTextField extends StatelessWidget {
     this.validator,
     this.suffix,
     this.prefixIcon,
+    this.isEmailField = false,
   });
 
   @override
@@ -29,6 +32,17 @@ class MyTextField extends StatelessWidget {
         obscureText: obscureText,
         keyboardType: keyboardType,
         validator: validator,
+        inputFormatters: [
+          if (isEmailField)
+            // Para campos de email, solo permitir letras, números, @, ., -, _
+            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]'))
+          else if (keyboardType == TextInputType.number)
+            // Para campos numéricos, solo permitir números
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
+          else
+            // Para otros campos, solo permitir letras, números y espacios
+            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+        ],
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.white),
