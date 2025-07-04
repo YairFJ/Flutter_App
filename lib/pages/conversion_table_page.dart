@@ -315,168 +315,173 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
 
-    return Padding(
-      padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
-      child: Column(
-        children: [
-          const Spacer(flex: 2),
-          Wrap(
-            spacing: isSmallScreen ? 8.0 : 16.0,
-            runSpacing: isSmallScreen ? 8.0 : 16.0,
-            alignment: WrapAlignment.center,
-            children: [
-              _buildCategoryButton('Peso', Icons.scale),
-              _buildCategoryButton('Volumen', Icons.water_drop),
-              _buildCategoryButton('Temperatura', Icons.thermostat),
-            ],
-          ),
-          SizedBox(height: isSmallScreen ? 16.0 : 24.0),
-          Table(
-            border: TableBorder.all(
-              color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Padding(
+        padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
+        child: Column(
+          children: [
+            const Spacer(flex: 2),
+            Wrap(
+              spacing: isSmallScreen ? 8.0 : 16.0,
+              runSpacing: isSmallScreen ? 8.0 : 16.0,
+              alignment: WrapAlignment.center,
+              children: [
+                _buildCategoryButton('Peso', Icons.scale),
+                _buildCategoryButton('Volumen', Icons.water_drop),
+                _buildCategoryButton('Temperatura', Icons.thermostat),
+              ],
             ),
-            columnWidths: const {
-              0: FlexColumnWidth(2),
-              1: FlexColumnWidth(2),
-              2: FlexColumnWidth(2),
-            },
-            children: [
-              TableRow(
+            SizedBox(height: isSmallScreen ? 16.0 : 24.0),
+            Table(
+              border: TableBorder.all(
+                color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+              ),
+              columnWidths: const {
+                0: FlexColumnWidth(2),
+                1: FlexColumnWidth(2),
+                2: FlexColumnWidth(2),
+              },
+              children: [
+                TableRow(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
+                      child: TextField(
+                        controller: _cantidadController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black,
+                          fontSize: isSmallScreen ? 14 : 16,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: isEnglish ? 'Amount' : 'Cantidad',
+                          border: const OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 4 : 8,
+                            vertical: isSmallScreen ? 8 : 12,
+                          ),
+                          fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                          filled: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                        ],
+                        onChanged: (value) => _calcularConversion(),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
+                      child: DropdownButtonFormField<String>(
+                        value: _unidadOrigen,
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 4 : 8,
+                            vertical: isSmallScreen ? 8 : 12,
+                          ),
+                          fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                          filled: true,
+                        ),
+                        dropdownColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black,
+                          fontSize: isSmallScreen ? 14 : 16,
+                        ),
+                        items: _unidadesPorCategoria[_categoriaSeleccionada]!
+                            .map((String unidad) {
+                          return DropdownMenuItem<String>(
+                            value: unidad,
+                            child: Text(unidad),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            setState(() {
+                              _unidadOrigen = value;
+                              _calcularConversion();
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
+                      child: DropdownButtonFormField<String>(
+                        value: _unidadDestino,
+                        decoration: InputDecoration(
+                          border: const OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 4 : 8,
+                            vertical: isSmallScreen ? 8 : 12,
+                          ),
+                          fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                          filled: true,
+                        ),
+                        dropdownColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black,
+                          fontSize: isSmallScreen ? 14 : 16,
+                        ),
+                        items: _unidadesPorCategoria[_categoriaSeleccionada]!
+                            .map((String unidad) {
+                          return DropdownMenuItem<String>(
+                            value: unidad,
+                            child: Text(unidad),
+                          );
+                        }).toList(),
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            setState(() {
+                              _unidadDestino = value;
+                              _calcularConversion();
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: isSmallScreen ? 16.0 : 24.0),
+            Container(
+              padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.blue.shade900 : Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDarkMode ? Colors.blue.shade700 : Colors.blue.shade200,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
-                    child: TextField(
-                      controller: _cantidadController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black,
-                        fontSize: isSmallScreen ? 14 : 16,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: isEnglish ? 'Amount' : 'Cantidad',
-                        border: const OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: isSmallScreen ? 4 : 8,
-                          vertical: isSmallScreen ? 8 : 12,
-                        ),
-                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
-                        filled: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      ],
-                      onChanged: (value) => _calcularConversion(),
+                  Text(
+                    isEnglish ? 'Result: ' : 'Resultado: ',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
-                    child: DropdownButtonFormField<String>(
-                      value: _unidadOrigen,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: isSmallScreen ? 4 : 8,
-                          vertical: isSmallScreen ? 8 : 12,
-                        ),
-                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
-                        filled: true,
-                      ),
-                      dropdownColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black,
-                        fontSize: isSmallScreen ? 14 : 16,
-                      ),
-                      items: _unidadesPorCategoria[_categoriaSeleccionada]!
-                          .map((String unidad) {
-                        return DropdownMenuItem<String>(
-                          value: unidad,
-                          child: Text(unidad),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        if (value != null) {
-                          setState(() {
-                            _unidadOrigen = value;
-                            _calcularConversion();
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(isSmallScreen ? 4.0 : 8.0),
-                    child: DropdownButtonFormField<String>(
-                      value: _unidadDestino,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: isSmallScreen ? 4 : 8,
-                          vertical: isSmallScreen ? 8 : 12,
-                        ),
-                        fillColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
-                        filled: true,
-                      ),
-                      dropdownColor: isDarkMode ? Colors.grey.shade800 : Colors.white,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black,
-                        fontSize: isSmallScreen ? 14 : 16,
-                      ),
-                      items: _unidadesPorCategoria[_categoriaSeleccionada]!
-                          .map((String unidad) {
-                        return DropdownMenuItem<String>(
-                          value: unidad,
-                          child: Text(unidad),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        if (value != null) {
-                          setState(() {
-                            _unidadDestino = value;
-                            _calcularConversion();
-                          });
-                        }
-                      },
+                  Text(
+                    '${_formatearResultado(_resultado)} $_unidadDestino',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 16 : 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-          SizedBox(height: isSmallScreen ? 16.0 : 24.0),
-          Container(
-            padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.blue.shade900 : Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isDarkMode ? Colors.blue.shade700 : Colors.blue.shade200,
-              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  isEnglish ? 'Result: ' : 'Resultado: ',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                ),
-                Text(
-                  '${_formatearResultado(_resultado)} $_unidadDestino',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(flex: 2),
-        ],
+            const Spacer(flex: 2),
+          ],
+        ),
       ),
     );
   }

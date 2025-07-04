@@ -569,7 +569,7 @@ class RecipeCard extends StatelessWidget {
                             '${recipe.ingredients.length} ${isEnglish ? 'ingr.' : 'ing.'}',
                             style: TextStyle(
                               fontSize: 10,
-                              color: HomeScreen.primaryColor,
+                              color: const Color.fromARGB(255, 18, 107, 216),
                             ),
                           ),
                         ),
