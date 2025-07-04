@@ -50,6 +50,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
                 ],
+                textCapitalization: TextCapitalization.sentences,
               ),
             ],
           ),
@@ -217,6 +218,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   _searchQuery = value.toLowerCase();
                 });
               },
+              textCapitalization: TextCapitalization.sentences,
             ),
           ),
           Expanded(

@@ -55,6 +55,7 @@ class ProfilePage extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
         ),
         actions: [
           TextButton(
@@ -172,7 +173,7 @@ class ProfilePage extends StatelessWidget {
         _buildProfileSection(
           icon: Icons.help_outline,
           title: isEnglish ? 'Help & Support' : 'Ayuda y Soporte',
-          subtitle: isEnglish ? 'Get help and contact support' : 'Obtén ayuda y contacta con soporte',
+          subtitle: isEnglish ? 'Get help and contact us' : 'Obtén ayuda y contacta con nosotros',
           isTablet: isTablet,
           onTap: () {
             Navigator.push(
@@ -283,8 +284,8 @@ class ProfilePage extends StatelessWidget {
                         icon: Icons.restaurant_menu,
                         title: isEnglish ? 'My Recipes' : 'Mis Recetas',
                         subtitle: isEnglish
-                            ? 'Manage your created recipes'
-                            : 'Gestiona tus recetas creadas',
+                            ? 'Manage my creations'
+                            : 'Gestionar mis creaciones',
                         isTablet: isTablet,
                         onTap: () {
                           Navigator.push(
@@ -300,8 +301,8 @@ class ProfilePage extends StatelessWidget {
                         icon: Icons.favorite,
                         title: isEnglish ? 'Favorite Recipes' : 'Recetas Favoritas',
                         subtitle: isEnglish
-                            ? 'Recipes saved as favorites'
-                            : 'Recetas guardadas como favoritas',
+                            ? 'My collection'
+                            : 'Mi colección',
                         isTablet: isTablet,
                         onTap: () {
                           Navigator.push(

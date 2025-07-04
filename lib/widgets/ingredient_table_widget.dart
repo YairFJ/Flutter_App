@@ -32,14 +32,14 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
     'ml',
     'l',
     'cl',
-    'cda',
-    'cdta',
-    'tz',
-    'oz liq',
-    'pinta',
-    'c-galon',
-    'galon',
-    'u',
+    'tbsp',
+    'tsp',
+    'cup',
+    'fl oz',
+    'pint',
+    'c-gal',
+    'gal',
+    'un',
   ];
 
   final Map<String, Map<String, String>> _unidadesCompletas = {
@@ -50,14 +50,14 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
     'l': {'es': 'Litro', 'en': 'Liter'},
     'cl': {'es': 'Centilitros', 'en': 'Centiliters'},
     'tz': {'es': 'Taza', 'en': 'Cup'},
-    'cda': {'es': 'Cucharada', 'en': 'Tablespoon'},
-    'cdta': {'es': 'Cucharadita', 'en': 'Teaspoon'},
+    'tbsp': {'es': 'Cucharada', 'en': 'Tablespoon'},
+    'tsp': {'es': 'Cucharadita', 'en': 'Teaspoon'},
     'oz': {'es': 'Onza', 'en': 'Ounce'},
     'lb': {'es': 'Libra', 'en': 'Pound'},
-    'oz liq': {'es': 'Onza líquida', 'en': 'Fluid ounce'},
-    'pinta': {'es': 'Pinta', 'en': 'Pint'},
-    'c-galon': {'es': 'Cuarto galón', 'en': 'Quart'},
-    'galon': {'es': 'Galón', 'en': 'Gallon'},
+    'fl oz': {'es': 'Onza líquida', 'en': 'Fluid ounce'},
+    'pint': {'es': 'Pinta', 'en': 'Pint'},
+    'c-gal': {'es': 'Cuarto galón', 'en': 'Quart'},
+    'gal': {'es': 'Galón', 'en': 'Gallon'},
   };
 
   // Agregar listas de FocusNode para cada campo
@@ -141,7 +141,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 child: Padding(
                   padding: const EdgeInsets.all(4.0),
                   child: Text(
-                    widget.isEnglish ? 'AMOUNT' : 'CANTIDAD',
+                    widget.isEnglish ? 'QUANTITY' : 'CANTIDAD',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -214,6 +214,7 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
             child: TextField(
               controller: ingrediente.nombreController,
               focusNode: _nombreFocusNodes[idx],
+              textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -224,7 +225,17 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
               ],
               onChanged: (value) {
-                _ingredientes[idx].nombre = value;
+                if (value.isNotEmpty) {
+                  // Capitalizar la primera letra
+                  final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                  if (capitalizedValue != value) {
+                    ingrediente.nombreController.text = capitalizedValue;
+                    ingrediente.nombreController.selection = TextSelection.fromPosition(
+                      TextPosition(offset: capitalizedValue.length),
+                    );
+                  }
+                }
+                ingrediente.nombre = value;
               },
               onEditingComplete: null,
               onSubmitted: null,
@@ -239,11 +250,12 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
               controller: ingrediente.cantidadController,
               focusNode: _cantidadFocusNodes[idx],
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                 isDense: true,
-                hintText: widget.isEnglish ? 'Amount' : 'Cantidad',
+                hintText: widget.isEnglish ? 'Quantity' : 'Cantidad',
               ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
@@ -255,18 +267,18 @@ class _IngredientTableWidgetState extends State<IngredientTableWidget> {
                   });
                 }
               },
-              onChanged: (value) {
-                double cantidad = 0.0;
-                try {
-                  cantidad = double.parse(value.replaceAll(',', '.'));
-                  if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
+                              onChanged: (value) {
+                  double cantidad = 0.0;
+                  try {
+                    cantidad = double.parse(value.replaceAll(',', '.'));
+                    if (cantidad <= 0 || cantidad.isNaN || cantidad.isInfinite) {
+                      cantidad = 1.0;
+                    }
+                  } catch (c) {
                     cantidad = 1.0;
                   }
-                } catch (c) {
-                  cantidad = 1.0;
-                }
-                _ingredientes[idx].cantidad = cantidad;
-              },
+                  ingrediente.cantidad = cantidad;
+                },
               onEditingComplete: null,
               onSubmitted: null,
             ),

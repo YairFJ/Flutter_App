@@ -142,6 +142,17 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 }
                 return null;
               },
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (value) {
+                if (value.isNotEmpty) {
+                  // Capitalizar la primera letra
+                  final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                  if (capitalizedValue != value) {
+                    _title = capitalizedValue;
+                  }
+                }
+                _title = value;
+              },
               onSaved: (value) => _title = value ?? '',
             ),
             const SizedBox(height: 16),
@@ -152,6 +163,24 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (value) {
+                if (value.isNotEmpty) {
+                  // Capitalizar la primera letra de cada oración
+                  final sentences = value.split('. ');
+                  final capitalizedSentences = sentences.map((sentence) {
+                    if (sentence.isNotEmpty) {
+                      return sentence[0].toUpperCase() + sentence.substring(1);
+                    }
+                    return sentence;
+                  }).join('. ');
+                  
+                  if (capitalizedSentences != value) {
+                    _description = capitalizedSentences;
+                  }
+                }
+                _description = value;
+              },
               onSaved: (value) => _description = value ?? '',
             ),
             const SizedBox(height: 16),
@@ -167,6 +196,17 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   return isEnglish ? 'Please enter the cooking time' : 'Por favor ingresa el tiempo de cocción';
                 }
                 return null;
+              },
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (value) {
+                if (value.isNotEmpty) {
+                  // Capitalizar la primera letra
+                  final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                  if (capitalizedValue != value) {
+                    _cookingTime = capitalizedValue;
+                  }
+                }
+                _cookingTime = value;
               },
               onSaved: (value) => _cookingTime = value ?? '0',
             ),
@@ -223,10 +263,27 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   leading: CircleAvatar(child: Text('${index + 1}')),
                   title: TextFormField(
                     initialValue: _steps[index],
-                    onChanged: (value) => _steps[index] = value,
+                    onChanged: (value) {
+                      if (value.isNotEmpty) {
+                        // Capitalizar la primera letra de cada oración
+                        final sentences = value.split('. ');
+                        final capitalizedSentences = sentences.map((sentence) {
+                          if (sentence.isNotEmpty) {
+                            return sentence[0].toUpperCase() + sentence.substring(1);
+                          }
+                          return sentence;
+                        }).join('. ');
+                        
+                        if (capitalizedSentences != value) {
+                          _steps[index] = capitalizedSentences;
+                        }
+                      }
+                      _steps[index] = value;
+                    },
                     decoration: InputDecoration(
                       hintText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
                     ),
+                    textCapitalization: TextCapitalization.sentences,
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete),

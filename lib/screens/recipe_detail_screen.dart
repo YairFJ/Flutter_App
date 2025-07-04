@@ -245,7 +245,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                             DataColumn(
                               label: Text(
-                                isEnglish ? 'Amount' : 'Cantidad',
+                                isEnglish ? 'Quantity' : 'Cantidad',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: isDarkMode ? Colors.white : Colors.black,

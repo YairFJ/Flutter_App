@@ -306,6 +306,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                   validator: _validateTitle,
                   textCapitalization: TextCapitalization.sentences,
+                  onChanged: (value) {
+                    if (value.isNotEmpty) {
+                      // Capitalizar la primera letra
+                      final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                      if (capitalizedValue != value) {
+                        _titleController.text = capitalizedValue;
+                        _titleController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: capitalizedValue.length),
+                        );
+                      }
+                    }
+                  },
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
                   ],
@@ -324,6 +336,25 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   maxLines: 3,
                   validator: _validateDescription,
                   textCapitalization: TextCapitalization.sentences,
+                  onChanged: (value) {
+                    if (value.isNotEmpty) {
+                      // Capitalizar la primera letra de cada oración
+                      final sentences = value.split('. ');
+                      final capitalizedSentences = sentences.map((sentence) {
+                        if (sentence.isNotEmpty) {
+                          return sentence[0].toUpperCase() + sentence.substring(1);
+                        }
+                        return sentence;
+                      }).join('. ');
+                      
+                      if (capitalizedSentences != value) {
+                        _descriptionController.text = capitalizedSentences;
+                        _descriptionController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: capitalizedSentences.length),
+                        );
+                      }
+                    }
+                  },
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
                   ],
@@ -582,6 +613,26 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       labelText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
                     ),
                     maxLines: 2,
+                    textCapitalization: TextCapitalization.sentences,
+                    onChanged: (value) {
+                      if (value.isNotEmpty) {
+                        // Capitalizar la primera letra de cada oración
+                        final sentences = value.split('. ');
+                        final capitalizedSentences = sentences.map((sentence) {
+                          if (sentence.isNotEmpty) {
+                            return sentence[0].toUpperCase() + sentence.substring(1);
+                          }
+                          return sentence;
+                        }).join('. ');
+                        
+                        if (capitalizedSentences != value) {
+                          _stepControllers[index].text = capitalizedSentences;
+                          _stepControllers[index].selection = TextSelection.fromPosition(
+                            TextPosition(offset: capitalizedSentences.length),
+                          );
+                        }
+                      }
+                    },
                   ),
                 ),
                 IconButton(

@@ -61,9 +61,20 @@ class _RecipesPageState extends State<RecipesPage> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
             ],
+            textCapitalization: TextCapitalization.sentences,
             onChanged: (value) {
+              if (value.isNotEmpty) {
+                // Capitalizar la primera letra
+                final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                if (capitalizedValue != value) {
+                  _searchController.text = capitalizedValue;
+                  _searchController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: capitalizedValue.length),
+                  );
+                }
+              }
               setState(() {
-                _searchQuery = value.toLowerCase();
+                _searchQuery = value;
               });
             },
           ),
@@ -178,7 +189,8 @@ class _RecipesPageState extends State<RecipesPage> {
                 ],
               ),
               Text(
-                '${categoryRecipes.length} ${isEnglish ? 'recipes' : 'recetas'}',
+                '${categoryRecipes.length} '
+                '${categoryRecipes.length == 1 ? (isEnglish ? 'recipe' : 'receta') : (isEnglish ? 'recipes' : 'recetas')}',
                 style: TextStyle(
                   color: Colors.grey[600],
                 ),
