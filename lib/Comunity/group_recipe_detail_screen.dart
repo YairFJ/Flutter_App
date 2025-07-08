@@ -329,7 +329,13 @@ class _GroupRecipeDetailScreenState extends State<GroupRecipeDetailScreen> {
             bottom: 20.0,
             child: ElevatedButton(
               onPressed: () async {
-                final pdfBytes = await generateRecipePdf(widget.recipe, isEnglish: isEnglish);
+                final currentUser = FirebaseAuth.instance.currentUser;
+                final userName = currentUser?.displayName ?? 'Usuario';
+                final pdfBytes = await generateRecipePdf(
+                  widget.recipe,
+                  isEnglish: isEnglish,
+                  userName: widget.recipe.creatorName,
+                );
                 await Printing.sharePdf(
                   bytes: pdfBytes,
                   filename: '${widget.recipe.title}.pdf',

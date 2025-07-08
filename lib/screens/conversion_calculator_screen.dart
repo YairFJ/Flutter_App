@@ -10,6 +10,7 @@ import '../utils/pdf_calculator_generator.dart';
 import '../models/ingrediente_tabla.dart';
 import '../utils/pdf_generator.dart' as custom_pdf;
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ConversionCalculatorScreen extends StatefulWidget {
   final Recipe recipe;
@@ -1147,6 +1148,8 @@ class _ConversionCalculatorScreenState
   }
 
   Future<void> _generarPDF() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final userName = currentUser?.displayName ?? 'Usuario';
     final pdfBytes = await generateCalculatorPdf(
       ingredientes: _ingredientesTabla,
       rendimiento: _platosDestino,
@@ -1154,6 +1157,7 @@ class _ConversionCalculatorScreenState
       detalles: widget.recipe.description ?? '',
       pasos: widget.recipe.steps,
       tituloReceta: widget.recipe.title,
+      userName: widget.recipe.creatorName,
       isEnglish: widget.isEnglish,
     );
     final output = await getTemporaryDirectory();
