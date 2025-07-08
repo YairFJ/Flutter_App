@@ -370,7 +370,20 @@ class _ConversionTablePageState extends State<ConversionTablePage> {
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                         ],
-                        onChanged: (value) => _calcularConversion(),
+                        textCapitalization: TextCapitalization.sentences,
+                        onChanged: (value) {
+                          if (value.isNotEmpty) {
+                            // Capitalizar la primera letra
+                            final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                            if (capitalizedValue != value) {
+                              _cantidadController.text = capitalizedValue;
+                              _cantidadController.selection = TextSelection.fromPosition(
+                                TextPosition(offset: capitalizedValue.length),
+                              );
+                            }
+                          }
+                          _calcularConversion();
+                        },
                       ),
                     ),
                     Padding(

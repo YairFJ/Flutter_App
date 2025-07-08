@@ -1,16 +1,16 @@
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import '../models/recipe.dart'; // Asegúrate de que la ruta y el modelo sean correctos.
+import '../models/recipe.dart';
 import 'package:flutter/material.dart';
 import '../models/ingrediente_tabla.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
-/// Genera un PDF a partir de la información de una receta.
+
 Future<Uint8List> generateRecipePdf(Recipe receta) async {
   final pdf = pw.Document();
   
-  // Definir colores según el tema
-  // Definir colores según el tema
+
   final fontColor = PdfColors.black;
   final backgroundColor = PdfColors.white;
   final primaryColor = PdfColor.fromInt(0xFF2B4C8C); // Azul más fuerte
@@ -198,9 +198,12 @@ Future<Uint8List> generateCalculatorPdf({
   required String detalles,
   required List<String> pasos,
   required String tituloReceta,
+  required String userName,
   bool isEnglish = false,
 }) async {
   final pdf = pw.Document();
+  final logoBytes = await rootBundle.load('assets/icon/icon.png');
+  final logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
 
   // Estilos y colores del archivo pdf_generator.dart
   final fontColor = PdfColors.black;
@@ -394,6 +397,21 @@ Future<Uint8List> generateCalculatorPdf({
                     ),
                   );
                 }).toList(),
+              ),
+              pw.SizedBox(height: 30),
+              pw.Divider(),
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  isEnglish
+                    ? 'Created by $userName / Gauge your Recipe'
+                    : 'Creado por $userName / Gauge your Recipe',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    color: PdfColors.grey700,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                ),
               ),
               
             ],

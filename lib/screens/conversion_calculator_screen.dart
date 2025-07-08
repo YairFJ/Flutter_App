@@ -10,6 +10,7 @@ import '../utils/pdf_calculator_generator.dart';
 import '../models/ingrediente_tabla.dart';
 import '../utils/pdf_generator.dart' as custom_pdf;
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ConversionCalculatorScreen extends StatefulWidget {
   final Recipe recipe;
@@ -100,18 +101,18 @@ class _ConversionCalculatorScreenState
     'l': 'Litro',
     'ml': 'Mililitros',
     'cl': 'Centilitros',
-    'cda': 'Cucharada',      // <-- Añadido
+    'tbsp': 'Cucharada',      // <-- Añadido
     'cucharada': 'Cucharada',   // <-- Añadido
-    'cdta': 'Cucharadita',   // <-- Añadido
+    'tsp': 'Cucharadita',   // <-- Añadido
     'cucharadita': 'Cucharadita', // <-- Añadido
-    'tz': 'Taza',            // <-- Añadido
+    'cup': 'Taza',            // <-- Añadido
     'taza': 'Taza',          // <-- Añadido
-    'oz liq': 'Onza liquida', // <-- Añadido
+    'fl oz': 'Onza liquida', // <-- Añadido
     'onza liquida': 'Onza liquida', // <-- Añadido
-    'pinta': 'Pinta',        // <-- Añadido
-    'c-galon': 'Cuarto galon', // <-- Añadido
+    'pint': 'Pinta',        // <-- Añadido
+    'c-gal': 'Cuarto galon', // <-- Añadido
     'cuarto galon': 'Cuarto galon', // <-- Añadido
-    'galon': 'Galon',        // <-- Añadido
+    'gal': 'Galon',        // <-- Añadido
     // Unidades de Rendimiento (Persona, Porción, etc.)
     
     'porcion': 'Porción',
@@ -124,7 +125,7 @@ class _ConversionCalculatorScreenState
     'unidad': 'Unidad',
     'unidades': 'Unidad',
     'und': 'Unidad',
-    'u': 'Unidad',
+    'un': 'Unidad',
   };
 
   // Mapa de unidades completas a abreviadas
@@ -137,13 +138,13 @@ class _ConversionCalculatorScreenState
     'Mililitros': 'ml',
     'Litro': 'l',
     'Centilitros': 'cl',
-    'Cucharada': 'cda',
-    'Cucharadita': 'cdta',
-    'Taza': 'tz',
-    'Onza liquida': 'oz liq',  // Cambiado de 'oz liquida' a 'oz liq' para evitar confusión
-    'Pinta': 'pinta',
-    'Cuarto galon': 'c-galon',  // Cambiado de 'cuarto galon' a 'c-galon' para que sea más corto
-    'Galon': 'galon',
+    'Cucharada': 'tbsp',
+    'Cucharadita': 'tsp',
+    'Taza': 'cup',
+    'Onza liquida': 'fl oz',  // Cambiado de 'oz liquida' a 'oz liq' para evitar confusión
+    'Pinta': 'pint',
+    'Cuarto galon': 'c-gal',  // Cambiado de 'cuarto galon' a 'c-galon' para que sea más corto
+    'Galon': 'gal',
     'Persona': 'pers',
     'Porción': 'porc',
     'Ración': 'rac',
@@ -1147,6 +1148,8 @@ class _ConversionCalculatorScreenState
   }
 
   Future<void> _generarPDF() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final userName = currentUser?.displayName ?? 'Usuario';
     final pdfBytes = await generateCalculatorPdf(
       ingredientes: _ingredientesTabla,
       rendimiento: _platosDestino,
@@ -1154,6 +1157,7 @@ class _ConversionCalculatorScreenState
       detalles: widget.recipe.description ?? '',
       pasos: widget.recipe.steps,
       tituloReceta: widget.recipe.title,
+      userName: widget.recipe.creatorName,
       isEnglish: widget.isEnglish,
     );
     final output = await getTemporaryDirectory();
@@ -1242,9 +1246,8 @@ class _ConversionCalculatorScreenState
                     // Encabezados de la tabla
                     Row(
                       children: [
-                        Expanded(child: Text(widget.isEnglish ? 'ORIGINAL' : 'ORIGINAL', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                        Expanded(child: Text(widget.isEnglish ? 'UNIT' : 'UNIDAD', style: textTheme.labelMedium, textAlign: TextAlign.center)),
-                        Expanded(flex: 2, child: Text(widget.isEnglish ? 'NEW' : 'NUEVO', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                        Expanded(child: Text(widget.isEnglish ? 'STANDARD UNIT' : 'UNIDAD  ESTÁNDAR', style: textTheme.labelMedium, textAlign: TextAlign.center)),
+                        Expanded(flex: 2, child: Text(widget.isEnglish ? 'CUSTOM UNIT' : '                 UNIDAD  PERSONALIZADA', style: textTheme.labelMedium, textAlign: TextAlign.center)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -1307,6 +1310,7 @@ class _ConversionCalculatorScreenState
                                     textAlign: TextAlign.center,
                                     style: textTheme.bodyMedium,
                                     decoration: inputDecoration,
+                                    textCapitalization: TextCapitalization.sentences,
                                     onChanged: null,
                                     onEditingComplete: null,
                                   ),
@@ -1519,6 +1523,7 @@ class _ConversionCalculatorScreenState
                                       textAlign: TextAlign.center, // Centrar cantidad
                                       style: textTheme.bodyMedium,
                                       decoration: inputDecoration,
+                                      textCapitalization: TextCapitalization.sentences,
                                       onChanged: null,
                                       onEditingComplete: null,
                                     ),

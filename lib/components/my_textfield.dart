@@ -10,6 +10,7 @@ class MyTextField extends StatelessWidget {
   final Widget? suffix;
   final Widget? prefixIcon;
   final bool isEmailField;
+  final TextCapitalization textCapitalization;
 
   const MyTextField({
     super.key,
@@ -21,6 +22,7 @@ class MyTextField extends StatelessWidget {
     this.suffix,
     this.prefixIcon,
     this.isEmailField = false,
+    this.textCapitalization = TextCapitalization.sentences,
   });
 
   @override
@@ -32,6 +34,27 @@ class MyTextField extends StatelessWidget {
         obscureText: obscureText,
         keyboardType: keyboardType,
         validator: validator,
+        textCapitalization: textCapitalization,
+        onChanged: (value) {
+          if (value.isNotEmpty) {
+            // Capitalizar la primera letra de cada oración
+            final sentences = value.split('. ');
+            final capitalizedSentences = sentences.map((sentence) {
+              if (sentence.isNotEmpty) {
+                return sentence[0].toUpperCase() + sentence.substring(1);
+              }
+              return sentence;
+            }).join('. ');
+            
+            // Solo actualizar si el valor cambió para evitar loops infinitos
+            if (capitalizedSentences != value) {
+              controller.text = capitalizedSentences;
+              controller.selection = TextSelection.fromPosition(
+                TextPosition(offset: capitalizedSentences.length),
+              );
+            }
+          }
+        },
         inputFormatters: [
           if (isEmailField)
             // Para campos de email, solo permitir letras, números, @, ., -, _

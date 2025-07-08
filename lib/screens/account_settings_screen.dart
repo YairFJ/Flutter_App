@@ -400,6 +400,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       keyboardType: keyboardType,
       maxLines: maxLines,
       validator: validator,
+      textCapitalization: TextCapitalization.sentences,
       inputFormatters: [
         if (label.contains('Email') || label.contains('Correo'))
           FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@._-]'))

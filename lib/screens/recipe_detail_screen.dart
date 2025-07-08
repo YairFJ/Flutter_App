@@ -245,7 +245,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                             DataColumn(
                               label: Text(
-                                isEnglish ? 'Amount' : 'Cantidad',
+                                isEnglish ? 'Quantity' : 'Cantidad',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: isDarkMode ? Colors.white : Colors.black,
@@ -366,7 +366,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             bottom: 40.0,
             child: ElevatedButton(
               onPressed: () async {
-                final pdfBytes = await generateRecipePdf(widget.recipe, isEnglish: isEnglish);
+                final currentUser = FirebaseAuth.instance.currentUser;
+                final userName = currentUser?.displayName ?? 'Usuario';
+                final pdfBytes = await generateRecipePdf(
+                  widget.recipe,
+                  isEnglish: isEnglish,
+                  userName: widget.recipe.creatorName,
+                );
                 await Printing.sharePdf(
                   bytes: pdfBytes,
                   filename: '${widget.recipe.title}.pdf',

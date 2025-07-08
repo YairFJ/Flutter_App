@@ -82,7 +82,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
         _ingredients.clear();
         _ingredients.addAll(ingredients.map((ing) => {
           'name': ing.name,
-          'amount': ing.quantity.toString(),
+          'quantity': ing.quantity.toString(),
           'unit': ing.unit,
         }));
       });
@@ -253,6 +253,19 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                   }
                   return null;
                 },
+                textCapitalization: TextCapitalization.sentences,
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    // Capitalizar la primera letra
+                    final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                    if (capitalizedValue != value) {
+                      _titleController.text = capitalizedValue;
+                      _titleController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: capitalizedValue.length),
+                      );
+                    }
+                  }
+                },
               ),
               const SizedBox(height: 16.0),
 
@@ -268,6 +281,19 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                     return isEnglish ? 'Time is required' : 'Tiempo requerido';
                   }
                   return null;
+                },
+                textCapitalization: TextCapitalization.sentences,
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    // Capitalizar la primera letra
+                    final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                    if (capitalizedValue != value) {
+                      _preparationTimeController.text = capitalizedValue;
+                      _preparationTimeController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: capitalizedValue.length),
+                      );
+                    }
+                  }
                 },
               ),
               const SizedBox(height: 16.0),
@@ -302,7 +328,17 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                             decoration: InputDecoration(
                               labelText: isEnglish ? 'Ingredient' : 'Ingrediente',
                             ),
-                            onChanged: null,
+                            textCapitalization: TextCapitalization.sentences,
+                            onChanged: (value) {
+                              if (value.isNotEmpty) {
+                                // Capitalizar la primera letra
+                                final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                                if (capitalizedValue != value) {
+                                  _ingredients[idx]['name'] = capitalizedValue;
+                                }
+                              }
+                              _ingredients[idx]['name'] = value;
+                            },
                             onEditingComplete: null,
                           ),
                         ),
@@ -313,7 +349,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
                             decoration: InputDecoration(
-                              labelText: isEnglish ? 'Amount' : 'Cantidad',
+                              labelText: isEnglish ? 'Quantity' : 'Cantidad',
                               border: OutlineInputBorder(),
                             ),
                             onTap: () {
@@ -329,7 +365,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return isEnglish 
-                                  ? 'Please enter an amount'
+                                  ? 'Please enter a quantity'
                                   : 'Por favor ingrese una cantidad';
                               }
                               return null;
@@ -344,7 +380,17 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                               labelText: 'Unidad',
                               hintText: 'gr, ml, unidad',
                             ),
-                            onChanged: null,
+                            textCapitalization: TextCapitalization.sentences,
+                            onChanged: (value) {
+                              if (value.isNotEmpty) {
+                                // Capitalizar la primera letra
+                                final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                                if (capitalizedValue != value) {
+                                  _ingredients[idx]['unit'] = capitalizedValue;
+                                }
+                              }
+                              _ingredients[idx]['unit'] = value;
+                            },
                             onEditingComplete: null,
                           ),
                         ),
@@ -382,6 +428,26 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                       : 'Las instrucciones son obligatorias';
                   }
                   return null;
+                },
+                textCapitalization: TextCapitalization.sentences,
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    // Capitalizar la primera letra de cada oración
+                    final sentences = value.split('. ');
+                    final capitalizedSentences = sentences.map((sentence) {
+                      if (sentence.isNotEmpty) {
+                        return sentence[0].toUpperCase() + sentence.substring(1);
+                      }
+                      return sentence;
+                    }).join('. ');
+                    
+                    if (capitalizedSentences != value) {
+                      _instructionsController.text = capitalizedSentences;
+                      _instructionsController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: capitalizedSentences.length),
+                      );
+                    }
+                  }
                 },
               ),
               const SizedBox(height: 24.0),

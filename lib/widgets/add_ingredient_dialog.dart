@@ -33,14 +33,14 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
     'ml',
     'l',
     'cl',
-    'cda',
-    'cdta',
-    'tz',
-    'oz liq',
-    'pinta',
-    'c-galon',
-    'galon',
-    'u',
+    'tbsp',
+    'tsp',
+    'cup',
+    'fl oz',
+    'pint',
+    'c-gal',
+    'gal',
+    'un',
   ];
 
   @override
@@ -233,7 +233,7 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                               ),
                               Expanded(
                                 child: Text(
-                                  isEnglish ? 'AMOUNT' : 'CANTIDAD',
+                                  isEnglish ? 'QUANTITY' : 'CANTIDAD',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
@@ -359,8 +359,19 @@ class _AddIngredientDialogState extends State<AddIngredientDialog> {
                 hintText: isEnglish ? 'Ingredient' : 'Ingrediente',
               ),
               onChanged: (value) {
+                if (value.isNotEmpty) {
+                  // Capitalizar la primera letra
+                  final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                  if (capitalizedValue != value) {
+                    ingrediente.nombreController.text = capitalizedValue;
+                    ingrediente.nombreController.selection = TextSelection.fromPosition(
+                      TextPosition(offset: capitalizedValue.length),
+                    );
+                  }
+                }
                 ingrediente.nombre = value;
               },
+              textCapitalization: TextCapitalization.sentences,
             ),
           ),
           const SizedBox(width: 2),

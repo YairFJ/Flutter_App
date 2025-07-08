@@ -22,6 +22,7 @@ class ProfileScreen extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
         ),
         actions: [
           TextButton(
