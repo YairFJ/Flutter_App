@@ -34,6 +34,8 @@ class AuthService {
     }
   }
 
+  // Eliminar variable en memoria
+
   // Registrar usuario
   Future<UserCredential?> registerWithEmailAndPassword({
     required String email,
@@ -61,18 +63,16 @@ class AuthService {
 
       if (userCredential.user != null) {
         final user = userCredential.user!;
-        _logger.info('Usuario creado exitosamente: ${user.uid}');
+        _logger.info('Usuario creado exitosamente:  [32m${user.uid} [0m');
         
         try {
           // Generar código de verificación
           final verificationCode = _generateVerificationCode();
           final timestamp = DateTime.now();
-          
-          // Crear el documento en Firestore con el código de verificación
+          // Guardar el código y timestamp en Firestore
           await _firestore.collection('users').doc(user.uid).set({
             'name': name,
             'email': email,
-            'password': password, // Guardar la contraseña temporalmente
             'createdAt': FieldValue.serverTimestamp(),
             'isEmailVerified': false,
             'verificationCode': verificationCode,
@@ -81,7 +81,6 @@ class AuthService {
             'needsVerification': true,
             'verified': false,
           }, SetOptions(merge: true));
-          
           _logger.info('Documento de usuario creado en Firestore');
 
           // Actualizar el nombre del usuario
@@ -161,22 +160,17 @@ class AuthService {
       print('=== Iniciando verificación de código ===');
       print('UserId: $userId');
       print('Código ingresado: $code');
-
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      
       if (!userDoc.exists) {
         print('Error: Usuario no encontrado en Firestore');
         throw Exception('Usuario no encontrado');
       }
-
       final userData = userDoc.data() as Map<String, dynamic>;
       final storedCode = userData['verificationCode'] as String;
       final timestamp = userData['verificationCodeTimestamp'] as Timestamp;
       final email = userData['email'] as String;
-      
       print('Código almacenado: $storedCode');
       print('Timestamp del código: ${timestamp.toDate()}');
-      
       // Verificar si el código ha expirado (10 minutos)
       final now = DateTime.now();
       final codeTime = timestamp.toDate();
@@ -184,10 +178,8 @@ class AuthService {
         print('Error: Código expirado');
         throw Exception('El código de verificación ha expirado');
       }
-
       if (code == storedCode) {
         print('Código verificado correctamente');
-        
         // Actualizar Firestore
         await _firestore.collection('users').doc(userId).update({
           'isEmailVerified': true,
@@ -196,33 +188,8 @@ class AuthService {
           'verified': true,
         });
         print('Estado de verificación actualizado en Firestore');
-
-        // Intentar iniciar sesión automáticamente
-        try {
-          final user = _auth.currentUser;
-          if (user != null) {
-            // Si hay un usuario actual, cerrar sesión
-            await _auth.signOut();
-          }
-          
-          // Obtener la contraseña del usuario desde Firestore
-          final password = userData['password'] as String?;
-          if (password != null) {
-            // Intentar iniciar sesión con las credenciales
-            await _auth.signInWithEmailAndPassword(
-              email: email,
-              password: password,
-            );
-            print('Sesión iniciada automáticamente después de la verificación');
-          }
-        } catch (e) {
-          print('Error al iniciar sesión automáticamente: $e');
-          // No relanzamos el error para permitir que el proceso continúe
-        }
-
         return true;
       }
-      
       print('Error: Código incorrecto');
       return false;
     } catch (e) {
@@ -237,7 +204,6 @@ class AuthService {
       print('=== Iniciando reenvío de código de verificación ===');
       print('Email: $email');
       print('UserId: $userId');
-
       // Verificar si el documento existe
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (!userDoc.exists) {
@@ -256,11 +222,9 @@ class AuthService {
         });
         print('Documento de usuario creado');
       }
-
       // Generar nuevo código
       final verificationCode = _generateVerificationCode();
       final timestamp = DateTime.now();
-      
       // Actualizar el código en Firestore
       await _firestore.collection('users').doc(userId).update({
         'verificationCode': verificationCode,
@@ -268,11 +232,9 @@ class AuthService {
         'lastVerificationAttempt': FieldValue.serverTimestamp(),
       });
       print('Código actualizado en Firestore');
-
       // Enviar el nuevo código
       await sendVerificationCodeEmail(email, userId);
       print('Nuevo código de verificación enviado a: $email');
-      
       print('=== Proceso de reenvío completado ===');
     } catch (e) {
       print('Error al reenviar código de verificación: $e');
@@ -601,29 +563,12 @@ class AuthService {
     try {
       // Obtener los métodos de inicio de sesión para el email
       final methods = await _auth.fetchSignInMethodsForEmail(email);
-      
       if (methods.contains('password')) {
         // Si existe una cuenta con email/password, intentar vincular
         final user = googleCredential.user;
         if (user != null) {
-          // Obtener la contraseña del usuario desde Firestore
-          final userDoc = await _firestore.collection('users').doc(user.uid).get();
-          if (userDoc.exists) {
-            final userData = userDoc.data() as Map<String, dynamic>;
-            final password = userData['password'] as String?;
-            
-            if (password != null) {
-              // Crear credenciales de email/password
-              final emailCredential = EmailAuthProvider.credential(
-                email: email,
-                password: password,
-              );
-              
-              // Vincular las cuentas
-              await user.linkWithCredential(emailCredential);
-              return googleCredential;
-            }
-          }
+          // Ya no se puede obtener la contraseña desde Firestore, así que no se puede vincular automáticamente
+          // El usuario debe vincular manualmente desde la app
         }
       }
       return googleCredential;
@@ -656,30 +601,8 @@ class AuthService {
             final methods = await _auth.fetchSignInMethodsForEmail(email);
             
             if (methods.contains('password')) {
-              // Si existe una cuenta con email/password, intentar vincular
-              try {
-                // Obtener la contraseña del usuario desde Firestore
-                final userDoc = await _firestore.collection('users').doc(userCredential.user!.uid).get();
-                if (userDoc.exists) {
-                  final userData = userDoc.data() as Map<String, dynamic>;
-                  final password = userData['password'] as String?;
-                  
-                  if (password != null) {
-                    // Crear credenciales de email/password
-                    final emailCredential = EmailAuthProvider.credential(
-                      email: email,
-                      password: password,
-                    );
-                    
-                    // Vincular las cuentas
-                    await userCredential.user!.linkWithCredential(emailCredential);
-                    _logger.info('Cuentas vinculadas exitosamente');
-                  }
-                }
-              } catch (e) {
-                _logger.warning('Error al vincular cuentas: $e');
-                // Continuar con el inicio de sesión de Google aunque falle la vinculación
-              }
+              // Ya no se puede obtener la contraseña desde Firestore, así que no se puede vincular automáticamente
+              // El usuario debe vincular manualmente desde la app
             }
           }
         }
@@ -956,17 +879,14 @@ class AuthService {
       print('=== Iniciando envío de código de verificación ===');
       print('Email: $email');
       print('UserId: $userId');
-      
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (!userDoc.exists) {
         print('Error: Usuario no encontrado en Firestore');
         throw Exception('Usuario no encontrado');
       }
-
       final userData = userDoc.data() as Map<String, dynamic>;
       final verificationCode = userData['verificationCode'] as String;
       print('Código de verificación: $verificationCode');
-
       // Configurar el email usando Gmail
       final message = Message()
         ..from = Address('farinayair1@gmail.com', 'Gauge your Recipe')
@@ -987,7 +907,6 @@ class AuthService {
             </div>
           </div>
         ''';
-
       // Enviar el email usando Gmail
       final smtpServer = SmtpServer(
         'smtp.gmail.com',
@@ -997,17 +916,8 @@ class AuthService {
         ssl: false,
         allowInsecure: true,
       );
-
       final sendReport = await send(message, smtpServer);
       print('Email enviado: ${sendReport.toString()}');
-
-      // Actualizar el código en Firestore
-      await _firestore.collection('users').doc(userId).update({
-        'verificationCode': verificationCode,
-        'lastVerificationAttempt': FieldValue.serverTimestamp(),
-      });
-      print('Código actualizado en Firestore');
-      
       print('=== Proceso de envío de código completado ===');
     } catch (e) {
       print('Error al enviar código de verificación: $e');

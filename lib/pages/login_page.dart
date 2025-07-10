@@ -93,7 +93,13 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       _logger.severe('Excepción durante inicio de sesión: $e');
       if (e is FirebaseAuthException) {
-        _showError(_authService.getErrorMessage(e));
+        if (e.code == 'email-not-verified') {
+          _showError(isEnglish
+            ? 'You must verify your email before logging in. Please check your inbox.'
+            : 'Debes verificar tu correo antes de iniciar sesión. Por favor, revisa tu bandeja de entrada.');
+        } else {
+          _showError(_authService.getErrorMessage(e));
+        }
       } else {
         _showError(isEnglish ? 'LOGIN ERROR' : 'ERROR DE INICIO DE SESIÓN');
       }

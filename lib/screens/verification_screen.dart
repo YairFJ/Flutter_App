@@ -19,6 +19,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   String? _errorMessage;
   int _remainingTime = 600; // 10 minutos en segundos
   bool _canResend = true; // Cambiado a true por defecto
+  String? _lastSentCode; // Para mostrar el último código enviado en debug si lo deseas
 
   @override
   void initState() {
@@ -70,9 +71,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       if (isVerified) {
         if (mounted) {
           print('Código verificado, redirigiendo a HomeScreen');
-          // Forzar la verificación en Firestore antes del modal
           await _authService.forceEmailVerification();
-          // Mostrar modal de éxito
           await showDialog(
             context: context,
             barrierDismissible: false,
@@ -84,9 +83,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Cierra el modal
+                    Navigator.of(context).pop();
                     Future.delayed(Duration.zero, () {
-                      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false); // Navega al Home
+                      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
                     });
                   },
                   child: const Text('Aceptar', style: TextStyle(color: Colors.white)),
@@ -100,7 +99,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
       }
     } catch (e) {
       String errorMessage = 'Error al verificar el código';
-      if (e.toString().contains('email-already-in-use')) {
+      if (e.toString().contains('El código de verificación ha expirado')) {
+        errorMessage = 'El código ha expirado. Solicita uno nuevo.';
+      } else if (e.toString().contains('email-already-in-use')) {
         errorMessage = 'Este correo electrónico ya está registrado';
       } else if (e.toString().contains('No hay usuario autenticado')) {
         errorMessage = 'Este correo electrónico ya está registrado';
@@ -129,12 +130,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
       }
 
       await _authService.resendVerificationCode(user.email!, user.uid);
-      
       setState(() {
-        _remainingTime = 600; // Reiniciamos el tiempo
+        _remainingTime = 600;
       });
       _startTimer();
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -145,12 +144,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
       }
     } catch (e) {
       String errorMessage = 'Error al reenviar el código';
-      if (e.toString().contains('email-already-in-use')) {
+      if (e.toString().contains('El código de verificación ha expirado')) {
+        errorMessage = 'El código ha expirado. Solicita uno nuevo.';
+      } else if (e.toString().contains('email-already-in-use')) {
         errorMessage = 'Este correo electrónico ya está registrado';
       } else if (e.toString().contains('No hay usuario autenticado')) {
         errorMessage = 'Este correo electrónico ya está registrado';
       }
-      
       if (mounted) {
         setState(() => _errorMessage = errorMessage);
         ScaffoldMessenger.of(context).showSnackBar(
