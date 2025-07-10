@@ -207,6 +207,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       _logger.info('Registro exitoso');
+      _showSuccess('Registro exitoso. Por favor, revisa tu correo para verificar tu cuenta. Luego inicia sesión manualmente.');
     } catch (e) {
       _logger.severe('Error en registro: $e');
       if (e is FirebaseAuthException) {

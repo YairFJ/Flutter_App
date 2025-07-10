@@ -19,6 +19,7 @@ import 'Comunity/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'utils/firestore_cleanup.dart';
 
 void main() async {
   Logger.root.level = Level.ALL;
@@ -27,6 +28,13 @@ void main() async {
   });
   
   WidgetsFlutterBinding.ensureInitialized();
+  // Cambia esta bandera a true SOLO cuando quieras limpiar la base de datos
+  const bool ejecutarLimpieza = false; // PONER EN true SOLO PARA LIMPIAR
+
+  if (ejecutarLimpieza) {
+    await limpiarCamposUsuariosVerificados();
+  }
+
   await DefaultFirebaseOptions.loadEnv();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
