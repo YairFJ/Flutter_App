@@ -362,6 +362,8 @@ class _LoginPageState extends State<LoginPage> {
                     isEmailField: true,
                     validator: (val) =>
                         val!.isEmpty ? (isEnglish ? 'Enter your email' : 'Ingresa tu correo') : null,
+                    textCapitalization: TextCapitalization.none,
+                    autoCapitalize: false,
                   ),
                 ),
 
@@ -389,6 +391,8 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (val) =>
                         val!.isEmpty ? (isEnglish ? 'Enter your password' : 'Ingresa tu contraseña') : null,
+                    textCapitalization: TextCapitalization.none,
+                    autoCapitalize: false,
                   ),
                 ),
 

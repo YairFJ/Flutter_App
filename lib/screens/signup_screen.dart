@@ -292,6 +292,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   obscureText: false,
                   prefixIcon: const Icon(Icons.email),
                   isEmailField: true,
+                  textCapitalization: TextCapitalization.none,
+                  autoCapitalize: false,
                 ),
 
                 const SizedBox(height: 10),
@@ -312,6 +314,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       });
                     },
                   ),
+                  textCapitalization: TextCapitalization.none,
+                  autoCapitalize: false,
                 ),
 
                 const SizedBox(height: 10),
@@ -332,6 +336,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       });
                     },
                   ),
+                  textCapitalization: TextCapitalization.none,
+                  autoCapitalize: false,
                 ),
 
                 const SizedBox(height: 25),

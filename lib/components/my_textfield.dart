@@ -11,6 +11,7 @@ class MyTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final bool isEmailField;
   final TextCapitalization textCapitalization;
+  final bool autoCapitalize;
 
   const MyTextField({
     super.key,
@@ -23,6 +24,7 @@ class MyTextField extends StatelessWidget {
     this.prefixIcon,
     this.isEmailField = false,
     this.textCapitalization = TextCapitalization.sentences,
+    this.autoCapitalize = true,
   });
 
   @override
@@ -36,7 +38,7 @@ class MyTextField extends StatelessWidget {
         validator: validator,
         textCapitalization: textCapitalization,
         onChanged: (value) {
-          if (value.isNotEmpty) {
+          if (autoCapitalize && value.isNotEmpty) {
             // Capitalizar la primera letra de cada oración
             final sentences = value.split('. ');
             final capitalizedSentences = sentences.map((sentence) {
