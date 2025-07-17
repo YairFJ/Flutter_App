@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       _logger.info('Inicio de sesión exitoso');
-      _showSuccess(isEnglish ? 'SUCCESSFUL LOGIN' : 'INICIO DE SESIÓN CORRECTO');
+      _showSuccess(isEnglish ? 'Successful login' : 'Inicio de sesión correcto');
     } catch (e) {
       _logger.severe('Excepción durante inicio de sesión: $e');
       if (e is FirebaseAuthException) {
@@ -165,7 +165,7 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEnglish ? 'SUCCESSFUL LOGIN' : 'INICIO DE SESIÓN CORRECTO'),
+            content: Text(isEnglish ? 'Successful login' : 'Inicio de sesión correcto'),
             backgroundColor: Colors.green,
           ),
         );
@@ -223,7 +223,7 @@ class _LoginPageState extends State<LoginPage> {
       final userCredential = await _authService.signInWithApple();
 
       if (userCredential != null && userCredential.user != null) {
-        _showSuccess(isEnglish ? 'SUCCESSFUL LOGIN' : 'INICIO DE SESIÓN CORRECTO');
+        _showSuccess(isEnglish ? 'Successful login' : 'Inicio de sesión correcto');
 
         await Future.delayed(const Duration(seconds: 1));
         if (mounted) {
