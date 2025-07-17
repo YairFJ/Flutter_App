@@ -8,9 +8,9 @@ import 'package:flutter_app/services/language_service.dart';
 import 'package:provider/provider.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter_app/pages/stopwatch_page.dart';
-import 'package:flutter_app/pages/timer_page.dart';
-import 'package:flutter_app/pages/conversion_table_page.dart';
-
+import 'package:flutter_app/widgetsOut/timer_login.dart' as login_widgets;
+import 'package:flutter_app/widgetsOut/coversion_login_page.dart' as login_widgets;
+import 'package:flutter_app/widgetsOut/stopwatch_login.dart' as login_widgets;
 final _logger = Logger('LoginPage');
 
 class LoginPage extends StatefulWidget {
@@ -553,7 +553,7 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     mainContext,
                                     MaterialPageRoute(
-                                      builder: (context) => StopwatchPage(isEnglish: isEnglish),
+                                      builder: (context) => login_widgets.StopwatchPage(isEnglish: isEnglish),
                                     ),
                                   );
                                 });
@@ -569,7 +569,7 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     mainContext,
                                     MaterialPageRoute(
-                                      builder: (context) => const TimerPage(),
+                                      builder: (context) => login_widgets.TimerPage(),
                                     ),
                                   );
                                 });
@@ -585,7 +585,10 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     mainContext,
                                     MaterialPageRoute(
-                                      builder: (context) => ConversionTablePage(isEnglish: isEnglish),
+                                      builder: (context) {
+                                        print('Construyendo ConversionTablePage');
+                                        return login_widgets.ConversionTablePage(isEnglish: isEnglish);
+                                      },
                                     ),
                                   );
                                 });
