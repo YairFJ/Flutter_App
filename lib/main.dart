@@ -91,6 +91,15 @@ class _MyAppState extends State<MyApp> {
               '/register': (context) => const SignUpScreen(),
               '/verification': (context) => const VerificationScreen(),
               '/groups': (context) => const GroupsScreen(),
+              '/stopwatch': (context) {
+                final isEnglish = Provider.of<LanguageService>(context, listen: false).isEnglish;
+                return StopwatchPage(isEnglish: isEnglish);
+              },
+              '/timer': (context) => const TimerPage(),
+              '/conversion': (context) {
+                final isEnglish = Provider.of<LanguageService>(context, listen: false).isEnglish;
+                return ConversionTablePage(isEnglish: isEnglish);
+              },
             },
           );
         },

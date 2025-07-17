@@ -7,6 +7,9 @@ import 'package:flutter_app/services/auth_service.dart';
 import 'package:flutter_app/services/language_service.dart';
 import 'package:provider/provider.dart';
 import 'package:logging/logging.dart';
+import 'package:flutter_app/pages/stopwatch_page.dart';
+import 'package:flutter_app/pages/timer_page.dart';
+import 'package:flutter_app/pages/conversion_table_page.dart';
 
 final _logger = Logger('LoginPage');
 
@@ -282,237 +285,321 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF96B4D8),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-                
-                // Botón de idioma
-                Padding(
-                  padding: const EdgeInsets.only(right: 20.0, top: 20.0),
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: GestureDetector(
-                      onTap: _toggleLanguage,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
+                    
+                    // Botón de idioma
+                    Padding(
+                      padding: const EdgeInsets.only(right: 20.0, top: 20.0),
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: GestureDetector(
+                          onTap: _toggleLanguage,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Center(
-                            child: Text(
-                              isEnglish ? 'EN' : 'ES',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Center(
+                                child: Text(
+                                  isEnglish ? 'EN' : 'ES',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: 30),
+                    const SizedBox(height: 30),
 
-                // logo
-                const Icon(
-                  Icons.person_sharp,
-                  size: 100,
-                  color: Colors.white,
-                ),
-
-                const SizedBox(height: 40),
-
-                // welcome back, you've been missed!
-                Text(
-                  isEnglish ? 'Welcome!' : '¡Bienvenido!',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // email textfield
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: MyTextField(
-                    controller: _emailController,
-                    hintText: isEnglish ? 'Email' : 'Correo electrónico',
-                    obscureText: false,
-                    keyboardType: TextInputType.emailAddress,
-                    isEmailField: true,
-                    validator: (val) =>
-                        val!.isEmpty ? (isEnglish ? 'Enter your email' : 'Ingresa tu correo') : null,
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                // password textfield
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: MyTextField(
-                    controller: _passwordController,
-                    hintText: isEnglish ? 'Password' : 'Contraseña',
-                    obscureText: !_isPasswordVisible,
-                    suffix: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                    // logo
+                    const Icon(
+                      Icons.person_sharp,
+                      size: 100,
+                      color: Colors.white,
                     ),
-                    validator: (val) =>
-                        val!.isEmpty ? (isEnglish ? 'Enter your password' : 'Ingresa tu contraseña') : null,
-                  ),
-                ),
 
-                const SizedBox(height: 10),
+                    const SizedBox(height: 40),
 
-                // forgot password?
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: _handleForgotPassword,
-                        child: Text(
-                          isEnglish ? 'Forgot password?' : '¿Olvidaste tu contraseña?',
-                          style: const TextStyle(
+                    // welcome back, you've been missed!
+                    Text(
+                      isEnglish ? 'Welcome!' : '¡Bienvenido!',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // email textfield
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                      child: MyTextField(
+                        controller: _emailController,
+                        hintText: isEnglish ? 'Email' : 'Correo electrónico',
+                        obscureText: false,
+                        keyboardType: TextInputType.emailAddress,
+                        isEmailField: true,
+                        validator: (val) =>
+                            val!.isEmpty ? (isEnglish ? 'Enter your email' : 'Ingresa tu correo') : null,
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    // password textfield
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                      child: MyTextField(
+                        controller: _passwordController,
+                        hintText: isEnglish ? 'Password' : 'Contraseña',
+                        obscureText: !_isPasswordVisible,
+                        suffix: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
+                        validator: (val) =>
+                            val!.isEmpty ? (isEnglish ? 'Enter your password' : 'Ingresa tu contraseña') : null,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // forgot password?
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          GestureDetector(
+                            onTap: _handleForgotPassword,
+                            child: Text(
+                              isEnglish ? 'Forgot password?' : '¿Olvidaste tu contraseña?',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // sign in button
+                    _isLoading
+                        ? const CircularProgressIndicator(
                             color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                            child: MyButton(
+                              onTap: _login,
+                              text: isEnglish ? 'Sign In' : 'Iniciar sesión',
+                            ),
+                          ),
+
+                    const SizedBox(height: 30),
+
+                    // or continue with
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              thickness: 0.5,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                            child: Text(
+                              isEnglish ? 'Or continue with' : 'O continuar con',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              thickness: 0.5,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // google + apple sign in buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // google button
+                        GestureDetector(
+                          onTap: _isLoading ? null : _handleGoogleSignIn,
+                          child: const SquareTile(
+                            imagePath: 'lib/images/google.png',
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // sign in button
-                _isLoading
-                    ? const CircularProgressIndicator(
-                        color: Colors.white,
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                        child: MyButton(
-                          onTap: _login,
-                          text: isEnglish ? 'Sign In' : 'Iniciar sesión',
+                        const SizedBox(width: 25),
+                        // apple button
+                        GestureDetector(
+                          onTap: _isLoading ? null : _handleAppleSignIn,
+                          child: const SquareTile(
+                            imagePath: 'lib/images/apple.png',
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
 
-                const SizedBox(height: 30),
+                    const SizedBox(height: 30),
 
-                // or continue with
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          thickness: 0.5,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Text(
-                          isEnglish ? 'Or continue with' : 'O continuar con',
+                    // not a member? register now
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isEnglish ? 'Don\'t have an account?' : '¿No tienes una cuenta?',
                           style: const TextStyle(color: Colors.white),
                         ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          thickness: 0.5,
-                          color: Colors.white,
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/register');
+                          },
+                          child: Text(
+                            isEnglish ? 'SIGN UP' : 'REGISTRARTE',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // google + apple sign in buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // google button
-                    GestureDetector(
-                      onTap: _isLoading ? null : _handleGoogleSignIn,
-                      child: const SquareTile(
-                        imagePath: 'lib/images/google.png',
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 25),
-                    // apple button
-                    GestureDetector(
-                      onTap: _isLoading ? null : _handleAppleSignIn,
-                      child: const SquareTile(
-                        imagePath: 'lib/images/apple.png',
-                      ),
-                    ),
+
+                    const SizedBox(height: 20),
                   ],
                 ),
-
-                const SizedBox(height: 30),
-
-                // not a member? register now
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      isEnglish ? 'Don\'t have an account?' : '¿No tienes una cuenta?',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/register');
-                      },
-                      child: Text(
-                        isEnglish ? 'SIGN UP' : 'REGISTRARTE',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
+            // Botón flotante en la esquina inferior derecha
+            Positioned(
+              bottom: 8,
+              right: 24,
+              child: FloatingActionButton(
+                heroTag: 'quick_tools',
+                backgroundColor: Colors.white,
+                mini: true,
+                shape: const CircleBorder(),
+                child: const Icon(Icons.menu, color: Color(0xFF96B4D8), size: 22),
+                onPressed: () async {
+                  final languageService = Provider.of<LanguageService>(context, listen: false);
+                  final isEnglish = languageService.isEnglish;
+                  final mainContext = context;
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (context) {
+                      return SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.timer, color: Color(0xFF96B4D8)),
+                              title: Text(isEnglish ? 'Stopwatch' : 'Cronómetro'),
+                              onTap: () {
+                                print('Tocaste cronómetro');
+                                Navigator.pop(context);
+                                Future.delayed(const Duration(milliseconds: 100), () {
+                                  Navigator.push(
+                                    mainContext,
+                                    MaterialPageRoute(
+                                      builder: (context) => StopwatchPage(isEnglish: isEnglish),
+                                    ),
+                                  );
+                                });
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.hourglass_bottom, color: Color(0xFF96B4D8)),
+                              title: Text(isEnglish ? 'Timer' : 'Temporizador'),
+                              onTap: () {
+                                print('Tocaste temporizador');
+                                Navigator.pop(context);
+                                Future.delayed(const Duration(milliseconds: 100), () {
+                                  Navigator.push(
+                                    mainContext,
+                                    MaterialPageRoute(
+                                      builder: (context) => const TimerPage(),
+                                    ),
+                                  );
+                                });
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.swap_horiz, color: Color(0xFF96B4D8)),
+                              title: Text(isEnglish ? 'Conversion Table' : 'Tabla de conversión'),
+                              onTap: () {
+                                print('Tocaste conversión');
+                                Navigator.pop(context);
+                                Future.delayed(const Duration(milliseconds: 100), () {
+                                  Navigator.push(
+                                    mainContext,
+                                    MaterialPageRoute(
+                                      builder: (context) => ConversionTablePage(isEnglish: isEnglish),
+                                    ),
+                                  );
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
