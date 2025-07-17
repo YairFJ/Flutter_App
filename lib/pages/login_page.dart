@@ -335,12 +335,14 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 30),
 
-                    // logo
-                    const Icon(
-                      Icons.person_sharp,
-                      size: 100,
-                      color: Colors.white,
-                    ),
+                // logo
+                const Icon(
+                  Icons.person_sharp,
+                  size: 100,
+                  color: Colors.white,
+                ),
+
+               
 
                     const SizedBox(height: 40),
 

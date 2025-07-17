@@ -105,23 +105,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     : 'Obtén ayuda por correo electrónico'),
                   onTap: _launchEmail,
                 ),
-                ListTile(
-                  leading: const Icon(Icons.chat_outlined),
-                  title: Text(widget.isEnglish ? 'Live Chat' : 'Chat en Vivo'),
-                  subtitle: Text(widget.isEnglish
-                    ? 'Coming soon!'
-                    : '¡Próximamente!'),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(widget.isEnglish
-                            ? 'Live chat will be available soon!'
-                            : '¡El chat en vivo estará disponible pronto!'),
-                        backgroundColor: Colors.blue,
-                      ),
-                    );
-                  },
-                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -129,34 +112,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               title: widget.isEnglish ? 'App Information' : 'Información de la App',
               icon: Icons.info_outline,
               children: [
-                ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(widget.isEnglish ? 'Terms of Service' : 'Términos de Servicio'),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(widget.isEnglish
-                            ? 'Coming soon!'
-                            : '¡Próximamente!'),
-                        backgroundColor: Colors.blue,
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined),
-                  title: Text(widget.isEnglish ? 'Privacy Policy' : 'Política de Privacidad'),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(widget.isEnglish
-                            ? 'Coming soon!'
-                            : '¡Próximamente!'),
-                        backgroundColor: Colors.blue,
-                      ),
-                    );
-                  },
-                ),
                 ListTile(
                   leading: const Icon(Icons.update_outlined),
                   title: Text(widget.isEnglish ? 'App Version' : 'Versión de la App'),
