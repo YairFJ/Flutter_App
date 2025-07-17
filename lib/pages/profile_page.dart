@@ -5,6 +5,7 @@ import '../screens/favorite_recipes_screen.dart';
 import '../screens/my_recipes_screen.dart';
 import '../screens/account_settings_screen.dart';
 import '../screens/help_support_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatelessWidget {
   final User user;
@@ -182,6 +183,32 @@ class ProfilePage extends StatelessWidget {
                 builder: (context) => HelpSupportScreen(isEnglish: isEnglish),
               ),
             );
+          },
+        ),
+        // NUEVA SECCIÓN DE POLÍTICA DE PRIVACIDAD
+        _buildProfileSection(
+          icon: Icons.privacy_tip_outlined,
+          title: isEnglish ? 'Privacy Policy' : 'Política de Privacidad',
+          subtitle: isEnglish
+              ? 'Read our privacy policy'
+              : 'Lee nuestra política de privacidad',
+          isTablet: isTablet,
+          onTap: () async {
+            final url = isEnglish
+                ? 'https://sites.google.com/view/gaugeyourrecipe-privacy-en/página-principal'
+                : 'https://sites.google.com/view/gauge-your-recipe/página-principal';
+            if (await canLaunch(url)) {
+              await launch(url);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isEnglish
+                      ? 'Could not open the link'
+                      : 'No se pudo abrir el enlace'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           },
         ),
       ],
