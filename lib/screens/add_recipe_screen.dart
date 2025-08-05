@@ -281,261 +281,280 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final screenSize = MediaQuery.of(context).size;
+    final isTablet = screenSize.width > 600;
+    final isLargeTablet = screenSize.width > 900;
+    final isIPadPro = screenSize.width > 2000;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isEnglish ? 'New Recipe' : 'Nueva Receta'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _titleController,
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: isEnglish ? 'Title' : 'Título',
-                    border: OutlineInputBorder(),
-                    helperText: isEnglish ? 'Between 3 and 100 characters' : 'Entre 3 y 100 caracteres',
-                  ),
-                  validator: _validateTitle,
-                  textCapitalization: TextCapitalization.sentences,
-                  onChanged: (value) {
-                    if (value.isNotEmpty) {
-                      // Capitalizar la primera letra
-                      final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                      if (capitalizedValue != value) {
-                        _titleController.text = capitalizedValue;
-                        _titleController.selection = TextSelection.fromPosition(
-                          TextPosition(offset: capitalizedValue.length),
-                        );
-                      }
-                    }
-                  },
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
-                  ],
+      body: isIPadPro
+          ? SingleChildScrollView(
+              padding: const EdgeInsets.all(64.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: _buildFormFields(isDarkMode),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _descriptionController,
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: isEnglish ? 'Description' : 'Descripción',
-                    border: OutlineInputBorder(),
-                    helperText: isEnglish ? 'Maximum 500 characters' : 'Máximo 500 caracteres',
-                  ),
-                  maxLines: 3,
-                  validator: _validateDescription,
-                  textCapitalization: TextCapitalization.sentences,
-                  onChanged: (value) {
-                    if (value.isNotEmpty) {
-                      // Capitalizar la primera letra de cada oración
-                      final sentences = value.split('. ');
-                      final capitalizedSentences = sentences.map((sentence) {
-                        if (sentence.isNotEmpty) {
-                          return sentence[0].toUpperCase() + sentence.substring(1);
-                        }
-                        return sentence;
-                      }).join('. ');
-                      
-                      if (capitalizedSentences != value) {
-                        _descriptionController.text = capitalizedSentences;
-                        _descriptionController.selection = TextSelection.fromPosition(
-                          TextPosition(offset: capitalizedSentences.length),
-                        );
-                      }
-                    }
-                  },
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
-                  ],
+              ),
+            )
+          : Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isLargeTablet ? 1400.0 : (isTablet ? 1000.0 : screenSize.width),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _cookingTimeController,
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: isEnglish ? 'Preparation Time (minutes)' : 'Tiempo de preparación (minutos)',
-                    border: OutlineInputBorder(),
-                    helperText: isEnglish ? 'Positive integer (maximum 1440)' : 'Número entero positivo (máximo 1440)',
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: _validateCookingTime,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Rendimiento
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: TextFormField(
-                        controller: _servingSizeController,
-                        decoration: InputDecoration(
-                          labelText: isEnglish ? 'Yield' : 'Rendimiento',
-                          border: OutlineInputBorder(),
-                          //helperText: 'Cantidad',
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        validator: _validateServingSize,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 1,
-                      child: DropdownButtonFormField<String>(
-                        value: _servingUnit,
-                        decoration: InputDecoration(
-                          labelText: isEnglish ? 'Unit' : 'Unidad',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: _todasLasUnidades.map((String unidad) {
-                          return DropdownMenuItem<String>(
-                            value: unidad,
-                            child: Text(unidad),
-                          );
-                        }).toList(),
-                        onChanged: (String? value) {
-                          if (value != null) {
-                            setState(() {
-                              _servingUnit = value;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    color: isDarkMode ? Colors.grey[800] : Colors.white,
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedCategory.isNotEmpty
-                          ? _selectedCategory
-                          : null,
-                      isExpanded: true,
-                      dropdownColor:
-                          isDarkMode ? Colors.grey[800] : Colors.white,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                      hint: Text(
-                        isEnglish ? 'Select a category' : 'Selecciona una categoría',
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white70 : Colors.grey[700],
-                        ),
-                      ),
-                      items: RecipeCategories.categories.map((String category) {
-                        return DropdownMenuItem<String>(
-                          value: category,
-                          child: Row(
-                            children: [
-                              Icon(
-                                RecipeCategories.getIconForCategory(category),
-                                color: RecipeCategories.getColorForCategory(
-                                    category),
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                RecipeCategories.getTranslatedCategory(category, isEnglish),
-                                style: TextStyle(
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedCategory = newValue;
-                          });
-                        }
-                      },
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(isLargeTablet ? 48.0 : (isTablet ? 32.0 : 16.0)),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: _buildFormFields(isDarkMode),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                _buildIngredientsList(),
-                const SizedBox(height: 24),
-                _buildStepsList(),
-                const SizedBox(height: 24),
-                SwitchListTile(
-                  title: Text(
-                    isEnglish ? 'Private Recipe' : 'Receta Privada',
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  subtitle: Text(
-                    _isPrivate
-                        ? isEnglish ? 'Only you can see this recipe' : 'Solo tú podrás ver esta receta'
-                        : isEnglish ? 'Everyone can see this recipe' : 'Todos podrán ver esta receta',
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
-                  value: _isPrivate,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _isPrivate = value;
-                    });
-                  },
-                  activeColor: Theme.of(context).primaryColor,
-                ),
-                const Divider(),
-                ElevatedButton(
-                  onPressed: _saveRecipe,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15, horizontal: 30),
-                    backgroundColor: Theme.of(context).primaryColor,
-                  ),
-                  child: Text(
-                    isEnglish ? 'Save Recipe' : 'Guardar Receta',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              ),
+            ),
+    );
+  }
+
+  List<Widget> _buildFormFields(bool isDarkMode) {
+    return [
+      TextFormField(
+        controller: _titleController,
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : Colors.black,
+        ),
+        decoration: InputDecoration(
+          labelText: isEnglish ? 'Title' : 'Título',
+          border: OutlineInputBorder(),
+          helperText: isEnglish ? 'Between 3 and 100 characters' : 'Entre 3 y 100 caracteres',
+        ),
+        validator: _validateTitle,
+        textCapitalization: TextCapitalization.sentences,
+        onChanged: (value) {
+          if (value.isNotEmpty) {
+            final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+            if (capitalizedValue != value) {
+              _titleController.text = capitalizedValue;
+              _titleController.selection = TextSelection.fromPosition(
+                TextPosition(offset: capitalizedValue.length),
+              );
+            }
+          }
+        },
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+        ],
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _descriptionController,
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : Colors.black,
+        ),
+        decoration: InputDecoration(
+          labelText: isEnglish ? 'Description' : 'Descripción',
+          border: OutlineInputBorder(),
+          helperText: isEnglish ? 'Maximum 500 characters' : 'Máximo 500 caracteres',
+        ),
+        maxLines: 3,
+        validator: _validateDescription,
+        textCapitalization: TextCapitalization.sentences,
+        onChanged: (value) {
+          if (value.isNotEmpty) {
+            final sentences = value.split('. ');
+            final capitalizedSentences = sentences.map((sentence) {
+              if (sentence.isNotEmpty) {
+                return sentence[0].toUpperCase() + sentence.substring(1);
+              }
+              return sentence;
+            }).join('. ');
+            
+            if (capitalizedSentences != value) {
+              _descriptionController.text = capitalizedSentences;
+              _descriptionController.selection = TextSelection.fromPosition(
+                TextPosition(offset: capitalizedSentences.length),
+              );
+            }
+          }
+        },
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
+        ],
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _cookingTimeController,
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : Colors.black,
+        ),
+        decoration: InputDecoration(
+          labelText: isEnglish ? 'Preparation Time (minutes)' : 'Tiempo de preparación (minutos)',
+          border: OutlineInputBorder(),
+          helperText: isEnglish ? 'Positive integer (maximum 1440)' : 'Número entero positivo (máximo 1440)',
+        ),
+        keyboardType: TextInputType.number,
+        validator: _validateCookingTime,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+        ],
+      ),
+      const SizedBox(height: 16),
+      // Rendimiento
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: TextFormField(
+              controller: _servingSizeController,
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Yield' : 'Rendimiento',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true),
+              validator: _validateServingSize,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 1,
+            child: DropdownButtonFormField<String>(
+              value: _servingUnit,
+              decoration: InputDecoration(
+                labelText: isEnglish ? 'Unit' : 'Unidad',
+                border: OutlineInputBorder(),
+              ),
+              items: _todasLasUnidades.map((String unidad) {
+                return DropdownMenuItem<String>(
+                  value: unidad,
+                  child: Text(unidad),
+                );
+              }).toList(),
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _servingUnit = value;
+                  });
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          color: isDarkMode ? Colors.grey[800] : Colors.white,
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _selectedCategory.isNotEmpty
+                ? _selectedCategory
+                : null,
+            isExpanded: true,
+            dropdownColor:
+                isDarkMode ? Colors.grey[800] : Colors.white,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+            hint: Text(
+              isEnglish ? 'Select a category' : 'Selecciona una categoría',
+              style: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+            items: RecipeCategories.categories.map((String category) {
+              return DropdownMenuItem<String>(
+                value: category,
+                child: Row(
+                  children: [
+                    Icon(
+                      RecipeCategories.getIconForCategory(category),
+                      color: RecipeCategories.getColorForCategory(
+                          category),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      RecipeCategories.getTranslatedCategory(category, isEnglish),
+                      style: TextStyle(
+                        color:
+                            isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _selectedCategory = newValue;
+                });
+              }
+            },
+          ),
         ),
       ),
-    );
+      const SizedBox(height: 24),
+      _buildIngredientsList(),
+      const SizedBox(height: 24),
+      _buildStepsList(),
+      const SizedBox(height: 24),
+      SwitchListTile(
+        title: Text(
+          isEnglish ? 'Private Recipe' : 'Receta Privada',
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
+        subtitle: Text(
+          _isPrivate
+              ? isEnglish ? 'Only you can see this recipe' : 'Solo tú podrás ver esta receta'
+              : isEnglish ? 'Everyone can see this recipe' : 'Todos podrán ver esta receta',
+          style: TextStyle(
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            fontSize: 12,
+          ),
+        ),
+        value: _isPrivate,
+        onChanged: (bool value) {
+          setState(() {
+            _isPrivate = value;
+          });
+        },
+        activeColor: Theme.of(context).primaryColor,
+      ),
+      const Divider(),
+      ElevatedButton(
+        onPressed: _saveRecipe,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+              vertical: 15, horizontal: 30),
+          backgroundColor: Theme.of(context).primaryColor,
+        ),
+        child: Text(
+          isEnglish ? 'Save Recipe' : 'Guardar Receta',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    ];
   }
 
   Widget _buildIngredientsList() {
