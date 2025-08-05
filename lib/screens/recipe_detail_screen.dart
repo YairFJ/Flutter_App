@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../constants/categories.dart';
-//import '../models/ingredient.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'edit_recipe_screen.dart';
 import 'conversion_calculator_screen.dart';
 import 'package:printing/printing.dart';
 import '../utils/pdf_generator.dart';
-
-// import '../widgets/conversion_table_dialog.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -157,7 +154,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ],
       ),
       body: isIPadPro
-          ? Padding(
+          ? SingleChildScrollView(
               padding: const EdgeInsets.all(64.0),
               child: _buildDetailContent(isDarkMode, isOwner),
             )
@@ -166,7 +163,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 constraints: BoxConstraints(
                   maxWidth: isLargeTablet ? 1600.0 : (isTablet ? 1200.0 : screenSize.width),
                 ),
-                child: Padding(
+                child: SingleChildScrollView(
                   padding: EdgeInsets.all(isLargeTablet ? 48.0 : (isTablet ? 32.0 : 16.0)),
                   child: _buildDetailContent(isDarkMode, isOwner),
                 ),
@@ -176,222 +173,277 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   Widget _buildDetailContent(bool isDarkMode, bool isOwner) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final isOwner = currentUser?.uid == widget.recipe.userId;
     final screenSize = MediaQuery.of(context).size;
-    final isTablet = screenSize.width > 600;
-    final isLargeTablet = screenSize.width > 900;
     final isIPadPro = screenSize.width > 2000;
-    final maxWidth = isIPadPro ? 2200.0 : (isLargeTablet ? 1600.0 : (isTablet ? 1200.0 : screenSize.width));
-
+    
     return Stack(
       children: [
-        SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 8,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.timer, size: 20),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${widget.recipe.cookingTime.inMinutes} min',
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.category, size: 20),
-                            const SizedBox(width: 4),
-                            Text(
-                              RecipeCategories.getTranslatedCategory(widget.recipe.category, isEnglish),
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    RichText(
-                      textAlign: TextAlign.justify,
-                      text: TextSpan(
-                        text: widget.recipe.description,
-                        style: TextStyle(
-                          fontSize: 16,
-                          height: 1.5,
-                          letterSpacing: 0.2,
-                          wordSpacing: 1.2,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                          fontFamily:
-                              Theme.of(context).textTheme.bodyLarge?.fontFamily,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    const Icon(Icons.timer, size: 20),
+                    const SizedBox(width: 4),
                     Text(
-                      isEnglish ? 'Yield: ${widget.recipe.servingSize}' : 'Rendimiento: ${widget.recipe.servingSize}',
+                      '${widget.recipe.cookingTime.inMinutes} min',
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w400,
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.category, size: 20),
+                    const SizedBox(width: 4),
                     Text(
-                      isEnglish ? 'Ingredients:' : 'Ingredientes:',
+                      RecipeCategories.getTranslatedCategory(widget.recipe.category, isEnglish),
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: [
-                          DataColumn(
-                            label: Text(
-                              isEnglish ? 'Ingredient' : 'Ingrediente',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            RichText(
+              textAlign: TextAlign.justify,
+              text: TextSpan(
+                text: widget.recipe.description,
+                style: TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                  letterSpacing: 0.2,
+                  wordSpacing: 1.2,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  fontFamily:
+                      Theme.of(context).textTheme.bodyLarge?.fontFamily,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              isEnglish ? 'Yield: ${widget.recipe.servingSize}' : 'Rendimiento: ${widget.recipe.servingSize}',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w400,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              isEnglish ? 'Ingredients:' : 'Ingredientes:',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Para iPad Pro, usar todo el ancho disponible
+            isIPadPro
+                ? DataTable(
+                    columnSpacing: 32,
+                    horizontalMargin: 0,
+                    columns: [
+                      DataColumn(
+                        label: Expanded(
+                          child: Text(
+                            isEnglish ? 'Ingredient' : 'Ingrediente',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
                             ),
                           ),
-                          DataColumn(
-                            label: Text(
-                              isEnglish ? 'Quantity' : 'Cantidad',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                            ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          isEnglish ? 'Quantity' : 'Cantidad',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
-                          DataColumn(
-                            label: Text(
-                              isEnglish ? 'Unit' : 'Unidad',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                            ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          isEnglish ? 'Unit' : 'Unidad',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
-                        ],
-                        rows: widget.recipe.ingredients.map((ingredient) {
-                          String formattedQuantity;
-                          if (ingredient.quantity % 1 == 0) {
-                            formattedQuantity =
-                                ingredient.quantity.toInt().toString();
-                          } else {
-                            formattedQuantity = ingredient.quantity.toString();
-                          }
-                          return DataRow(cells: [
-                            DataCell(Text(
+                        ),
+                      ),
+                    ],
+                    rows: widget.recipe.ingredients.map((ingredient) {
+                      String formattedQuantity;
+                      if (ingredient.quantity % 1 == 0) {
+                        formattedQuantity =
+                            ingredient.quantity.toInt().toString();
+                      } else {
+                        formattedQuantity = ingredient.quantity.toString();
+                      }
+                      return DataRow(cells: [
+                        DataCell(
+                          Expanded(
+                            child: Text(
                               ingredient.name,
                               style: TextStyle(
                                 color: isDarkMode ? Colors.white : Colors.black87,
                               ),
-                            )),
-                            DataCell(Text(
-                              formattedQuantity,
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white : Colors.black87,
-                              ),
-                            )),
-                            DataCell(Text(
-                              ingredient.unit,
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white : Colors.black87,
-                              ),
-                            )),
-                          ]);
-                        }).toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      isEnglish ? 'Steps:' : 'Pasos:',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: widget.recipe.steps.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.only(right: 12),
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).primaryColor,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  '${index + 1}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: RichText(
-                                  textAlign: TextAlign.justify,
-                                  text: TextSpan(
-                                    text: widget.recipe.steps[index],
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      height: 1.5,
-                                      letterSpacing: 0.2,
-                                      wordSpacing: 1.2,
-                                      color: isDarkMode
-                                          ? Colors.white
-                                          : Colors.black,
-                                      fontFamily: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.fontFamily,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        );
-                      },
+                        ),
+                        DataCell(Text(
+                          formattedQuantity,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                        )),
+                        DataCell(Text(
+                          ingredient.unit,
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                        )),
+                      ]);
+                    }).toList(),
+                  )
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: [
+                        DataColumn(
+                          label: Text(
+                            isEnglish ? 'Ingredient' : 'Ingrediente',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
+                        ),
+                        DataColumn(
+                          label: Text(
+                            isEnglish ? 'Quantity' : 'Cantidad',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
+                        ),
+                        DataColumn(
+                          label: Text(
+                            isEnglish ? 'Unit' : 'Unidad',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                      rows: widget.recipe.ingredients.map((ingredient) {
+                        String formattedQuantity;
+                        if (ingredient.quantity % 1 == 0) {
+                          formattedQuantity =
+                              ingredient.quantity.toInt().toString();
+                        } else {
+                          formattedQuantity = ingredient.quantity.toString();
+                        }
+                        return DataRow(cells: [
+                          DataCell(Text(
+                            ingredient.name,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          )),
+                          DataCell(Text(
+                            formattedQuantity,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          )),
+                          DataCell(Text(
+                            ingredient.unit,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black87,
+                            ),
+                          )),
+                        ]);
+                      }).toList(),
                     ),
-                  ],
-                ),
+                  ),
+            const SizedBox(height: 24),
+            Text(
+              isEnglish ? 'Steps:' : 'Pasos:',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black,
               ),
-              const SizedBox(height: 100),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: widget.recipe.steps.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(right: 12),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: RichText(
+                          textAlign: TextAlign.justify,
+                          text: TextSpan(
+                            text: widget.recipe.steps[index],
+                            style: TextStyle(
+                              fontSize: 16,
+                              height: 1.5,
+                              letterSpacing: 0.2,
+                              wordSpacing: 1.2,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : Colors.black,
+                              fontFamily: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.fontFamily,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 100),
+          ],
         ),
         Positioned(
           right: 20.0,
@@ -433,13 +485,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                     color: Colors.black,
-             ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
+      ],
     );
   }
 }
