@@ -238,8 +238,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEnglish 
-          ? 'Create Recipe in  ${widget.group.name}'
-          : 'Crear Receta en  ${widget.group.name}'),
+          ? 'Create Recipe in ${widget.group.name}'
+          : 'Crear Receta en ${widget.group.name}'),
       ),
       body: isIPadPro
           ? Padding(
@@ -247,218 +247,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
               child: Form(
                 key: _formKey,
                 child: ListView(
-                  children: [
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        labelText: isEnglish ? 'Recipe Title' : 'Título de la receta',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return isEnglish ? 'Title is required' : 'El título es obligatorio';
-                        }
-                        return null;
-                      },
-                      textCapitalization: TextCapitalization.sentences,
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                          if (capitalizedValue != value) {
-                            _titleController.text = capitalizedValue;
-                            _titleController.selection = TextSelection.fromPosition(
-                              TextPosition(offset: capitalizedValue.length),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-
-                    // Campo de tiempo de preparación
-                    TextFormField(
-                      controller: _preparationTimeController,
-                      decoration: InputDecoration(
-                        labelText: isEnglish ? 'Preparation Time' : 'Tiempo de preparación',
-                        hintText: isEnglish ? 'Ex: 30 minutes' : 'Ej: 30 minutos',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return isEnglish ? 'Time is required' : 'Tiempo requerido';
-                        }
-                        return null;
-                      },
-                      textCapitalization: TextCapitalization.sentences,
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                          if (capitalizedValue != value) {
-                            _preparationTimeController.text = capitalizedValue;
-                            _preparationTimeController.selection = TextSelection.fromPosition(
-                              TextPosition(offset: capitalizedValue.length),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.restaurant),
-                        title: Text(isEnglish ? 'People' : 'Personas'),
-                        subtitle: Text(
-                            isEnglish 
-                              ? 'This recipe yields $_servings ${_servings <= 1 ? 'person' : 'people'}'
-                              : 'Esta receta rinde para $_servings ${_servings <= 1 ? 'persona' : 'personas'}'),
-                        trailing: ElevatedButton(
-                          onPressed: _showServingsDialog,
-                          child: Text(isEnglish ? 'Change' : 'Cambiar'),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-
-                    // Lista de ingredientes
-                    ..._ingredients.asMap().entries.map((entry) {
-                      int idx = entry.key;
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: TextEditingController(text: _ingredients[idx]['name'] ?? ''),
-                                  decoration: InputDecoration(
-                                    labelText: isEnglish ? 'Ingredient' : 'Ingrediente',
-                                  ),
-                                  textCapitalization: TextCapitalization.sentences,
-                                  onChanged: (value) {
-                                    if (value.isNotEmpty) {
-                                      final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                                      if (capitalizedValue != value) {
-                                        _ingredients[idx]['name'] = capitalizedValue;
-                                      }
-                                    }
-                                    _ingredients[idx]['name'] = value;
-                                  },
-                                  onEditingComplete: null,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: TextEditingController(text: _ingredients[idx]['amount'] ?? '0,0'),
-                                  keyboardType: const TextInputType.numberWithOptions(
-                                      decimal: true),
-                                  decoration: InputDecoration(
-                                    labelText: isEnglish ? 'Quantity' : 'Cantidad',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  onTap: () {
-                                    final controller = TextEditingController(
-                                        text: _ingredients[idx]['amount'] ?? '0,0');
-                                    if (controller.text == '0,0') {
-                                      controller.clear();
-                                    }
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      controller.clear();
-                                    });
-                                  },
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return isEnglish 
-                                        ? 'Please enter a quantity'
-                                        : 'Por favor ingrese una cantidad';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: TextEditingController(text: _ingredients[idx]['unit'] ?? ''),
-                                  decoration: const InputDecoration(
-                                    labelText: 'Unidad',
-                                    hintText: 'gr, ml, unidad',
-                                  ),
-                                  textCapitalization: TextCapitalization.sentences,
-                                  onChanged: (value) {
-                                    if (value.isNotEmpty) {
-                                      final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                                      if (capitalizedValue != value) {
-                                        _ingredients[idx]['unit'] = capitalizedValue;
-                                      }
-                                    }
-                                    _ingredients[idx]['unit'] = value;
-                                  },
-                                  onEditingComplete: null,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () {
-                                  setState(() {
-                                    _ingredients.removeAt(idx);
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-
-                    const SizedBox(height: 16.0),
-                    ElevatedButton(
-                      onPressed: _addIngredient,
-                      child: Text(isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
-                    ),
-
-                    const SizedBox(height: 16.0),
-                    TextFormField(
-                      controller: _instructionsController,
-                      decoration: InputDecoration(
-                        labelText: isEnglish ? 'Preparation Instructions' : 'Instrucciones de preparación',
-                      ),
-                      maxLines: null,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return isEnglish 
-                            ? 'Instructions are required'
-                            : 'Las instrucciones son obligatorias';
-                        }
-                        return null;
-                      },
-                      textCapitalization: TextCapitalization.sentences,
-                      onChanged: (value) {
-                        if (value.isNotEmpty) {
-                          final sentences = value.split('. ');
-                          final capitalizedSentences = sentences.map((sentence) {
-                            if (sentence.isNotEmpty) {
-                              return sentence[0].toUpperCase() + sentence.substring(1);
-                            }
-                            return sentence;
-                          }).join('. ');
-                          
-                          if (capitalizedSentences != value) {
-                            _instructionsController.text = capitalizedSentences;
-                            _instructionsController.selection = TextSelection.fromPosition(
-                              TextPosition(offset: capitalizedSentences.length),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 24.0),
-                    _isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : ElevatedButton(
-                            onPressed: _createRecipe,
-                            child: Text(isEnglish ? 'Create Recipe' : 'Crear Receta'),
-                          ),
-                  ],
+                  children: _buildFormFields(),
                 ),
               ),
             )
@@ -472,223 +261,227 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                   child: Form(
                     key: _formKey,
                     child: ListView(
-                      children: [
-                        TextFormField(
-                          controller: _titleController,
-                          decoration: InputDecoration(
-                            labelText: isEnglish ? 'Recipe Title' : 'Título de la receta',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return isEnglish ? 'Title is required' : 'El título es obligatorio';
-                            }
-                            return null;
-                          },
-                          textCapitalization: TextCapitalization.sentences,
-                          onChanged: (value) {
-                            if (value.isNotEmpty) {
-                              final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                              if (capitalizedValue != value) {
-                                _titleController.text = capitalizedValue;
-                                _titleController.selection = TextSelection.fromPosition(
-                                  TextPosition(offset: capitalizedValue.length),
-                                );
-                              }
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 16.0),
-
-                        // Campo de tiempo de preparación
-                        TextFormField(
-                          controller: _preparationTimeController,
-                          decoration: InputDecoration(
-                            labelText: isEnglish ? 'Preparation Time' : 'Tiempo de preparación',
-                            hintText: isEnglish ? 'Ex: 30 minutes' : 'Ej: 30 minutos',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return isEnglish ? 'Time is required' : 'Tiempo requerido';
-                            }
-                            return null;
-                          },
-                          textCapitalization: TextCapitalization.sentences,
-                          onChanged: (value) {
-                            if (value.isNotEmpty) {
-                              final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                              if (capitalizedValue != value) {
-                                _preparationTimeController.text = capitalizedValue;
-                                _preparationTimeController.selection = TextSelection.fromPosition(
-                                  TextPosition(offset: capitalizedValue.length),
-                                );
-                              }
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 16.0),
-
-                        Card(
-                          child: ListTile(
-                            leading: const Icon(Icons.restaurant),
-                            title: Text(isEnglish ? 'People' : 'Personas'),
-                            subtitle: Text(
-                                isEnglish 
-                                  ? 'This recipe yields $_servings ${_servings <= 1 ? 'person' : 'people'}'
-                                  : 'Esta receta rinde para $_servings ${_servings <= 1 ? 'persona' : 'personas'}'),
-                            trailing: ElevatedButton(
-                              onPressed: _showServingsDialog,
-                              child: Text(isEnglish ? 'Change' : 'Cambiar'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16.0),
-
-                        // Lista de ingredientes
-                        ..._ingredients.asMap().entries.map((entry) {
-                          int idx = entry.key;
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: TextEditingController(text: _ingredients[idx]['name'] ?? ''),
-                                      decoration: InputDecoration(
-                                        labelText: isEnglish ? 'Ingredient' : 'Ingrediente',
-                                      ),
-                                      textCapitalization: TextCapitalization.sentences,
-                                      onChanged: (value) {
-                                        if (value.isNotEmpty) {
-                                          final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                                          if (capitalizedValue != value) {
-                                            _ingredients[idx]['name'] = capitalizedValue;
-                                          }
-                                        }
-                                        _ingredients[idx]['name'] = value;
-                                      },
-                                      onEditingComplete: null,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: TextEditingController(text: _ingredients[idx]['amount'] ?? '0,0'),
-                                      keyboardType: const TextInputType.numberWithOptions(
-                                          decimal: true),
-                                      decoration: InputDecoration(
-                                        labelText: isEnglish ? 'Quantity' : 'Cantidad',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      onTap: () {
-                                        final controller = TextEditingController(
-                                            text: _ingredients[idx]['amount'] ?? '0,0');
-                                        if (controller.text == '0,0') {
-                                          controller.clear();
-                                        }
-                                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                                          controller.clear();
-                                        });
-                                      },
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return isEnglish 
-                                            ? 'Please enter a quantity'
-                                            : 'Por favor ingrese una cantidad';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: TextEditingController(text: _ingredients[idx]['unit'] ?? ''),
-                                      decoration: const InputDecoration(
-                                        labelText: 'Unidad',
-                                        hintText: 'gr, ml, unidad',
-                                      ),
-                                      textCapitalization: TextCapitalization.sentences,
-                                      onChanged: (value) {
-                                        if (value.isNotEmpty) {
-                                          final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                                          if (capitalizedValue != value) {
-                                            _ingredients[idx]['unit'] = capitalizedValue;
-                                          }
-                                        }
-                                        _ingredients[idx]['unit'] = value;
-                                      },
-                                      onEditingComplete: null,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () {
-                                      setState(() {
-                                        _ingredients.removeAt(idx);
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }),
-
-                        const SizedBox(height: 16.0),
-                        ElevatedButton(
-                          onPressed: _addIngredient,
-                          child: Text(isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
-                        ),
-
-                        const SizedBox(height: 16.0),
-                        TextFormField(
-                          controller: _instructionsController,
-                          decoration: InputDecoration(
-                            labelText: isEnglish ? 'Preparation Instructions' : 'Instrucciones de preparación',
-                          ),
-                          maxLines: null,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return isEnglish 
-                                ? 'Instructions are required'
-                                : 'Las instrucciones son obligatorias';
-                            }
-                            return null;
-                          },
-                          textCapitalization: TextCapitalization.sentences,
-                          onChanged: (value) {
-                            if (value.isNotEmpty) {
-                              final sentences = value.split('. ');
-                              final capitalizedSentences = sentences.map((sentence) {
-                                if (sentence.isNotEmpty) {
-                                  return sentence[0].toUpperCase() + sentence.substring(1);
-                                }
-                                return sentence;
-                              }).join('. ');
-                              
-                              if (capitalizedSentences != value) {
-                                _instructionsController.text = capitalizedSentences;
-                                _instructionsController.selection = TextSelection.fromPosition(
-                                  TextPosition(offset: capitalizedSentences.length),
-                                );
-                              }
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 24.0),
-                        _isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : ElevatedButton(
-                                onPressed: _createRecipe,
-                                child: Text(isEnglish ? 'Create Recipe' : 'Crear Receta'),
-                              ),
-                      ],
+                      children: _buildFormFields(),
                     ),
                   ),
                 ),
               ),
             ),
     );
+  }
+
+  List<Widget> _buildFormFields() {
+    return [
+      TextFormField(
+        controller: _titleController,
+        decoration: InputDecoration(
+          labelText: isEnglish ? 'Recipe Title' : 'Título de la receta',
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return isEnglish ? 'Title is required' : 'El título es obligatorio';
+          }
+          return null;
+        },
+        textCapitalization: TextCapitalization.sentences,
+        onChanged: (value) {
+          if (value.isNotEmpty) {
+            final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+            if (capitalizedValue != value) {
+              _titleController.text = capitalizedValue;
+              _titleController.selection = TextSelection.fromPosition(
+                TextPosition(offset: capitalizedValue.length),
+              );
+            }
+          }
+        },
+      ),
+      const SizedBox(height: 16.0),
+
+      // Campo de tiempo de preparación
+      TextFormField(
+        controller: _preparationTimeController,
+        decoration: InputDecoration(
+          labelText: isEnglish ? 'Preparation Time' : 'Tiempo de preparación',
+          hintText: isEnglish ? 'Ex: 30 minutes' : 'Ej: 30 minutos',
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return isEnglish ? 'Time is required' : 'Tiempo requerido';
+          }
+          return null;
+        },
+        textCapitalization: TextCapitalization.sentences,
+        onChanged: (value) {
+          if (value.isNotEmpty) {
+            final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+            if (capitalizedValue != value) {
+              _preparationTimeController.text = capitalizedValue;
+              _preparationTimeController.selection = TextSelection.fromPosition(
+                TextPosition(offset: capitalizedValue.length),
+              );
+            }
+          }
+        },
+      ),
+      const SizedBox(height: 16.0),
+
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.restaurant),
+          title: Text(isEnglish ? 'People' : 'Personas'),
+          subtitle: Text(
+              isEnglish 
+                ? 'This recipe yields $_servings ${_servings <= 1 ? 'person' : 'people'}'
+                : 'Esta receta rinde para $_servings ${_servings <= 1 ? 'persona' : 'personas'}'),
+          trailing: ElevatedButton(
+            onPressed: _showServingsDialog,
+            child: Text(isEnglish ? 'Change' : 'Cambiar'),
+          ),
+        ),
+      ),
+      const SizedBox(height: 16.0),
+
+      // Lista de ingredientes
+      ..._ingredients.asMap().entries.map((entry) {
+        int idx = entry.key;
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: TextEditingController(text: _ingredients[idx]['name'] ?? ''),
+                    decoration: InputDecoration(
+                      labelText: isEnglish ? 'Ingredient' : 'Ingrediente',
+                    ),
+                    textCapitalization: TextCapitalization.sentences,
+                    onChanged: (value) {
+                      if (value.isNotEmpty) {
+                        final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                        if (capitalizedValue != value) {
+                          _ingredients[idx]['name'] = capitalizedValue;
+                        }
+                      }
+                      _ingredients[idx]['name'] = value;
+                    },
+                    onEditingComplete: null,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: TextEditingController(text: _ingredients[idx]['amount'] ?? '0,0'),
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    decoration: InputDecoration(
+                      labelText: isEnglish ? 'Quantity' : 'Cantidad',
+                      border: OutlineInputBorder(),
+                    ),
+                    onTap: () {
+                      final controller = TextEditingController(
+                          text: _ingredients[idx]['amount'] ?? '0,0');
+                      if (controller.text == '0,0') {
+                        controller.clear();
+                      }
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        controller.clear();
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return isEnglish 
+                          ? 'Please enter a quantity'
+                          : 'Por favor ingrese una cantidad';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: TextEditingController(text: _ingredients[idx]['unit'] ?? ''),
+                    decoration: const InputDecoration(
+                      labelText: 'Unidad',
+                      hintText: 'gr, ml, unidad',
+                    ),
+                    textCapitalization: TextCapitalization.sentences,
+                    onChanged: (value) {
+                      if (value.isNotEmpty) {
+                        final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                        if (capitalizedValue != value) {
+                          _ingredients[idx]['unit'] = capitalizedValue;
+                        }
+                      }
+                      _ingredients[idx]['unit'] = value;
+                    },
+                    onEditingComplete: null,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _ingredients.removeAt(idx);
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+
+      const SizedBox(height: 16.0),
+      ElevatedButton(
+        onPressed: _addIngredient,
+        child: Text(isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
+      ),
+
+      const SizedBox(height: 16.0),
+      TextFormField(
+        controller: _instructionsController,
+        decoration: InputDecoration(
+          labelText: isEnglish ? 'Preparation Instructions' : 'Instrucciones de preparación',
+        ),
+        maxLines: null,
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return isEnglish 
+              ? 'Instructions are required'
+              : 'Las instrucciones son obligatorias';
+          }
+          return null;
+        },
+        textCapitalization: TextCapitalization.sentences,
+        onChanged: (value) {
+          if (value.isNotEmpty) {
+            final sentences = value.split('. ');
+            final capitalizedSentences = sentences.map((sentence) {
+              if (sentence.isNotEmpty) {
+                return sentence[0].toUpperCase() + sentence.substring(1);
+              }
+              return sentence;
+            }).join('. ');
+            
+            if (capitalizedSentences != value) {
+              _instructionsController.text = capitalizedSentences;
+              _instructionsController.selection = TextSelection.fromPosition(
+                TextPosition(offset: capitalizedSentences.length),
+              );
+            }
+          }
+        },
+      ),
+      const SizedBox(height: 24.0),
+      _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ElevatedButton(
+              onPressed: _createRecipe,
+              child: Text(isEnglish ? 'Create Recipe' : 'Crear Receta'),
+            ),
+    ];
   }
 }
