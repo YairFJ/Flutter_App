@@ -167,6 +167,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   border: const OutlineInputBorder(),
                 ),
                 obscureText: true,
+                textCapitalization: TextCapitalization.none,
+                autocorrect: false,
               ),
               const SizedBox(height: 16),
               TextField(
@@ -176,6 +178,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   border: const OutlineInputBorder(),
                 ),
                 obscureText: true,
+                textCapitalization: TextCapitalization.none,
+                autocorrect: false,
               ),
               const SizedBox(height: 16),
               TextField(
@@ -185,6 +189,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                   border: const OutlineInputBorder(),
                 ),
                 obscureText: true,
+                textCapitalization: TextCapitalization.none,
+                autocorrect: false,
               ),
             ],
           ),

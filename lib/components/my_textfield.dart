@@ -38,7 +38,8 @@ class MyTextField extends StatelessWidget {
         validator: validator,
         textCapitalization: textCapitalization,
         onChanged: (value) {
-          if (autoCapitalize && value.isNotEmpty) {
+          // Solo aplicar capitalización automática si autoCapitalize es true
+          if (autoCapitalize && value.isNotEmpty && textCapitalization != TextCapitalization.none) {
             // Capitalizar la primera letra de cada oración
             final sentences = value.split('. ');
             final capitalizedSentences = sentences.map((sentence) {
@@ -64,6 +65,9 @@ class MyTextField extends StatelessWidget {
           else if (keyboardType == TextInputType.number)
             // Para campos numéricos, solo permitir números
             FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
+          else if (obscureText)
+            // Para campos de contraseña, permitir todos los caracteres excepto espacios
+            FilteringTextInputFormatter.allow(RegExp(r'[^\s]'))
           else
             // Para otros campos, solo permitir letras, números y espacios
             FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),

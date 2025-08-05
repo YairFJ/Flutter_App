@@ -367,6 +367,8 @@ class _LoginPageState extends State<LoginPage> {
                         obscureText: false,
                         keyboardType: TextInputType.emailAddress,
                         isEmailField: true,
+                        textCapitalization: TextCapitalization.none,
+                        autoCapitalize: false,
                         validator: (val) =>
                             val!.isEmpty ? (isEnglish ? 'Enter your email' : 'Ingresa tu correo') : null,
                       ),
@@ -381,6 +383,8 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _passwordController,
                         hintText: isEnglish ? 'Password' : 'Contraseña',
                         obscureText: !_isPasswordVisible,
+                        textCapitalization: TextCapitalization.none,
+                        autoCapitalize: false,
                         suffix: IconButton(
                           icon: Icon(
                             _isPasswordVisible
