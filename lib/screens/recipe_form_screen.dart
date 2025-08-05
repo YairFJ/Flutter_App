@@ -119,17 +119,25 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isTablet = screenSize.width > 600;
+    final isLargeTablet = screenSize.width > 900;
+    final maxWidth = isLargeTablet ? 800.0 : (isTablet ? 600.0 : screenSize.width);
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.recipe == null 
           ? (isEnglish ? 'New Recipe' : 'Nueva Receta') 
           : (isEnglish ? 'Edit Recipe' : 'Editar Receta')),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: EdgeInsets.all(isLargeTablet ? 32.0 : (isTablet ? 24.0 : 16.0)),
+              children: [
             TextFormField(
               initialValue: _title,
               decoration: InputDecoration(
@@ -300,6 +308,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
           ],
         ),
       ),
+    )
+    )
     );
   }
 

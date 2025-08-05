@@ -230,18 +230,26 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isTablet = screenSize.width > 600;
+    final isLargeTablet = screenSize.width > 900;
+    final maxWidth = isLargeTablet ? 800.0 : (isTablet ? 600.0 : screenSize.width);
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(isEnglish 
           ? 'Create Recipe in ${widget.group.name}'
           : 'Crear Receta en ${widget.group.name}'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Padding(
+            padding: EdgeInsets.all(isLargeTablet ? 32.0 : (isTablet ? 24.0 : 16.0)),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                children: [
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
@@ -461,6 +469,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
           ),
         ),
       ),
+    )
+    )
     );
   }
 }

@@ -97,6 +97,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final currentUser = FirebaseAuth.instance.currentUser;
     final isOwner = currentUser?.uid == widget.recipe.userId;
+    final screenSize = MediaQuery.of(context).size;
+    final isTablet = screenSize.width > 600;
+    final isLargeTablet = screenSize.width > 900;
+    final maxWidth = isLargeTablet ? 900.0 : (isTablet ? 700.0 : screenSize.width);
 
     return Scaffold(
       appBar: AppBar(
@@ -152,15 +156,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ],
         ],
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(isLargeTablet ? 32.0 : (isTablet ? 24.0 : 16.0)),
+                      child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Wrap(
@@ -401,7 +408,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: Colors.black,
-                    ),
+             ),
                   ),
                 ],
               ),
@@ -409,6 +416,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ),
         ],
       ),
+    )
+    )
     );
   }
 }
