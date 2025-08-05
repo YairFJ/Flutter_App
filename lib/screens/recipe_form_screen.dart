@@ -122,194 +122,378 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     final screenSize = MediaQuery.of(context).size;
     final isTablet = screenSize.width > 600;
     final isLargeTablet = screenSize.width > 900;
-    final maxWidth = isLargeTablet ? 800.0 : (isTablet ? 600.0 : screenSize.width);
-    
+    final isIPadPro = screenSize.width > 2000;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.recipe == null 
           ? (isEnglish ? 'New Recipe' : 'Nueva Receta') 
           : (isEnglish ? 'Edit Recipe' : 'Editar Receta')),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: EdgeInsets.all(isLargeTablet ? 32.0 : (isTablet ? 24.0 : 16.0)),
-              children: [
-            TextFormField(
-              initialValue: _title,
-              decoration: InputDecoration(
-                labelText: isEnglish ? 'Title' : 'Título',
-                border: const OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return isEnglish ? 'Please enter a title' : 'Por favor ingresa un título';
-                }
-                return null;
-              },
-              textCapitalization: TextCapitalization.sentences,
-              onChanged: (value) {
-                if (value.isNotEmpty) {
-                  // Capitalizar la primera letra
-                  final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                  if (capitalizedValue != value) {
-                    _title = capitalizedValue;
-                  }
-                }
-                _title = value;
-              },
-              onSaved: (value) => _title = value ?? '',
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              initialValue: _description,
-              decoration: InputDecoration(
-                labelText: isEnglish ? 'Description' : 'Descripción',
-                border: const OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              textCapitalization: TextCapitalization.sentences,
-              onChanged: (value) {
-                if (value.isNotEmpty) {
-                  // Capitalizar la primera letra de cada oración
-                  final sentences = value.split('. ');
-                  final capitalizedSentences = sentences.map((sentence) {
-                    if (sentence.isNotEmpty) {
-                      return sentence[0].toUpperCase() + sentence.substring(1);
-                    }
-                    return sentence;
-                  }).join('. ');
-                  
-                  if (capitalizedSentences != value) {
-                    _description = capitalizedSentences;
-                  }
-                }
-                _description = value;
-              },
-              onSaved: (value) => _description = value ?? '',
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              initialValue: _cookingTime,
-              decoration: InputDecoration(
-                labelText: isEnglish ? 'Cooking time (minutes)' : 'Tiempo de cocción (minutos)',
-                border: const OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return isEnglish ? 'Please enter the cooking time' : 'Por favor ingresa el tiempo de cocción';
-                }
-                return null;
-              },
-              textCapitalization: TextCapitalization.sentences,
-              onChanged: (value) {
-                if (value.isNotEmpty) {
-                  // Capitalizar la primera letra
-                  final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                  if (capitalizedValue != value) {
-                    _cookingTime = capitalizedValue;
-                  }
-                }
-                _cookingTime = value;
-              },
-              onSaved: (value) => _cookingTime = value ?? '0',
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _category,
-              decoration: InputDecoration(
-                labelText: isEnglish ? 'Category' : 'Categoría',
-                border: const OutlineInputBorder(),
-              ),
-              items: ['Desayuno', 'Almuerzo', 'Cena', 'Postre', 'Snack']
-                  .map((category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      ))
-                  .toList(),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return isEnglish ? 'Please select a category' : 'Por favor selecciona una categoría';
-                }
-                return null;
-              },
-              onChanged: (value) => setState(() => _category = value!),
-              onSaved: (value) => _category = value!,
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: Text(isEnglish ? 'Private Recipe' : 'Receta Privada'),
-              value: _isPrivate,
-              onChanged: (value) => setState(() => _isPrivate = value),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isEnglish ? 'Steps' : 'Pasos',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _steps.length + 1,
-              itemBuilder: (context, index) {
-                if (index == _steps.length) {
-                  return TextButton.icon(
-                    onPressed: () => setState(() => _steps.add('')),
-                    icon: const Icon(Icons.add),
-                    label: Text(isEnglish ? 'Add step' : 'Agregar paso'),
-                  );
-                }
-                return ListTile(
-                  leading: CircleAvatar(child: Text('${index + 1}')),
-                  title: TextFormField(
-                    initialValue: _steps[index],
-                    onChanged: (value) {
-                      if (value.isNotEmpty) {
-                        // Capitalizar la primera letra de cada oración
-                        final sentences = value.split('. ');
-                        final capitalizedSentences = sentences.map((sentence) {
-                          if (sentence.isNotEmpty) {
-                            return sentence[0].toUpperCase() + sentence.substring(1);
-                          }
-                          return sentence;
-                        }).join('. ');
-                        
-                        if (capitalizedSentences != value) {
-                          _steps[index] = capitalizedSentences;
+      body: isIPadPro
+          ? Padding(
+              padding: const EdgeInsets.all(64.0),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    TextFormField(
+                      initialValue: _title,
+                      decoration: InputDecoration(
+                        labelText: isEnglish ? 'Title' : 'Título',
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return isEnglish ? 'Please enter a title' : 'Por favor ingresa un título';
                         }
-                      }
-                      _steps[index] = value;
-                    },
-                    decoration: InputDecoration(
-                      hintText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
+                        return null;
+                      },
+                      textCapitalization: TextCapitalization.sentences,
+                      onChanged: (value) {
+                        if (value.isNotEmpty) {
+                          // Capitalizar la primera letra
+                          final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                          if (capitalizedValue != value) {
+                            _title = capitalizedValue;
+                          }
+                        }
+                        _title = value;
+                      },
+                      onSaved: (value) => _title = value ?? '',
                     ),
-                    textCapitalization: TextCapitalization.sentences,
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: _description,
+                      decoration: InputDecoration(
+                        labelText: isEnglish ? 'Description' : 'Descripción',
+                        border: const OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                      textCapitalization: TextCapitalization.sentences,
+                      onChanged: (value) {
+                        if (value.isNotEmpty) {
+                          // Capitalizar la primera letra de cada oración
+                          final sentences = value.split('. ');
+                          final capitalizedSentences = sentences.map((sentence) {
+                            if (sentence.isNotEmpty) {
+                              return sentence[0].toUpperCase() + sentence.substring(1);
+                            }
+                            return sentence;
+                          }).join('. ');
+                          
+                          if (capitalizedSentences != value) {
+                            _description = capitalizedSentences;
+                          }
+                        }
+                        _description = value;
+                      },
+                      onSaved: (value) => _description = value ?? '',
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: _cookingTime,
+                      decoration: InputDecoration(
+                        labelText: isEnglish ? 'Cooking time (minutes)' : 'Tiempo de cocción (minutos)',
+                        border: const OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return isEnglish ? 'Please enter the cooking time' : 'Por favor ingresa el tiempo de cocción';
+                        }
+                        return null;
+                      },
+                      textCapitalization: TextCapitalization.sentences,
+                      onChanged: (value) {
+                        if (value.isNotEmpty) {
+                          // Capitalizar la primera letra
+                          final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                          if (capitalizedValue != value) {
+                            _cookingTime = capitalizedValue;
+                          }
+                        }
+                        _cookingTime = value;
+                      },
+                      onSaved: (value) => _cookingTime = value ?? '0',
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _category,
+                      decoration: InputDecoration(
+                        labelText: isEnglish ? 'Category' : 'Categoría',
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: ['Desayuno', 'Almuerzo', 'Cena', 'Postre', 'Snack']
+                          .map((category) => DropdownMenuItem(
+                                value: category,
+                                child: Text(category),
+                              ))
+                          .toList(),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return isEnglish ? 'Please select a category' : 'Por favor selecciona una categoría';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) => setState(() => _category = value!),
+                      onSaved: (value) => _category = value!,
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: Text(isEnglish ? 'Private Recipe' : 'Receta Privada'),
+                      value: _isPrivate,
+                      onChanged: (value) => setState(() => _isPrivate = value),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      isEnglish ? 'Steps' : 'Pasos',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _steps.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == _steps.length) {
+                          return TextButton.icon(
+                            onPressed: () => setState(() => _steps.add('')),
+                            icon: const Icon(Icons.add),
+                            label: Text(isEnglish ? 'Add step' : 'Agregar paso'),
+                          );
+                        }
+                        return ListTile(
+                          leading: CircleAvatar(child: Text('${index + 1}')),
+                          title: TextFormField(
+                            initialValue: _steps[index],
+                            onChanged: (value) {
+                              if (value.isNotEmpty) {
+                                // Capitalizar la primera letra de cada oración
+                                final sentences = value.split('. ');
+                                final capitalizedSentences = sentences.map((sentence) {
+                                  if (sentence.isNotEmpty) {
+                                    return sentence[0].toUpperCase() + sentence.substring(1);
+                                  }
+                                  return sentence;
+                                }).join('. ');
+                                
+                                if (capitalizedSentences != value) {
+                                  _steps[index] = capitalizedSentences;
+                                }
+                              }
+                              _steps[index] = value;
+                            },
+                            decoration: InputDecoration(
+                              hintText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
+                            ),
+                            textCapitalization: TextCapitalization.sentences,
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => setState(() => _steps.removeAt(index)),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _saveRecipe,
+                      child: Text(isEnglish ? 'Save Recipe' : 'Guardar Receta'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isLargeTablet ? 1400.0 : (isTablet ? 1000.0 : screenSize.width),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(isLargeTablet ? 48.0 : (isTablet ? 32.0 : 16.0)),
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        TextFormField(
+                          initialValue: _title,
+                          decoration: InputDecoration(
+                            labelText: isEnglish ? 'Title' : 'Título',
+                            border: const OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return isEnglish ? 'Please enter a title' : 'Por favor ingresa un título';
+                            }
+                            return null;
+                          },
+                          textCapitalization: TextCapitalization.sentences,
+                          onChanged: (value) {
+                            if (value.isNotEmpty) {
+                              // Capitalizar la primera letra
+                              final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                              if (capitalizedValue != value) {
+                                _title = capitalizedValue;
+                              }
+                            }
+                            _title = value;
+                          },
+                          onSaved: (value) => _title = value ?? '',
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: _description,
+                          decoration: InputDecoration(
+                            labelText: isEnglish ? 'Description' : 'Descripción',
+                            border: const OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                          textCapitalization: TextCapitalization.sentences,
+                          onChanged: (value) {
+                            if (value.isNotEmpty) {
+                              // Capitalizar la primera letra de cada oración
+                              final sentences = value.split('. ');
+                              final capitalizedSentences = sentences.map((sentence) {
+                                if (sentence.isNotEmpty) {
+                                  return sentence[0].toUpperCase() + sentence.substring(1);
+                                }
+                                return sentence;
+                              }).join('. ');
+                              
+                              if (capitalizedSentences != value) {
+                                _description = capitalizedSentences;
+                              }
+                            }
+                            _description = value;
+                          },
+                          onSaved: (value) => _description = value ?? '',
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: _cookingTime,
+                          decoration: InputDecoration(
+                            labelText: isEnglish ? 'Cooking time (minutes)' : 'Tiempo de cocción (minutos)',
+                            border: const OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return isEnglish ? 'Please enter the cooking time' : 'Por favor ingresa el tiempo de cocción';
+                            }
+                            return null;
+                          },
+                          textCapitalization: TextCapitalization.sentences,
+                          onChanged: (value) {
+                            if (value.isNotEmpty) {
+                              // Capitalizar la primera letra
+                              final capitalizedValue = value[0].toUpperCase() + value.substring(1);
+                              if (capitalizedValue != value) {
+                                _cookingTime = capitalizedValue;
+                              }
+                            }
+                            _cookingTime = value;
+                          },
+                          onSaved: (value) => _cookingTime = value ?? '0',
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          value: _category,
+                          decoration: InputDecoration(
+                            labelText: isEnglish ? 'Category' : 'Categoría',
+                            border: const OutlineInputBorder(),
+                          ),
+                          items: ['Desayuno', 'Almuerzo', 'Cena', 'Postre', 'Snack']
+                              .map((category) => DropdownMenuItem(
+                                    value: category,
+                                    child: Text(category),
+                                  ))
+                              .toList(),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return isEnglish ? 'Please select a category' : 'Por favor selecciona una categoría';
+                            }
+                            return null;
+                          },
+                          onChanged: (value) => setState(() => _category = value!),
+                          onSaved: (value) => _category = value!,
+                        ),
+                        const SizedBox(height: 16),
+                        SwitchListTile(
+                          title: Text(isEnglish ? 'Private Recipe' : 'Receta Privada'),
+                          value: _isPrivate,
+                          onChanged: (value) => setState(() => _isPrivate = value),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          isEnglish ? 'Steps' : 'Pasos',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _steps.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == _steps.length) {
+                              return TextButton.icon(
+                                onPressed: () => setState(() => _steps.add('')),
+                                icon: const Icon(Icons.add),
+                                label: Text(isEnglish ? 'Add step' : 'Agregar paso'),
+                              );
+                            }
+                            return ListTile(
+                              leading: CircleAvatar(child: Text('${index + 1}')),
+                              title: TextFormField(
+                                initialValue: _steps[index],
+                                onChanged: (value) {
+                                  if (value.isNotEmpty) {
+                                    // Capitalizar la primera letra de cada oración
+                                    final sentences = value.split('. ');
+                                    final capitalizedSentences = sentences.map((sentence) {
+                                      if (sentence.isNotEmpty) {
+                                        return sentence[0].toUpperCase() + sentence.substring(1);
+                                      }
+                                      return sentence;
+                                    }).join('. ');
+                                    
+                                    if (capitalizedSentences != value) {
+                                      _steps[index] = capitalizedSentences;
+                                    }
+                                  }
+                                  _steps[index] = value;
+                                },
+                                decoration: InputDecoration(
+                                  hintText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
+                                ),
+                                textCapitalization: TextCapitalization.sentences,
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => setState(() => _steps.removeAt(index)),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _saveRecipe,
+                          child: Text(isEnglish ? 'Save Recipe' : 'Guardar Receta'),
+                        ),
+                      ],
+                    ),
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => setState(() => _steps.removeAt(index)),
-                  ),
-                );
-              },
+                ),
+              ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _saveRecipe,
-              child: Text(isEnglish ? 'Save Recipe' : 'Guardar Receta'),
-            ),
-          ],
-        ),
-      ),
-    )
-    )
     );
   }
 
