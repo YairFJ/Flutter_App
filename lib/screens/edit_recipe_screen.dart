@@ -232,49 +232,77 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final screenSize = MediaQuery.of(context).size;
+    
+    // Detección responsive mejorada
+    final isMobile = screenSize.width < 600;
+    final isTablet = screenSize.width >= 600 && screenSize.width < 1200;
+    final isLargeTablet = screenSize.width >= 1200 && screenSize.width < 2000;
+    final isUltraWide = screenSize.width >= 2000;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEnglish ? 'Edit Recipe' : 'Editar Receta'),
+        title: Text(
+          isEnglish ? 'Edit Recipe' : 'Editar Receta',
+          style: TextStyle(
+            fontSize: isUltraWide ? 24 : (isLargeTablet ? 22 : (isTablet ? 20 : 18)),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: const Color(0xFF96B4D8),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 16.0 : (isTablet ? 32.0 : (isLargeTablet ? 48.0 : 64.0)),
+          vertical: 32.0,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
                 TextFormField(
                   controller: _titleController,
                   style: TextStyle(
                     color: isDarkMode ? Colors.white : Colors.black,
+                    fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
                   ),
                   decoration: InputDecoration(
                     labelText: isEnglish ? 'Title' : 'Título',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+                    ),
                     helperText: isEnglish
                         ? 'Between 3 and 100 characters'
                         : 'Entre 3 y 100 caracteres',
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                      vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+                    ),
                   ),
                   validator: _validateTitle,
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 16 : 16))),
                 TextFormField(
                   controller: _descriptionController,
                   style: TextStyle(
                     color: isDarkMode ? Colors.white : Colors.black,
+                    fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
                   ),
                   decoration: InputDecoration(
                     labelText: isEnglish ? 'Description' : 'Descripción',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+                    ),
                     helperText: isEnglish
                         ? 'Maximum 500 characters'
                         : 'Máximo 500 caracteres',
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                      vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+                    ),
                   ),
-                  maxLines: 3,
+                  maxLines: isUltraWide ? 4 : (isLargeTablet ? 3 : 3),
                   validator: _validateDescription,
                   textCapitalization: TextCapitalization.sentences,
                 ),
@@ -283,12 +311,19 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   controller: _cookingTimeController,
                   style: TextStyle(
                     color: isDarkMode ? Colors.white : Colors.black,
+                    fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
                   ),
                   decoration: InputDecoration(
                     labelText: isEnglish
                         ? 'Preparation time (minutes)'
                         : 'Tiempo de preparación (minutos)',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                      vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                   validator: _validateCookingTime,
@@ -435,14 +470,19 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                 ElevatedButton(
                   onPressed: _updateRecipe,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15, horizontal: 30),
+                    padding: EdgeInsets.symmetric(
+                      vertical: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 15)),
+                      horizontal: isUltraWide ? 40 : (isLargeTablet ? 35 : (isTablet ? 30 : 30)),
+                    ),
                     backgroundColor: Theme.of(context).primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+                    ),
                   ),
                   child: Text(
                     isEnglish ? 'Save Changes' : 'Guardar Cambios',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 16)),
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -452,25 +492,31 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             ),
           ),
         ),
-      ),
+      
     );
   }
 
   Widget _buildIngredientsList() {
+    final screenSize = MediaQuery.of(context).size;
+    final isMobile = screenSize.width < 600;
+    final isTablet = screenSize.width >= 600 && screenSize.width < 1200;
+    final isLargeTablet = screenSize.width >= 1200 && screenSize.width < 2000;
+    final isUltraWide = screenSize.width >= 2000;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           isEnglish ? 'Ingredients' : 'Ingredientes',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: isUltraWide ? 22 : (isLargeTablet ? 20 : (isTablet ? 18 : 18)),
             fontWeight: FontWeight.bold,
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.white
                 : Colors.black,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 8))),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -478,12 +524,34 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
           itemBuilder: (context, index) {
             final ingredient = _ingredients[index];
             return Card(
-              margin: const EdgeInsets.only(bottom: 8),
+              margin: EdgeInsets.only(bottom: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 8))),
+              elevation: isUltraWide ? 4 : (isLargeTablet ? 3 : (isTablet ? 2 : 2)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+              ),
               child: ListTile(
-                title: Text(ingredient.name),
-                subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                  vertical: isUltraWide ? 8 : (isLargeTablet ? 6 : (isTablet ? 4 : 4)),
+                ),
+                title: Text(
+                  ingredient.name,
+                  style: TextStyle(
+                    fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  '${ingredient.quantity} ${ingredient.unit}',
+                  style: TextStyle(
+                    fontSize: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 13 : 12)),
+                  ),
+                ),
                 trailing: IconButton(
-                  icon: const Icon(Icons.remove_circle_outline),
+                  icon: Icon(
+                    Icons.remove_circle_outline,
+                    size: isUltraWide ? 28 : (isLargeTablet ? 24 : (isTablet ? 22 : 20)),
+                  ),
                   onPressed: () => _removeIngredient(index),
                   color: Colors.red,
                 ),
@@ -491,66 +559,107 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             );
           },
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 8))),
         ElevatedButton(
           onPressed: _addIngredient,
-          child: Text(isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes'),
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+              horizontal: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 16 : 14)),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+            ),
+          ),
+          child: Text(
+            isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes',
+            style: TextStyle(
+              fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildStepsList() {
+    final screenSize = MediaQuery.of(context).size;
+    final isMobile = screenSize.width < 600;
+    final isTablet = screenSize.width >= 600 && screenSize.width < 1200;
+    final isLargeTablet = screenSize.width >= 1200 && screenSize.width < 2000;
+    final isUltraWide = screenSize.width >= 2000;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           isEnglish ? 'Steps' : 'Pasos',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: isUltraWide ? 22 : (isLargeTablet ? 20 : (isTablet ? 18 : 18)),
             fontWeight: FontWeight.bold,
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.white
                 : Colors.black,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 8))),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _stepControllers.length,
           itemBuilder: (context, index) {
-            return Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _stepControllers[index],
-                    decoration: InputDecoration(
-                      labelText:
-                          isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
+            return Padding(
+              padding: EdgeInsets.only(bottom: isUltraWide ? 16 : (isLargeTablet ? 12 : (isTablet ? 10 : 8))),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _stepControllers[index],
+                      style: TextStyle(
+                        fontSize: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 13 : 12)),
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+                          vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+                        ),
+                      ),
+                      maxLines: isUltraWide ? 3 : (isLargeTablet ? 2 : 2),
                     ),
-                    maxLines: 2,
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    setState(() {
-                      _stepControllers.add(TextEditingController());
-                    });
-                  },
-                ),
-                if (_stepControllers.length > 1)
+                  SizedBox(width: isUltraWide ? 8 : (isLargeTablet ? 6 : (isTablet ? 4 : 4))),
                   IconButton(
-                    icon: const Icon(Icons.remove),
+                    icon: Icon(
+                      Icons.add,
+                      size: isUltraWide ? 28 : (isLargeTablet ? 24 : (isTablet ? 22 : 20)),
+                    ),
                     onPressed: () {
                       setState(() {
-                        _stepControllers[index].dispose();
-                        _stepControllers.removeAt(index);
+                        _stepControllers.add(TextEditingController());
                       });
                     },
                   ),
-              ],
+                  if (_stepControllers.length > 1)
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove,
+                        size: isUltraWide ? 28 : (isLargeTablet ? 24 : (isTablet ? 22 : 20)),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _stepControllers[index].dispose();
+                          _stepControllers.removeAt(index);
+                        });
+                      },
+                    ),
+                ],
+              ),
             );
           },
         ),

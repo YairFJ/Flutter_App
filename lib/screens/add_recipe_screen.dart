@@ -282,54 +282,55 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final screenSize = MediaQuery.of(context).size;
-    final isTablet = screenSize.width > 600;
-    final isLargeTablet = screenSize.width > 900;
-    final isIPadPro = screenSize.width > 2000;
+    
+    // Detección responsive mejorada
+    final isMobile = screenSize.width < 600;
+    final isTablet = screenSize.width >= 600 && screenSize.width < 1200;
+    final isLargeTablet = screenSize.width >= 1200 && screenSize.width < 2000;
+    final isUltraWide = screenSize.width >= 2000;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isEnglish ? 'New Recipe' : 'Nueva Receta'),
       ),
-      body: isIPadPro
-          ? SingleChildScrollView(
-              padding: const EdgeInsets.all(64.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: _buildFormFields(isDarkMode),
-                ),
-              ),
-            )
-          : Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: isLargeTablet ? 1400.0 : (isTablet ? 1000.0 : screenSize.width),
-                ),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(isLargeTablet ? 48.0 : (isTablet ? 32.0 : 16.0)),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: _buildFormFields(isDarkMode),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 16.0 : (isTablet ? 32.0 : (isLargeTablet ? 48.0 : 64.0)),
+          vertical: 32.0,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: _buildFormFields(isDarkMode, screenSize),
+          ),
+        ),
+      ),
     );
   }
 
-  List<Widget> _buildFormFields(bool isDarkMode) {
+  List<Widget> _buildFormFields(bool isDarkMode, Size screenSize) {
+    // Detección responsive mejorada
+    final isMobile = screenSize.width < 600;
+    final isTablet = screenSize.width >= 600 && screenSize.width < 1200;
+    final isLargeTablet = screenSize.width >= 1200 && screenSize.width < 2000;
+    final isUltraWide = screenSize.width >= 2000;
     return [
       TextFormField(
         controller: _titleController,
         style: TextStyle(
           color: isDarkMode ? Colors.white : Colors.black,
+          fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
         ),
         decoration: InputDecoration(
           labelText: isEnglish ? 'Title' : 'Título',
-          border: OutlineInputBorder(),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+          ),
           helperText: isEnglish ? 'Between 3 and 100 characters' : 'Entre 3 y 100 caracteres',
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+            vertical: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+          ),
         ),
         validator: _validateTitle,
         textCapitalization: TextCapitalization.sentences,
@@ -348,18 +349,25 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
         ],
       ),
-      const SizedBox(height: 16),
+      SizedBox(height: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 18 : 16))),
       TextFormField(
         controller: _descriptionController,
         style: TextStyle(
           color: isDarkMode ? Colors.white : Colors.black,
+          fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
         ),
         decoration: InputDecoration(
           labelText: isEnglish ? 'Description' : 'Descripción',
-          border: OutlineInputBorder(),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+          ),
           helperText: isEnglish ? 'Maximum 500 characters' : 'Máximo 500 caracteres',
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+            vertical: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+          ),
         ),
-        maxLines: 3,
+        maxLines: isUltraWide ? 4 : (isLargeTablet ? 3 : 3),
         validator: _validateDescription,
         textCapitalization: TextCapitalization.sentences,
         onChanged: (value) {
@@ -384,16 +392,23 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]')),
         ],
       ),
-      const SizedBox(height: 16),
+      SizedBox(height: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 18 : 16))),
       TextFormField(
         controller: _cookingTimeController,
         style: TextStyle(
           color: isDarkMode ? Colors.white : Colors.black,
+          fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
         ),
         decoration: InputDecoration(
           labelText: isEnglish ? 'Preparation Time (minutes)' : 'Tiempo de preparación (minutos)',
-          border: OutlineInputBorder(),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+          ),
           helperText: isEnglish ? 'Positive integer (maximum 1440)' : 'Número entero positivo (máximo 1440)',
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+            vertical: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+          ),
         ),
         keyboardType: TextInputType.number,
         validator: _validateCookingTime,
@@ -401,7 +416,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
         ],
       ),
-      const SizedBox(height: 16),
+      SizedBox(height: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 18 : 16))),
       // Rendimiento
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,9 +425,19 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             flex: 2,
             child: TextFormField(
               controller: _servingSizeController,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+                fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
+              ),
               decoration: InputDecoration(
                 labelText: isEnglish ? 'Yield' : 'Rendimiento',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                  vertical: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                ),
               ),
               keyboardType: const TextInputType.numberWithOptions(
                   decimal: true),
@@ -422,19 +447,34 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: isUltraWide ? 16 : (isLargeTablet ? 12 : (isTablet ? 10 : 8))),
           Expanded(
             flex: 1,
             child: DropdownButtonFormField<String>(
               value: _servingUnit,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+                fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
+              ),
               decoration: InputDecoration(
                 labelText: isEnglish ? 'Unit' : 'Unidad',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                  vertical: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                ),
               ),
               items: _todasLasUnidades.map((String unidad) {
                 return DropdownMenuItem<String>(
                   value: unidad,
-                  child: Text(unidad),
+                  child: Text(
+                    unidad,
+                    style: TextStyle(
+                      fontSize: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 13 : 12)),
+                    ),
+                  ),
                 );
               }).toList(),
               onChanged: (String? value) {
@@ -448,14 +488,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
         ],
       ),
-      const SizedBox(height: 16),
+      SizedBox(height: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 18 : 16))),
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+          vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+        ),
         decoration: BoxDecoration(
           border: Border.all(
             color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
+            width: isUltraWide ? 2 : (isLargeTablet ? 1.5 : 1),
           ),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
           color: isDarkMode ? Colors.grey[800] : Colors.white,
         ),
         child: DropdownButtonHideUnderline(
@@ -468,11 +512,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 isDarkMode ? Colors.grey[800] : Colors.white,
             style: TextStyle(
               color: isDarkMode ? Colors.white : Colors.black,
+              fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
             ),
             hint: Text(
               isEnglish ? 'Select a category' : 'Selecciona una categoría',
               style: TextStyle(
                 color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
               ),
             ),
             items: RecipeCategories.categories.map((String category) {
@@ -484,14 +530,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       RecipeCategories.getIconForCategory(category),
                       color: RecipeCategories.getColorForCategory(
                           category),
-                      size: 24,
+                      size: isUltraWide ? 28 : (isLargeTablet ? 24 : (isTablet ? 22 : 20)),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: isUltraWide ? 16 : (isLargeTablet ? 12 : (isTablet ? 10 : 8))),
                     Text(
                       RecipeCategories.getTranslatedCategory(category, isEnglish),
                       style: TextStyle(
-                        color:
-                            isDarkMode ? Colors.white : Colors.black,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
                       ),
                     ),
                   ],
@@ -508,16 +554,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
         ),
       ),
-      const SizedBox(height: 24),
-      _buildIngredientsList(),
-      const SizedBox(height: 24),
-      _buildStepsList(),
-      const SizedBox(height: 24),
+      SizedBox(height: isUltraWide ? 32 : (isLargeTablet ? 28 : (isTablet ? 24 : 20))),
+      _buildIngredientsList(screenSize),
+      SizedBox(height: isUltraWide ? 32 : (isLargeTablet ? 28 : (isTablet ? 24 : 20))),
+      _buildStepsList(screenSize),
+      SizedBox(height: isUltraWide ? 32 : (isLargeTablet ? 28 : (isTablet ? 24 : 20))),
       SwitchListTile(
         title: Text(
           isEnglish ? 'Private Recipe' : 'Receta Privada',
           style: TextStyle(
             color: isDarkMode ? Colors.white : Colors.black,
+            fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 14)),
+            fontWeight: FontWeight.w500,
           ),
         ),
         subtitle: Text(
@@ -526,7 +574,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               : isEnglish ? 'Everyone can see this recipe' : 'Todos podrán ver esta receta',
           style: TextStyle(
             color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-            fontSize: 12,
+            fontSize: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 13 : 12)),
           ),
         ),
         value: _isPrivate,
@@ -536,19 +584,28 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           });
         },
         activeColor: Theme.of(context).primaryColor,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+          vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+        ),
       ),
-      const Divider(),
+      SizedBox(height: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 18 : 16))),
       ElevatedButton(
         onPressed: _saveRecipe,
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-              vertical: 15, horizontal: 30),
+          padding: EdgeInsets.symmetric(
+            vertical: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 15)),
+            horizontal: isUltraWide ? 40 : (isLargeTablet ? 36 : (isTablet ? 32 : 30)),
+          ),
           backgroundColor: Theme.of(context).primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+          ),
         ),
         child: Text(
           isEnglish ? 'Save Recipe' : 'Guardar Receta',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 14)),
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -557,21 +614,26 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     ];
   }
 
-  Widget _buildIngredientsList() {
+  Widget _buildIngredientsList(Size screenSize) {
+    // Detección responsive mejorada
+    final isMobile = screenSize.width < 600;
+    final isTablet = screenSize.width >= 600 && screenSize.width < 1200;
+    final isLargeTablet = screenSize.width >= 1200 && screenSize.width < 2000;
+    final isUltraWide = screenSize.width >= 2000;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           isEnglish ? 'Ingredients' : 'Ingredientes',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: isUltraWide ? 24 : (isLargeTablet ? 22 : (isTablet ? 20 : 18)),
             fontWeight: FontWeight.bold,
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.white
                 : Colors.black,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 6))),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -579,99 +641,161 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           itemBuilder: (context, index) {
             final ingredient = _ingredients[index];
             return Card(
-              margin: const EdgeInsets.only(bottom: 8),
+              margin: EdgeInsets.only(bottom: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 6))),
+              elevation: isUltraWide ? 4 : (isLargeTablet ? 3 : 2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+              ),
               child: ListTile(
-                title: Text(ingredient.name),
-                subtitle: Text('${ingredient.quantity} ${ingredient.unit}'),
+                title: Text(
+                  ingredient.name,
+                  style: TextStyle(
+                    fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  '${ingredient.quantity} ${ingredient.unit}',
+                  style: TextStyle(
+                    fontSize: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 13 : 12)),
+                  ),
+                ),
                 trailing: IconButton(
-                  icon: const Icon(Icons.remove_circle_outline),
+                  icon: Icon(
+                    Icons.remove_circle_outline,
+                    size: isUltraWide ? 28 : (isLargeTablet ? 24 : (isTablet ? 22 : 20)),
+                  ),
                   onPressed: () => _removeIngredient(index),
                   color: Colors.red,
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                  vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
                 ),
               ),
             );
           },
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 6))),
         ElevatedButton(
           onPressed: _addIngredient,
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 16 : 12)),
+              vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+            ),
+          ),
           child: Text(
             isEnglish ? 'Manage Ingredients' : 'Gestionar Ingredientes',
+            style: TextStyle(
+              fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStepsList() {
+  Widget _buildStepsList(Size screenSize) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // Detección responsive mejorada
+    final isMobile = screenSize.width < 600;
+    final isTablet = screenSize.width >= 600 && screenSize.width < 1200;
+    final isLargeTablet = screenSize.width >= 1200 && screenSize.width < 2000;
+    final isUltraWide = screenSize.width >= 2000;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           isEnglish ? 'Steps' : 'Pasos',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: isUltraWide ? 24 : (isLargeTablet ? 22 : (isTablet ? 20 : 18)),
             fontWeight: FontWeight.bold,
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.white
                 : Colors.black,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 6))),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _stepControllers.length,
           itemBuilder: (context, index) {
-            return Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _stepControllers[index],
-                    decoration: InputDecoration(
-                      labelText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
-                    ),
-                    maxLines: 2,
-                    textCapitalization: TextCapitalization.sentences,
-                    onChanged: (value) {
-                      if (value.isNotEmpty) {
-                        // Capitalizar la primera letra de cada oración
-                        final sentences = value.split('. ');
-                        final capitalizedSentences = sentences.map((sentence) {
-                          if (sentence.isNotEmpty) {
-                            return sentence[0].toUpperCase() + sentence.substring(1);
+            return Padding(
+              padding: EdgeInsets.only(bottom: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10))),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _stepControllers[index],
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 15 : 14)),
+                      ),
+                      decoration: InputDecoration(
+                        labelText: isEnglish ? 'Step ${index + 1}' : 'Paso ${index + 1}',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(isUltraWide ? 12 : (isLargeTablet ? 10 : 8)),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                          vertical: isUltraWide ? 20 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                        ),
+                      ),
+                      maxLines: isUltraWide ? 3 : (isLargeTablet ? 2 : 2),
+                      textCapitalization: TextCapitalization.sentences,
+                      onChanged: (value) {
+                        if (value.isNotEmpty) {
+                          // Capitalizar la primera letra de cada oración
+                          final sentences = value.split('. ');
+                          final capitalizedSentences = sentences.map((sentence) {
+                            if (sentence.isNotEmpty) {
+                              return sentence[0].toUpperCase() + sentence.substring(1);
+                            }
+                            return sentence;
+                          }).join('. ');
+                          
+                          if (capitalizedSentences != value) {
+                            _stepControllers[index].text = capitalizedSentences;
+                            _stepControllers[index].selection = TextSelection.fromPosition(
+                              TextPosition(offset: capitalizedSentences.length),
+                            );
                           }
-                          return sentence;
-                        }).join('. ');
-                        
-                        if (capitalizedSentences != value) {
-                          _stepControllers[index].text = capitalizedSentences;
-                          _stepControllers[index].selection = TextSelection.fromPosition(
-                            TextPosition(offset: capitalizedSentences.length),
-                          );
                         }
-                      }
-                    },
+                      },
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    setState(() {
-                      _stepControllers.add(TextEditingController());
-                    });
-                  },
-                ),
-                if (_stepControllers.length > 1)
+                  SizedBox(width: isUltraWide ? 12 : (isLargeTablet ? 10 : (isTablet ? 8 : 6))),
                   IconButton(
-                    icon: const Icon(Icons.remove),
+                    icon: Icon(
+                      Icons.add,
+                      size: isUltraWide ? 28 : (isLargeTablet ? 24 : (isTablet ? 22 : 20)),
+                    ),
                     onPressed: () {
                       setState(() {
-                        _stepControllers.removeAt(index);
+                        _stepControllers.add(TextEditingController());
                       });
                     },
                   ),
-              ],
+                  if (_stepControllers.length > 1)
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove,
+                        size: isUltraWide ? 28 : (isLargeTablet ? 24 : (isTablet ? 22 : 20)),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _stepControllers.removeAt(index);
+                        });
+                      },
+                    ),
+                ],
+              ),
             );
           },
         ),
