@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../models/recipe.dart';
 import '../constants/categories.dart';
 import '../screens/recipe_detail_screen.dart';
+import '../providers/auth_provider.dart' as app_auth;
+import '../widgets/guest_restriction_dialog.dart';
 import 'dart:async';
 
 class RecipesPage extends StatefulWidget {
@@ -347,6 +350,19 @@ class _RecipesPageState extends State<RecipesPage> {
 
   Future<void> _toggleFavorite(BuildContext context, Recipe recipe) async {
     final currentUser = FirebaseAuth.instance.currentUser;
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    
+    // Verificar si está en modo invitado
+    if (authProvider.isGuestMode) {
+      showDialog(
+        context: context,
+        builder: (context) => GuestRestrictionDialog(
+          action: isEnglish ? 'save favorites' : 'guardar favoritos',
+        ),
+      );
+      return;
+    }
+    
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

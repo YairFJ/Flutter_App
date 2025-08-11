@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../screens/edit_recipe_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../models/recipe.dart';
+import '../screens/edit_recipe_screen.dart';
+import '../providers/auth_provider.dart' as app_auth;
+import '../widgets/guest_restriction_dialog.dart';
 
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
@@ -69,6 +72,19 @@ class RecipeCard extends StatelessWidget {
 
   Future<void> _toggleFavorite(BuildContext context) async {
     final currentUser = FirebaseAuth.instance.currentUser;
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    
+    // Verificar si está en modo invitado
+    if (authProvider.isGuestMode) {
+      showDialog(
+        context: context,
+        builder: (context) => GuestRestrictionDialog(
+          action: 'guardar favoritos',
+        ),
+      );
+      return;
+    }
+    
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -251,6 +267,19 @@ class RecipeCard extends StatelessWidget {
                         color: Colors.blue,
                       ),
                       onPressed: () {
+                        final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                        
+                        // Verificar si está en modo invitado
+                        if (authProvider.isGuestMode) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => GuestRestrictionDialog(
+                              action: 'editar recetas',
+                            ),
+                          );
+                          return;
+                        }
+                        
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -276,7 +305,22 @@ class RecipeCard extends StatelessWidget {
                         size: 20,
                         color: Colors.red,
                       ),
-                      onPressed: () => _deleteRecipe(context),
+                      onPressed: () {
+                        final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                        
+                        // Verificar si está en modo invitado
+                        if (authProvider.isGuestMode) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => GuestRestrictionDialog(
+                              action: 'eliminar recetas',
+                            ),
+                          );
+                          return;
+                        }
+                        
+                        _deleteRecipe(context);
+                      },
                     ),
                   ),
                 ],

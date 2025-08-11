@@ -7,10 +7,15 @@ class AuthProvider with ChangeNotifier {
   User? _user;
   bool _isLoading = false;
   String? _error;
+  bool _isGuestMode = false;
 
   AuthProvider() {
     _authService.authStateChanges.listen((User? user) {
       _user = user;
+      // Si no hay usuario, no estamos en modo invitado
+      if (user == null) {
+        _isGuestMode = false;
+      }
       notifyListeners();
     });
   }
@@ -19,6 +24,24 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _user != null;
+  bool get isGuestMode => _isGuestMode;
+
+  // Método para entrar en modo invitado
+  void enterGuestMode() {
+    _isGuestMode = true;
+    notifyListeners();
+  }
+
+  // Método para salir del modo invitado
+  void exitGuestMode() {
+    _isGuestMode = false;
+    notifyListeners();
+  }
+
+  // Método para verificar si el usuario puede realizar acciones que requieren autenticación
+  bool canPerformAction() {
+    return isAuthenticated && !_isGuestMode;
+  }
 
   Future<void> register(String email, String password, String name) async {
     try {

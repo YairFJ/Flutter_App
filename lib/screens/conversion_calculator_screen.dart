@@ -85,7 +85,7 @@ class _ConversionCalculatorScreenState
     'Pinta',
     'Cuarto galon',
     'Galon',
-    //'Unidad',
+    'Unidad',
   ];
 
   // Mapa de conversión de unidades antiguas a nuevas

@@ -18,6 +18,7 @@ import 'pages/profile_page.dart';
 import 'Comunity/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
+import 'providers/auth_provider.dart' as app_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'utils/firestore_cleanup.dart';
 
@@ -59,6 +60,7 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider.value(value: _languageService),
         ChangeNotifierProvider.value(value: _themeService),
+        ChangeNotifierProvider.value(value: app_auth.AuthProvider()),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
@@ -113,74 +115,89 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          // Loader de pantalla completa
-          return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: const Center(
-              child: CircularProgressIndicator(),
-            ),
+    return Consumer<app_auth.AuthProvider>(
+      builder: (context, authProvider, child) {
+        // Si estamos en modo invitado, permitir acceso directo
+        if (authProvider.isGuestMode) {
+          print('AuthWrapper: Modo invitado activado, accediendo a HomeScreen');
+          return HomeScreen(
+            userId: 'guest',
+            userEmail: 'guest@example.com',
+            userName: 'Invitado',
+            toggleTheme: Provider.of<ThemeService>(context, listen: false).toggleTheme,
           );
         }
 
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: \\${snapshot.error}'));
-        }
+        return StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              // Loader de pantalla completa
+              return Scaffold(
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                body: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
 
-        final user = snapshot.data;
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
 
-        // Si no hay usuario, redirigir al login
-        if (user == null) {
-          print('AuthWrapper: Usuario no autenticado, redirigiendo a login');
-          return const LoginPage();
-        }
+            final user = snapshot.data;
 
-        // Verificar si el email está verificado para usuarios de email/password
-        // Los usuarios de Google ya vienen verificados
-        if (!user.emailVerified &&
-            !user.providerData.any((provider) => provider.providerId == 'google.com')) {
-          
-          // Verificar en Firestore si el usuario está verificado
-          return StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                // Loader de pantalla completa mientras se resuelve Firestore
-                return Scaffold(
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  body: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-              if (snapshot.hasData) {
-                final userData = snapshot.data!.data() as Map<String, dynamic>?;
-                final isVerified = userData?['isEmailVerified'] as bool? ?? false;
-                if (isVerified) {
-                  print('AuthWrapper: Usuario verificado en Firestore, accediendo a HomeScreen');
-                  return HomeScreen(
-                    userId: user.uid,
-                    userEmail: user.email ?? 'No disponible',
-                    userName: user.displayName ?? 'Usuario',
-                    toggleTheme: Provider.of<ThemeService>(context, listen: false).toggleTheme,
-                  );
-                }
-              }
-              print('AuthWrapper: Usuario no verificado, redirigiendo a verificación');
-              return const VerificationScreen();
-            },
-          );
-        }
+            // Si no hay usuario, redirigir al login
+            if (user == null) {
+              print('AuthWrapper: Usuario no autenticado, redirigiendo a login');
+              return const LoginPage();
+            }
 
-        print('AuthWrapper: Usuario autenticado y verificado, accediendo a HomeScreen');
-        return HomeScreen(
-          userId: user.uid,
-          userEmail: user.email ?? 'No disponible',
-          userName: user.displayName ?? 'Usuario',
-          toggleTheme: Provider.of<ThemeService>(context, listen: false).toggleTheme,
+            // Verificar si el email está verificado para usuarios de email/password
+            // Los usuarios de Google ya vienen verificados
+            if (!user.emailVerified &&
+                !user.providerData.any((provider) => provider.providerId == 'google.com')) {
+              
+              // Verificar en Firestore si el usuario está verificado
+              return StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    // Loader de pantalla completa mientras se resuelve Firestore
+                    return Scaffold(
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                      body: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasData) {
+                    final userData = snapshot.data!.data() as Map<String, dynamic>?;
+                    final isVerified = userData?['isEmailVerified'] as bool? ?? false;
+                    if (isVerified) {
+                      print('AuthWrapper: Usuario verificado en Firestore, accediendo a HomeScreen');
+                      return HomeScreen(
+                        userId: user.uid,
+                        userEmail: user.email ?? 'No disponible',
+                        userName: user.displayName ?? 'Usuario',
+                        toggleTheme: Provider.of<ThemeService>(context, listen: false).toggleTheme,
+                      );
+                    }
+                  }
+                  print('AuthWrapper: Usuario no verificado, redirigiendo a verificación');
+                  return const VerificationScreen();
+                },
+              );
+            }
+
+            print('AuthWrapper: Usuario autenticado y verificado, accediendo a HomeScreen');
+            return HomeScreen(
+              userId: user.uid,
+              userEmail: user.email ?? 'No disponible',
+              userName: user.displayName ?? 'Usuario',
+              toggleTheme: Provider.of<ThemeService>(context, listen: false).toggleTheme,
+            );
+          },
         );
       },
     );
@@ -276,6 +293,50 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _exitGuestMode() {
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    authProvider.exitGuestMode();
+    
+    // Mostrar mensaje informativo
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isEnglish 
+            ? 'You have exited guest mode. Please sign in to access all features.'
+            : 'Has salido del modo invitado. Por favor, inicia sesión para acceder a todas las funciones.'
+        ),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+    
+    // Redirigir al login
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+
+  void _showGuestRestrictionDialog(BuildContext context, String feature) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(isEnglish ? 'Guest Mode Restriction' : 'Restricción de Modo Invitado'),
+          content: Text(isEnglish 
+            ? 'You are currently in guest mode. You cannot access the $feature feature directly. Please sign in to access all features.'
+            : 'Actualmente estás en modo invitado. No puedes acceder a la función $feature directamente. Por favor, inicia sesión para acceder a todas las funciones.'
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(isEnglish ? 'OK' : 'Aceptar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     print('HomeScreen build llamado');
@@ -310,6 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
+          
           IconButton(
             icon: Text(
               isEnglish ? 'EN' : 'ES',
@@ -329,6 +391,16 @@ class _HomeScreenState extends State<HomeScreen> {
             tooltip:
                 isDarkMode ? 'Cambiar a modo claro' : 'Switch to dark mode',
           ),
+          // Botón para salir del modo invitado
+          if (widget.userId == 'guest')
+            IconButton(
+              icon: const Icon(
+                Icons.logout,
+                color: Colors.white,
+              ),
+              onPressed: _exitGuestMode,
+              tooltip: isEnglish ? 'Exit Guest Mode' : 'Salir del Modo Invitado',
+            ),
         ],
       ),
       drawer: Drawer(
@@ -368,8 +440,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.person),
-              title: Text(isEnglish ? 'My Profile' : 'Mi Perfil'),
+              title: Text(isEnglish ? 'Profile' : 'Perfil'),
               onTap: () {
+                // Verificar si está en modo invitado
+                if (widget.userId == 'guest') {
+                  Navigator.pop(context);
+                  _showGuestRestrictionDialog(context, isEnglish ? 'access profile' : 'acceder al perfil');
+                  return;
+                }
+                
                 Navigator.pop(context);
                 Navigator.push(
                   context,
@@ -386,6 +465,13 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.group),
               title: Text(isEnglish ? 'Communities' : 'Comunidades'),
               onTap: () {
+                // Verificar si está en modo invitado
+                if (widget.userId == 'guest') {
+                  Navigator.pop(context);
+                  _showGuestRestrictionDialog(context, isEnglish ? 'access communities' : 'acceder a comunidades');
+                  return;
+                }
+                
                 Navigator.pop(context);
                 Navigator.push(
                   context,
@@ -395,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-            if (FirebaseAuth.instance.currentUser != null) ...[
+            if (FirebaseAuth.instance.currentUser != null && widget.userId != 'guest') ...[
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.exit_to_app),
@@ -439,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: _selectedIndex == 0
+      floatingActionButton: _selectedIndex == 0 && widget.userId != 'guest'
           ? FloatingActionButton(
               onPressed: _navigateToAddRecipe,
               backgroundColor: primaryColor,

@@ -7,10 +7,8 @@ import 'package:flutter_app/services/auth_service.dart';
 import 'package:flutter_app/services/language_service.dart';
 import 'package:provider/provider.dart';
 import 'package:logging/logging.dart';
-import 'package:flutter_app/pages/stopwatch_page.dart';
-import 'package:flutter_app/widgetsOut/timer_login.dart' as login_widgets;
-import 'package:flutter_app/widgetsOut/coversion_login_page.dart' as login_widgets;
-import 'package:flutter_app/widgetsOut/stopwatch_login.dart' as login_widgets;
+import 'package:flutter_app/providers/auth_provider.dart' as app_auth;
+
 final _logger = Logger('LoginPage');
 
 class LoginPage extends StatefulWidget {
@@ -277,6 +275,31 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _enterGuestMode() {
+    final languageService = Provider.of<LanguageService>(context, listen: false);
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    final isEnglish = languageService.isEnglish;
+    
+    // Activar modo invitado
+    authProvider.enterGuestMode();
+    
+    // Mostrar mensaje informativo
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isEnglish 
+            ? 'You are now in guest mode. You can view recipes but cannot create, edit, or delete them.'
+            : 'Ahora estás en modo invitado. Puedes ver recetas pero no crear, editar o borrarlas.'
+        ),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    // Navegar a la aplicación principal en modo invitado
+    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final languageService = Provider.of<LanguageService>(context);
@@ -440,6 +463,34 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
 
+                    const SizedBox(height: 15),
+
+                    // guest mode button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : _enterGuestMode,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white, width: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            isEnglish ? 'Enter as Guest' : 'Entrar como Invitado',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
                     const SizedBox(height: 30),
 
                     // or continue with
@@ -526,88 +577,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             // Botón flotante en la esquina inferior derecha
-            Positioned(
-              bottom: 8,
-              right: 24,
-              child: FloatingActionButton(
-                heroTag: 'quick_tools',
-                backgroundColor: Colors.white,
-                mini: true,
-                shape: const CircleBorder(),
-                child: const Icon(Icons.menu, color: Color(0xFF96B4D8), size: 22),
-                onPressed: () async {
-                  final languageService = Provider.of<LanguageService>(context, listen: false);
-                  final isEnglish = languageService.isEnglish;
-                  final mainContext = context;
-                  showModalBottomSheet(
-                    context: context,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    builder: (context) {
-                      return SafeArea(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              leading: const Icon(Icons.timer, color: Color(0xFF96B4D8)),
-                              title: Text(isEnglish ? 'Stopwatch' : 'Cronómetro'),
-                              onTap: () {
-                                print('Tocaste cronómetro');
-                                Navigator.pop(context);
-                                Future.delayed(const Duration(milliseconds: 100), () {
-                                  Navigator.push(
-                                    mainContext,
-                                    MaterialPageRoute(
-                                      builder: (context) => login_widgets.StopwatchPage(isEnglish: isEnglish),
-                                    ),
-                                  );
-                                });
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.hourglass_bottom, color: Color(0xFF96B4D8)),
-                              title: Text(isEnglish ? 'Timer' : 'Temporizador'),
-                              onTap: () {
-                                print('Tocaste temporizador');
-                                Navigator.pop(context);
-                                Future.delayed(const Duration(milliseconds: 100), () {
-                                  Navigator.push(
-                                    mainContext,
-                                    MaterialPageRoute(
-                                      builder: (context) => login_widgets.TimerPage(),
-                                    ),
-                                  );
-                                });
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.swap_horiz, color: Color(0xFF96B4D8)),
-                              title: Text(isEnglish ? 'Conversion Table' : 'Tabla de conversión'),
-                              onTap: () {
-                                print('Tocaste conversión');
-                                Navigator.pop(context);
-                                Future.delayed(const Duration(milliseconds: 100), () {
-                                  Navigator.push(
-                                    mainContext,
-                                    MaterialPageRoute(
-                                      builder: (context) {
-                                        print('Construyendo ConversionTablePage');
-                                        return login_widgets.ConversionTablePage(isEnglish: isEnglish);
-                                      },
-                                    ),
-                                  );
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+            
           ],
         ),
       ),
