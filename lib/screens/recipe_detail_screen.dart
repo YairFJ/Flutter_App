@@ -264,83 +264,138 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             
             SizedBox(height: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10))),
             
-            // Tabla de ingredientes responsive
+            // Tabla de ingredientes responsive - Solución compatible con iOS
             Container(
               width: double.infinity,
-              child: DataTable(
-                columnSpacing: isUltraWide ? 64 : (isLargeTablet ? 48 : (isTablet ? 32 : 24)),
-                horizontalMargin: 0,
-                dataRowHeight: isUltraWide ? 72 : (isLargeTablet ? 64 : (isTablet ? 56 : 48)),
-                headingRowHeight: isUltraWide ? 64 : (isLargeTablet ? 56 : (isTablet ? 48 : 40)),
-                columns: [
-                  DataColumn(
-                    label: Expanded(
-                      child: Text(
-                        isEnglish ? 'Ingredient' : 'Ingrediente',
-                        style: TextStyle(
-                          fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 14)),
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        ),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  // Encabezados de la tabla
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(8),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 16 : 12)),
+                        vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              isEnglish ? 'Ingredient' : 'Ingrediente',
+                              style: TextStyle(
+                                fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 14)),
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
+                            ),
+                          ),
+                                                      Expanded(
+                              flex: 1,
+                              child: Text(
+                                isEnglish ? 'Quantity' : 'Cantidad',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 14)),
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                                                      Expanded(
+                              flex: 1,
+                              child: Text(
+                                isEnglish ? 'Unit' : 'Unidad',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 14)),
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
-                  DataColumn(
-                    label: Text(
-                      isEnglish ? 'Quantity' : 'Cantidad',
-                      style: TextStyle(
-                        fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 14)),
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      isEnglish ? 'Unit' : 'Unidad',
-                      style: TextStyle(
-                        fontSize: isUltraWide ? 20 : (isLargeTablet ? 18 : (isTablet ? 16 : 14)),
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ),
-                ],
-                rows: widget.recipe.ingredients.map((ingredient) {
-                  String formattedQuantity;
-                  if (ingredient.quantity % 1 == 0) {
-                    formattedQuantity = ingredient.quantity.toInt().toString();
-                  } else {
-                    formattedQuantity = ingredient.quantity.toString();
-                  }
-                  return DataRow(cells: [
-                    DataCell(
-                      Expanded(
-                        child: Text(
-                          ingredient.name,
-                          style: TextStyle(
-                            fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                  // Filas de ingredientes
+                  ...widget.recipe.ingredients.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final ingredient = entry.value;
+                    String formattedQuantity;
+                    if (ingredient.quantity % 1 == 0) {
+                      formattedQuantity = ingredient.quantity.toInt().toString();
+                    } else {
+                      formattedQuantity = ingredient.quantity.toString();
+                    }
+                    
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
+                            width: 0.5,
                           ),
                         ),
                       ),
-                    ),
-                    DataCell(Text(
-                      formattedQuantity,
-                      style: TextStyle(
-                        fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
-                        color: isDarkMode ? Colors.white : Colors.black87,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isUltraWide ? 24 : (isLargeTablet ? 20 : (isTablet ? 16 : 12)),
+                          vertical: isUltraWide ? 16 : (isLargeTablet ? 14 : (isTablet ? 12 : 10)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                ingredient.name,
+                                style: TextStyle(
+                                  fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                                  color: isDarkMode ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                formattedQuantity,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                                  color: isDarkMode ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                ingredient.unit,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
+                                  color: isDarkMode ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    )),
-                    DataCell(Text(
-                      ingredient.unit,
-                      style: TextStyle(
-                        fontSize: isUltraWide ? 18 : (isLargeTablet ? 16 : (isTablet ? 14 : 12)),
-                        color: isDarkMode ? Colors.white : Colors.black87,
-                      ),
-                    )),
-                  ]);
-                }).toList(),
+                    );
+                  }).toList(),
+                ],
               ),
             ),
             
