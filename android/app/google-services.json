@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:251928304911:android:a222768487b1b664db727a",
         "android_client_info": {
-          "package_name": "com.example.flutter_app"
+          "package_name": "com.gauge.dinamita"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "251928304911-4leoj47jdsr0gdi34s6gbj761o2q6vjl.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.flutter_app",
+            "package_name": "com.gauge.dinamita",
             "certificate_hash": "e2669af14a321ddd43178b2595ed745ca0acb642"
           }
         },
@@ -25,7 +25,7 @@
           "client_id": "251928304911-npb75jb3p3bufask8gs65huvh8qemt72.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.flutter_app",
+            "package_name": "com.gauge.dinamita",
             "certificate_hash": "4a5c7e6d7c31e1d50a09f11fe34510d356655fa9"
           }
         },
@@ -33,7 +33,7 @@
           "client_id": "251928304911-p9d0emdv253rgranqj9okct0eavikgi0.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.flutter_app",
+              "package_name": "com.gauge.dinamita",
             "certificate_hash": "a915dc29ec108f0fa6af7ff55339c303ae845cfc"
           }
         },
@@ -58,12 +58,35 @@
               "client_id": "251928304911-44ncpj6eu61b87pu8alns8e2rr1mne6o.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.flutterApp"
+                "bundle_id": "com.gauge.dinamita"
               }
             }
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:251928304911:android:com.gauge.dinamita",
+        "android_client_info": {
+          "package_name": "com.gauge.dinamita"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "251928304911-4leoj47jdsr0gdi34s6gbj761o2q6vjl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gauge.dinamita",
+            "certificate_hash": "e2669af14a321ddd43178b2595ed745ca0acb642"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBULTRsmcAClbPWDdIMTgdiCzaay1caoOM"
+        }
+      ]
     }
   ],
   "configuration_version": "1"
