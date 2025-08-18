@@ -16,7 +16,7 @@ android {
     ndkVersion flutter.ndkVersion
 
     defaultConfig {
-        applicationId "com.gauge.dinamita"
+        applicationId "com.gauge.dinamita" 
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
