@@ -66,16 +66,6 @@ class _RecipesPageState extends State<RecipesPage> {
             ],
             textCapitalization: TextCapitalization.sentences,
             onChanged: (value) {
-              if (value.isNotEmpty) {
-                // Capitalizar la primera letra
-                final capitalizedValue = value[0].toUpperCase() + value.substring(1);
-                if (capitalizedValue != value) {
-                  _searchController.text = capitalizedValue;
-                  _searchController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: capitalizedValue.length),
-                  );
-                }
-              }
               setState(() {
                 _searchQuery = value;
               });
@@ -105,15 +95,23 @@ class _RecipesPageState extends State<RecipesPage> {
               // Filtrar las recetas según la búsqueda
               var filteredRecipes = recipes;
               if (_searchQuery.isNotEmpty) {
+                final searchQueryLower = _searchQuery.toLowerCase();
                 filteredRecipes = recipes.where((recipe) {
+                  final title = recipe.title.toLowerCase();
                   final description = recipe.description?.toLowerCase() ?? '';
                   final translatedCategory =
                       RecipeCategories.getTranslatedCategory(
                               recipe.category, isEnglish)
                           .toLowerCase();
-                  return recipe.title.toLowerCase().contains(_searchQuery) ||
-                      description.contains(_searchQuery) ||
-                      translatedCategory.contains(_searchQuery);
+                  
+                  // Buscar en ingredientes también
+                  final ingredients = recipe.ingredients.map((ingredient) => 
+                      ingredient.name.toLowerCase()).join(' ');
+                  
+                  return title.contains(searchQueryLower) ||
+                      description.contains(searchQueryLower) ||
+                      translatedCategory.contains(searchQueryLower) ||
+                      ingredients.contains(searchQueryLower);
                 }).toList();
               }
 
@@ -239,25 +237,25 @@ class _RecipesPageState extends State<RecipesPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                recipe.title,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                                             Text(
+                                 recipe.title,
+                                 style: const TextStyle(
+                                   fontSize: 15,
+                                   fontWeight: FontWeight.bold,
+                                 ),
+                                 maxLines: 1,
+                                 overflow: TextOverflow.ellipsis,
+                               ),
                               const SizedBox(height: 4),
-                              Text(
-                                recipe.description ?? '',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                                             Text(
+                                 recipe.description ?? '',
+                                 style: TextStyle(
+                                   fontSize: 12,
+                                   color: Colors.grey[600],
+                                 ),
+                                 maxLines: 2,
+                                 overflow: TextOverflow.ellipsis,
+                               ),
                               const SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -400,7 +398,9 @@ class _RecipesPageState extends State<RecipesPage> {
             backgroundColor: Colors.red,
           ),
         );
-      }
-    }
-  }
-}
+             }
+     }
+   }
+
+   
+ }
