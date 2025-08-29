@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
-import 'package:soundpool/soundpool.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:provider/provider.dart';
+import '../services/timer_service.dart';
 
 class TimerPage extends StatefulWidget {
   const TimerPage({super.key});
@@ -11,15 +12,12 @@ class TimerPage extends StatefulWidget {
 }
 
 class _TimerPageState extends State<TimerPage> {
-  Timer? countdownTimer;
   Duration myDuration = const Duration();
   Duration? pausedDuration;
-  bool isRunning = false;
   late List<FixedExtentScrollController> controllers;
   
-  // Soundpool
-  Soundpool? soundpool;
-  int? soundId;
+  // AudioPlayer
+  AudioPlayer? audioPlayer;
 
   @override
   void initState() {
@@ -32,111 +30,22 @@ class _TimerPageState extends State<TimerPage> {
     _initSound();
   }
 
-  Future<void> _initSound() async {
-    try {
-      soundpool = Soundpool.fromOptions(
-        options: SoundpoolOptions(
-          streamType: StreamType.alarm,
-          maxStreams: 1,
-        ),
-      );
-      
-      final ByteData data = await rootBundle.load('lib/sounds/alarm.mp3');
-      soundId = await soundpool?.load(data);
-      debugPrint('Sonido cargado exitosamente: $soundId');
-    } catch (e) {
-      debugPrint('Error cargando sonido: $e');
-    }
-  }
-
   @override
-  void dispose() {
-    countdownTimer?.cancel();
-    for (var controller in controllers) {
-      controller.dispose();
-    }
-    soundpool?.dispose();
-    super.dispose();
-  }
-
-  Future<void> _playAlarm() async {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Configurar callback de alarma en el TimerService
     try {
-      if (soundpool != null && soundId != null) {
-        debugPrint('Intentando reproducir sonido: $soundId');
-        
-        // Reproducir el sonido con volumen máximo y múltiples repeticiones
-        final streamId = await soundpool!.play(
-          soundId!,
-          rate: 1.0,      // Velocidad normal
-          repeat: 3,      // Repetir 3 veces
-        );
-        
-        debugPrint('Sonido reproducido con streamId: $streamId');
-        
-        // Esperar 3 segundos y detener
-        await Future.delayed(const Duration(seconds: 3));
-        await soundpool!.stop(streamId);
-      } else {
-        debugPrint('Soundpool o soundId es null');
-      }
+      final timerService = Provider.of<TimerService>(context, listen: false);
+      timerService.setTimerCompleteCallback(_playAlarm);
+      debugPrint('Callback de alarma configurado correctamente');
     } catch (e) {
-      debugPrint('Error reproduciendo alarma: $e');
+      debugPrint('Error configurando callback de alarma: $e');
     }
   }
 
-  void startTimer() {
-    if (isRunning || (myDuration.inSeconds == 0 && pausedDuration == null)) {
-      return;
-    }
-    
+  // Método para refrescar automáticamente el temporizador
+  void _autoRefreshTimer() {
     setState(() {
-      isRunning = true;
-      if (pausedDuration != null) {
-        myDuration = pausedDuration!;
-        pausedDuration = null;
-      }
-    });
-
-    countdownTimer?.cancel();
-    countdownTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) => setCountDown(),
-    );
-  }
-
-  void setCountDown() {
-    if (!mounted) return;
-    
-    setState(() {
-      final seconds = myDuration.inSeconds - 1;
-      if (seconds < 0) {
-        countdownTimer?.cancel();
-        isRunning = false;
-        _playAlarm(); // Reproducir alarma cuando llegue a cero
-      } else {
-        myDuration = Duration(seconds: seconds);
-        // Actualizar los controladores
-        controllers[0].jumpToItem(myDuration.inHours);
-        controllers[1].jumpToItem(myDuration.inMinutes.remainder(60));
-        controllers[2].jumpToItem(myDuration.inSeconds.remainder(60));
-      }
-    });
-  }
-
-  void pauseTimer() {
-    if (!isRunning) return;
-    
-    countdownTimer?.cancel();
-    setState(() {
-      pausedDuration = myDuration;
-      isRunning = false;
-    });
-  }
-
-  void resetTimer() {
-    countdownTimer?.cancel();
-    setState(() {
-      isRunning = false;
       pausedDuration = null;
       myDuration = const Duration();
       
@@ -145,9 +54,143 @@ class _TimerPageState extends State<TimerPage> {
         controller.jumpToItem(0);
       }
     });
+    
+    debugPrint('Temporizador refrescado automáticamente');
+  }
+
+  Future<void> _initSound() async {
+    try {
+      audioPlayer = AudioPlayer();
+      // Configurar el audio player
+      await audioPlayer!.setReleaseMode(ReleaseMode.loop);
+      await audioPlayer!.setVolume(1.0);
+      debugPrint('AudioPlayer inicializado exitosamente');
+    } catch (e) {
+      debugPrint('Error inicializando AudioPlayer: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+    audioPlayer?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playAlarm() async {
+    try {
+      if (audioPlayer != null) {
+        debugPrint('¡ALARMA! Reproduciendo sonido de temporizador completado');
+        
+        // Reproducir el sonido desde assets
+        await audioPlayer!.play(AssetSource('sounds/alarm.mp3'));
+        
+        // Reproducir por exactamente 5 segundos
+        await Future.delayed(const Duration(seconds: 5));
+        
+        // Detener la alarma después de 5 segundos
+        await audioPlayer!.stop();
+        
+        debugPrint('Alarma completada - detenida después de 5 segundos');
+      } else {
+        debugPrint('AudioPlayer es null - no se puede reproducir alarma');
+      }
+    } catch (e) {
+      debugPrint('Error reproduciendo alarma: $e');
+      // Fallback: mostrar un mensaje visual
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Temporizador completado!'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+    
+    // Solo refrescar cuando el temporizador se complete, no cuando se refresque manualmente
+    if (mounted) {
+      _autoRefreshTimer();
+    }
+  }
+
+  void startTimer() {
+    final timerService = Provider.of<TimerService>(context, listen: false);
+    
+    // Validar que haya tiempo configurado
+    if (myDuration.inSeconds == 0 && pausedDuration == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Configura un tiempo antes de iniciar'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
+    if (timerService.isCountdownRunning) {
+      return;
+    }
+    
+    if (pausedDuration != null) {
+      timerService.startCountdown(pausedDuration!);
+      pausedDuration = null;
+    } else {
+      timerService.startCountdown(myDuration);
+    }
+    
+    // Asegurar que la duración se sincronice inmediatamente
+    setState(() {
+      myDuration = timerService.remainingTime;
+    });
+  }
+
+  void pauseTimer() {
+    final timerService = Provider.of<TimerService>(context, listen: false);
+    
+    if (timerService.isCountdownRunning) {
+      pausedDuration = timerService.remainingTime;
+      timerService.pauseCountdown();
+      
+      // Mantener la duración sincronizada
+      setState(() {
+        myDuration = pausedDuration!;
+      });
+    }
+  }
+
+  void resetTimer() {
+    final timerService = Provider.of<TimerService>(context, listen: false);
+    timerService.stopCountdown();
+    
+    setState(() {
+      pausedDuration = null;
+      myDuration = const Duration();
+      
+      // Reiniciar los controladores
+      for (var controller in controllers) {
+        controller.jumpToItem(0);
+      }
+    });
+    
+    // Mostrar mensaje de confirmación
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Temporizador reseteado'),
+        backgroundColor: Colors.blue,
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   Widget _buildNumberPicker(int value, int maxValue, int controllerIndex) {
+    final timerService = Provider.of<TimerService>(context);
+    final isRunning = timerService.isCountdownRunning;
+    
     return Container(
       height: 100,
       width: 80,
@@ -217,67 +260,97 @@ class _TimerPageState extends State<TimerPage> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
+    return Consumer<TimerService>(
+      builder: (context, timerService, child) {
+        // Sincronizar la duración mostrada con el temporizador
+        if (timerService.isCountdownRunning) {
+          myDuration = timerService.remainingTime;
+          // Actualizar los controladores de los pickers para que muestren el tiempo correcto
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              controllers[0].jumpToItem(myDuration.inHours);
+              controllers[1].jumpToItem(myDuration.inMinutes.remainder(60));
+              controllers[2].jumpToItem(myDuration.inSeconds.remainder(60));
+            }
+          });
+        } else if (timerService.activeTimerType == TimerType.none && pausedDuration != null) {
+          // Si está pausado, mostrar el tiempo pausado
+          myDuration = pausedDuration!;
+        }
+        // Si no hay temporizador activo, permitir que el usuario configure el tiempo
+        // No hacer auto-refresh automático que interfiera con la configuración
+        
+        return Scaffold(
+          body: Center(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildNumberPicker(myDuration.inHours, 24, 0),
-                Text(' : ', 
-                  style: TextStyle(
-                    fontSize: 48, 
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  )
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildNumberPicker(myDuration.inHours, 24, 0),
+                    Text(' : ', 
+                      style: TextStyle(
+                        fontSize: 48, 
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      )
+                    ),
+                    _buildNumberPicker(myDuration.inMinutes.remainder(60), 60, 1),
+                    Text(' : ', 
+                      style: TextStyle(
+                        fontSize: 48, 
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      )
+                    ),
+                    _buildNumberPicker(myDuration.inSeconds.remainder(60), 60, 2),
+                  ],
                 ),
-                _buildNumberPicker(myDuration.inMinutes.remainder(60), 60, 1),
-                Text(' : ', 
-                  style: TextStyle(
-                    fontSize: 48, 
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  )
+                const SizedBox(height: 40),
+                // El indicador se eliminó para permitir configurar el tiempo libremente
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildControlButton(
+                      timerService.isCountdownRunning ? Icons.pause : Icons.play_arrow,
+                      timerService.isCountdownRunning ? Colors.orange : Colors.green,
+                      myDuration.inSeconds == 0 && !timerService.isCountdownRunning
+                          ? null
+                          : () => timerService.isCountdownRunning ? pauseTimer() : startTimer(),
+                      tooltip: timerService.isCountdownRunning ? 'Pausar' : 'Iniciar',
+                    ),
+                    const SizedBox(width: 20),
+                    _buildControlButton(
+                      Icons.refresh,
+                      Colors.blue,
+                      resetTimer,
+                      tooltip: 'Resetear',
+                    ),
+
+                  ],
                 ),
-                _buildNumberPicker(myDuration.inSeconds.remainder(60), 60, 2),
               ],
             ),
-            const SizedBox(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildControlButton(
-                  isRunning ? Icons.pause : Icons.play_arrow,
-                  isRunning ? Colors.orange : Colors.green,
-                  myDuration.inSeconds == 0 && !isRunning
-                      ? null
-                      : () => isRunning ? pauseTimer() : startTimer(),
-                ),
-                const SizedBox(width: 20),
-                _buildControlButton(
-                  Icons.refresh,
-                  Colors.blue,
-                  resetTimer,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildControlButton(IconData icon, Color color, VoidCallback? onPressed) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        shape: const CircleBorder(),
-        padding: const EdgeInsets.all(24),
+  Widget _buildControlButton(IconData icon, Color color, VoidCallback? onPressed, {String? tooltip}) {
+    return Tooltip(
+      message: tooltip ?? '',
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: const CircleBorder(),
+          padding: const EdgeInsets.all(24),
+        ),
+        child: Icon(icon, size: 32, color: Colors.white),
       ),
-      child: Icon(icon, size: 32, color: Colors.white),
     );
   }
 }

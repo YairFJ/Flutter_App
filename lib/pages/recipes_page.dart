@@ -8,6 +8,7 @@ import '../constants/categories.dart';
 import '../screens/recipe_detail_screen.dart';
 import '../providers/auth_provider.dart' as app_auth;
 import '../widgets/guest_restriction_dialog.dart';
+import '../services/timer_service.dart';
 import 'dart:async';
 
 class RecipesPage extends StatefulWidget {

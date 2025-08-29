@@ -18,6 +18,7 @@ import 'pages/profile_page.dart';
 import 'Comunity/groups_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
+import 'services/timer_service.dart';
 import 'providers/auth_provider.dart' as app_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'utils/firestore_cleanup.dart';
@@ -53,6 +54,16 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final _languageService = LanguageService();
   final _themeService = ThemeService();
+  final _timerService = TimerService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar notificaciones de manera asíncrona sin bloquear la app
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _timerService.initializeNotifications();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +71,7 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider.value(value: _languageService),
         ChangeNotifierProvider.value(value: _themeService),
+        ChangeNotifierProvider.value(value: _timerService),
         ChangeNotifierProvider.value(value: app_auth.AuthProvider()),
       ],
       child: Consumer<ThemeService>(
@@ -370,8 +382,60 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.white,
           ),
         ),
-        actions: [
-          
+                 actions: [
+           // Indicador de temporizador/cronómetro activo
+           Consumer<TimerService>(
+             builder: (context, timerService, child) {
+               if (timerService.isAnyActive) {
+                 return GestureDetector(
+                   onTap: () {
+                     // Navegar al temporizador o cronómetro según lo que esté activo
+                     if (timerService.activeTimerType == TimerType.countdown) {
+                       setState(() {
+                         _selectedIndex = 2; // Índice del temporizador
+                       });
+                     } else {
+                       setState(() {
+                         _selectedIndex = 3; // Índice del cronómetro
+                       });
+                     }
+                   },
+                   child: Container(
+                     margin: const EdgeInsets.only(right: 8),
+                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                     decoration: BoxDecoration(
+                       color: Colors.red.withOpacity(0.8),
+                       borderRadius: BorderRadius.circular(12),
+                     ),
+                     child: Row(
+                       mainAxisSize: MainAxisSize.min,
+                       children: [
+                         Icon(
+                           timerService.activeTimerType == TimerType.countdown 
+                               ? Icons.timer 
+                               : Icons.timer_outlined,
+                           color: Colors.white,
+                           size: 16,
+                         ),
+                         const SizedBox(width: 4),
+                         Text(
+                           timerService.activeTimerType == TimerType.countdown 
+                               ? timerService.remainingTimeFormatted
+                               : timerService.stopwatchTimeFormatted,
+                           style: const TextStyle(
+                             color: Colors.white,
+                             fontSize: 12,
+                             fontWeight: FontWeight.bold,
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
+                 );
+               }
+               return const SizedBox.shrink();
+             },
+           ),
           IconButton(
             icon: Text(
               isEnglish ? 'EN' : 'ES',
@@ -499,32 +563,32 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Theme.of(context).primaryColor,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white.withOpacity(0.6),
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.restaurant_menu),
-            label: isEnglish ? 'Recipes' : 'Recetas',
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.calculate),
-            label: isEnglish ? 'Conversion' : 'Conversión',
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.timer),
-            label: isEnglish ? 'Timer' : 'Temporizador',
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.timer_outlined),
-            label: isEnglish ? 'Stopwatch' : 'Cronómetro',
-          ),
-        ],
-      ),
+             bottomNavigationBar: BottomNavigationBar(
+         type: BottomNavigationBarType.fixed,
+         backgroundColor: Theme.of(context).primaryColor,
+         selectedItemColor: Colors.white,
+         unselectedItemColor: Colors.white.withOpacity(0.6),
+         currentIndex: _selectedIndex,
+         onTap: _onItemTapped,
+         items: [
+           BottomNavigationBarItem(
+             icon: const Icon(Icons.restaurant_menu),
+             label: isEnglish ? 'Recipes' : 'Recetas',
+           ),
+           BottomNavigationBarItem(
+             icon: const Icon(Icons.calculate),
+             label: isEnglish ? 'Conversion' : 'Conversión',
+           ),
+           BottomNavigationBarItem(
+             icon: const Icon(Icons.timer),
+             label: isEnglish ? 'Timer' : 'Temporizador',
+           ),
+           BottomNavigationBarItem(
+             icon: const Icon(Icons.timer_outlined),
+             label: isEnglish ? 'Stopwatch' : 'Cronómetro',
+           ),
+         ],
+       ),
       floatingActionButton: _selectedIndex == 0 && widget.userId != 'guest'
           ? FloatingActionButton(
               onPressed: _navigateToAddRecipe,

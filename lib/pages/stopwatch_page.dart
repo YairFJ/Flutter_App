@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import '../services/timer_service.dart';
 
 class StopwatchPage extends StatefulWidget {
   final bool isEnglish;
@@ -14,10 +16,6 @@ class StopwatchPage extends StatefulWidget {
 }
 
 class _StopwatchPageState extends State<StopwatchPage> {
-  int milliseconds = 0;
-  Timer? timer;
-  bool isRunning = false;
-  List<String> laps = [];
   late bool isEnglish;
   
   // Mapeo de etiquetas de tiempo
@@ -50,36 +48,23 @@ class _StopwatchPageState extends State<StopwatchPage> {
   }
 
   void startTimer() {
-    timer = Timer.periodic(const Duration(milliseconds: 10), (timer) {
-      setState(() {
-        milliseconds += 10;
-      });
-    });
-    setState(() {
-      isRunning = true;
-    });
+    final timerService = Provider.of<TimerService>(context, listen: false);
+    timerService.startStopwatch();
   }
 
   void stopTimer() {
-    timer?.cancel();
-    setState(() {
-      isRunning = false;
-    });
+    final timerService = Provider.of<TimerService>(context, listen: false);
+    timerService.pauseStopwatch();
   }
 
   void resetTimer() {
-    timer?.cancel();
-    setState(() {
-      milliseconds = 0;
-      isRunning = false;
-      laps.clear();
-    });
+    final timerService = Provider.of<TimerService>(context, listen: false);
+    timerService.resetStopwatch();
   }
 
   void addLap() {
-    setState(() {
-      laps.insert(0, formatTime(milliseconds));
-    });
+    final timerService = Provider.of<TimerService>(context, listen: false);
+    timerService.addLap();
   }
 
   String formatTime(int milliseconds) {
@@ -94,95 +79,102 @@ class _StopwatchPageState extends State<StopwatchPage> {
 
   @override
   Widget build(BuildContext context) {
-    String strDigits(int n) => n.toString().padLeft(2, '0');
+    return Consumer<TimerService>(
+      builder: (context, timerService, child) {
+        final milliseconds = timerService.stopwatchDuration.inMilliseconds;
+        final laps = timerService.stopwatchLaps;
+        
+        String strDigits(int n) => n.toString().padLeft(2, '0');
 
-    final hours = strDigits((milliseconds / 3600000).floor());
-    final minutes = strDigits(((milliseconds / 60000).floor()) % 60);
-    final seconds = strDigits(((milliseconds / 1000).floor()) % 60);
+        final hours = strDigits((milliseconds / 3600000).floor());
+        final minutes = strDigits(((milliseconds / 60000).floor()) % 60);
+        final seconds = strDigits(((milliseconds / 1000).floor()) % 60);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildTimeColumn('Horas', hours),
-                        const SizedBox(width: 8),
-                        Text(
-                          ':',
-                          style: TextStyle(fontSize: 40, color: Colors.grey[700]),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildTimeColumn('Minutos', minutes),
-                        const SizedBox(width: 8),
-                        Text(
-                          ':',
-                          style: TextStyle(fontSize: 40, color: Colors.grey[700]),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildTimeColumn('Segundos', seconds),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  Row(
+        return Scaffold(
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildControlButton(
-                        isRunning ? Icons.pause : Icons.play_arrow,
-                        isRunning ? Colors.orange : Colors.green,
-                        isRunning ? stopTimer : startTimer,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildTimeColumn('Horas', hours),
+                            const SizedBox(width: 8),
+                            Text(
+                              ':',
+                              style: TextStyle(fontSize: 40, color: Colors.grey[700]),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildTimeColumn('Minutos', minutes),
+                            const SizedBox(width: 8),
+                            Text(
+                              ':',
+                              style: TextStyle(fontSize: 40, color: Colors.grey[700]),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildTimeColumn('Segundos', seconds),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 20),
-                      _buildControlButton(
-                        Icons.refresh,
-                        Colors.blue,
-                        resetTimer,
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildControlButton(
+                            timerService.isStopwatchRunning ? Icons.pause : Icons.play_arrow,
+                            timerService.isStopwatchRunning ? Colors.orange : Colors.green,
+                            timerService.isStopwatchRunning ? stopTimer : startTimer,
+                          ),
+                          const SizedBox(width: 20),
+                          _buildControlButton(
+                            Icons.refresh,
+                            Colors.blue,
+                            resetTimer,
+                          ),
+                          const SizedBox(width: 20),
+                          _buildControlButton(
+                            Icons.flag,
+                            Colors.purple,
+                            timerService.isStopwatchRunning ? addLap : null,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 20),
-                      _buildControlButton(
-                        Icons.flag,
-                        Colors.purple,
-                        isRunning ? addLap : null,
-                      ),
+                      if (laps.isNotEmpty) ...[
+                        const SizedBox(height: 40),
+                        SizedBox(
+                          height: 150,
+                          child: ListView.builder(
+                            itemCount: laps.length,
+                            itemBuilder: (context, index) {
+                              return ListTile(
+                                title: Text(
+                                  '${_getLabel('Vuelta')} ${laps.length - index}',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                trailing: Text(
+                                  laps[index],
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                  if (laps.isNotEmpty) ...[
-                    const SizedBox(height: 40),
-                    SizedBox(
-                      height: 150,
-                      child: ListView.builder(
-                        itemCount: laps.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            title: Text(
-                              '${_getLabel('Vuelta')} ${laps.length - index}',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            trailing: Text(
-                              laps[index],
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -233,7 +225,6 @@ class _StopwatchPageState extends State<StopwatchPage> {
 
   @override
   void dispose() {
-    timer?.cancel();
     super.dispose();
   }
 } 
