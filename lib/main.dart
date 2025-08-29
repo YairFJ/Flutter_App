@@ -159,9 +159,24 @@ class AuthWrapper extends StatelessWidget {
 
             final user = snapshot.data;
 
-            // Si no hay usuario, redirigir al login
+            // Si no hay usuario, detener temporizador/cronómetro y redirigir al login
             if (user == null) {
-              print('AuthWrapper: Usuario no autenticado, redirigiendo a login');
+              print('AuthWrapper: Usuario no autenticado, deteniendo timers y redirigiendo a login');
+              // Diferir la detención para no notificar durante build
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                try {
+                  final timerService = Provider.of<TimerService>(context, listen: false);
+                  if (timerService.isAnyActive) {
+                    if (timerService.activeTimerType == TimerType.countdown) {
+                      timerService.stopCountdown(silent: true);
+                    } else {
+                      timerService.stopStopwatch();
+                    }
+                  }
+                } catch (e) {
+                  debugPrint('Error deteniendo timers al salir de sesión: $e');
+                }
+              });
               return const LoginPage();
             }
 

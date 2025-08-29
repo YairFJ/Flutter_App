@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 
 enum TimerType { none, countdown, stopwatch }
@@ -26,10 +27,15 @@ class TimerService extends ChangeNotifier {
 
   // Notificaciones
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  AudioPlayer? _audioPlayer;
+  bool _audioContextConfigured = false;
 
   // Inicializar notificaciones
   Future<void> initializeNotifications() async {
     try {
+      // Inicializar reproductor de audio para alarma
+      await _ensureAudioPlayer();
+
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
       
@@ -46,6 +52,20 @@ class TimerService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error inicializando notificaciones: $e');
       // No lanzar el error, solo logearlo para que la app no falle
+    }
+  }
+
+  Future<void> _ensureAudioPlayer() async {
+    try {
+      _audioPlayer ??= AudioPlayer();
+      if (!_audioContextConfigured) {
+        // Configurar el contexto de audio para reproducción limpia
+        await _audioPlayer!.setReleaseMode(ReleaseMode.loop);
+        await _audioPlayer!.setVolume(0.0); // Inicio en silencio
+        _audioContextConfigured = true;
+      }
+    } catch (e) {
+      debugPrint('Error inicializando AudioPlayer: $e');
     }
   }
 
@@ -87,13 +107,10 @@ class TimerService extends ChangeNotifier {
       if (remainingTime.inSeconds > 0) {
         remainingTime = Duration(seconds: remainingTime.inSeconds - 1);
         notifyListeners();
-      } else {
-        _stopCountdown();
-        // Mostrar notificación solo si está disponible
-        _showNotification('Timer Completed', 'Your timer has finished!');
-        // También mostrar un snackbar como alternativa
-        debugPrint('¡Temporizador completado!');
-      }
+              } else {
+          _stopCountdown();
+          debugPrint('¡Temporizador completado!');
+        }
     });
 
     notifyListeners();
@@ -118,7 +135,6 @@ class TimerService extends ChangeNotifier {
           notifyListeners();
         } else {
           _stopCountdown();
-          _showNotification('Timer Completed', 'Your timer has finished!');
         }
       });
       notifyListeners();
@@ -126,18 +142,27 @@ class TimerService extends ChangeNotifier {
   }
 
   // Detener temporizador
-  void stopCountdown() {
-    _stopCountdown();
+  void stopCountdown({bool silent = false}) {
+    _stopCountdown(silent: silent);
   }
 
-  void _stopCountdown() {
+  void _stopCountdown({bool silent = false}) {
     countdownTimer?.cancel();
     isCountdownRunning = false;
     if (activeType == TimerType.countdown) {
       activeType = TimerType.none;
-      // Llamar al callback de alarma si existe
-      if (_onTimerComplete != null) {
-        _onTimerComplete!();
+
+      if (!silent) {
+        // Mostrar notificación con sonido para que suene en cualquier parte de la app
+        _showNotification('¡Temporizador Completado!', 'Tu temporizador ha terminado');
+
+        // Llamar al callback de alarma si existe (para compatibilidad)
+        if (_onTimerComplete != null) {
+          _onTimerComplete!();
+        }
+
+        // Reproducir sonido de alarma como respaldo independiente de la pantalla actual
+        _playAlarmSound();
       }
     }
     notifyListeners();
@@ -230,10 +255,14 @@ class TimerService extends ChangeNotifier {
         'timer_channel',
         'Timer Notifications',
         channelDescription: 'Notifications for timer and stopwatch',
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
         playSound: true,
+        sound: RawResourceAndroidNotificationSound('alarm'),
         enableVibration: true,
+        showWhen: true,
+        autoCancel: false,
+        ongoing: false,
       );
 
       const NotificationDetails platformChannelSpecifics =
@@ -249,6 +278,37 @@ class TimerService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error mostrando notificación: $e');
       // No lanzar el error, solo logearlo
+    }
+  }
+
+  // Reproducir sonido de alarma desde assets como respaldo a la notificación
+  Future<void> _playAlarmSound() async {
+    try {
+      await _ensureAudioPlayer();
+      // Precargar el asset para evitar latencia
+      await _audioPlayer!.setSourceAsset('sounds/alarm.mp3');
+      
+      // Fade in gradual para evitar ruido
+      await _audioPlayer!.play(AssetSource('sounds/alarm.mp3'));
+      
+      // Aumentar volumen gradualmente
+      for (double vol = 0.0; vol <= 1.0; vol += 0.1) {
+        await _audioPlayer!.setVolume(vol);
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+      
+      // Mantener volumen máximo por 4 segundos
+      await Future.delayed(const Duration(seconds: 4));
+      
+      // Fade out gradual
+      for (double vol = 1.0; vol >= 0.0; vol -= 0.1) {
+        await _audioPlayer!.setVolume(vol);
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+      
+      await _audioPlayer!.stop();
+    } catch (e) {
+      debugPrint('Error reproduciendo sonido de alarma: $e');
     }
   }
 
@@ -289,6 +349,7 @@ class TimerService extends ChangeNotifier {
   void dispose() {
     countdownTimer?.cancel();
     stopwatchTimer?.cancel();
+    _audioPlayer?.dispose();
     super.dispose();
   }
 }

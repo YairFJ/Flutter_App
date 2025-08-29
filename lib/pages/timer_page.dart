@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
 import '../services/timer_service.dart';
 
@@ -16,8 +14,6 @@ class _TimerPageState extends State<TimerPage> {
   Duration? pausedDuration;
   late List<FixedExtentScrollController> controllers;
   
-  // AudioPlayer
-  AudioPlayer? audioPlayer;
 
   @override
   void initState() {
@@ -27,7 +23,6 @@ class _TimerPageState extends State<TimerPage> {
       FixedExtentScrollController(initialItem: 0),
       FixedExtentScrollController(initialItem: 0),
     ];
-    _initSound();
   }
 
   @override
@@ -36,11 +31,17 @@ class _TimerPageState extends State<TimerPage> {
     // Configurar callback de alarma en el TimerService
     try {
       final timerService = Provider.of<TimerService>(context, listen: false);
-      timerService.setTimerCompleteCallback(_playAlarm);
+      timerService.setTimerCompleteCallback(_onTimerCompleteUI);
       debugPrint('Callback de alarma configurado correctamente');
     } catch (e) {
       debugPrint('Error configurando callback de alarma: $e');
     }
+  }
+
+  // Callback para completar temporizador que solo actualiza la UI, el sonido lo maneja TimerService
+  void _onTimerCompleteUI() {
+    if (!mounted) return;
+    _autoRefreshTimer();
   }
 
   // Método para refrescar automáticamente el temporizador
@@ -58,64 +59,15 @@ class _TimerPageState extends State<TimerPage> {
     debugPrint('Temporizador refrescado automáticamente');
   }
 
-  Future<void> _initSound() async {
-    try {
-      audioPlayer = AudioPlayer();
-      // Configurar el audio player
-      await audioPlayer!.setReleaseMode(ReleaseMode.loop);
-      await audioPlayer!.setVolume(1.0);
-      debugPrint('AudioPlayer inicializado exitosamente');
-    } catch (e) {
-      debugPrint('Error inicializando AudioPlayer: $e');
-    }
-  }
-
   @override
   void dispose() {
     for (var controller in controllers) {
       controller.dispose();
     }
-    audioPlayer?.dispose();
     super.dispose();
   }
 
-  Future<void> _playAlarm() async {
-    try {
-      if (audioPlayer != null) {
-        debugPrint('¡ALARMA! Reproduciendo sonido de temporizador completado');
-        
-        // Reproducir el sonido desde assets
-        await audioPlayer!.play(AssetSource('sounds/alarm.mp3'));
-        
-        // Reproducir por exactamente 5 segundos
-        await Future.delayed(const Duration(seconds: 5));
-        
-        // Detener la alarma después de 5 segundos
-        await audioPlayer!.stop();
-        
-        debugPrint('Alarma completada - detenida después de 5 segundos');
-      } else {
-        debugPrint('AudioPlayer es null - no se puede reproducir alarma');
-      }
-    } catch (e) {
-      debugPrint('Error reproduciendo alarma: $e');
-      // Fallback: mostrar un mensaje visual
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Temporizador completado!'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-    
-    // Solo refrescar cuando el temporizador se complete, no cuando se refresque manualmente
-    if (mounted) {
-      _autoRefreshTimer();
-    }
-  }
+  
 
   void startTimer() {
     final timerService = Provider.of<TimerService>(context, listen: false);
@@ -165,7 +117,7 @@ class _TimerPageState extends State<TimerPage> {
 
   void resetTimer() {
     final timerService = Provider.of<TimerService>(context, listen: false);
-    timerService.stopCountdown();
+    timerService.stopCountdown(silent: true);
     
     setState(() {
       pausedDuration = null;
