@@ -1,0 +1,14 @@
+// Configuración específica para el flavor Android
+android {
+    // Excluir sign_in_with_apple para builds de Android
+    packagingOptions {
+        exclude '**/sign_in_with_apple/**'
+        exclude '**/AppleIDAuthorizationScopes/**'
+        exclude '**/SignInWithApple/**'
+    }
+}
+
+dependencies {
+    // Dependencias específicas para Android
+    // sign_in_with_apple se excluye automáticamente
+}

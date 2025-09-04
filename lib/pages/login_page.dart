@@ -277,26 +277,22 @@ class _LoginPageState extends State<LoginPage> {
 
   void _enterGuestMode() {
     final languageService = Provider.of<LanguageService>(context, listen: false);
-    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
     final isEnglish = languageService.isEnglish;
-    
-    // Activar modo invitado
-    authProvider.enterGuestMode();
     
     // Mostrar mensaje informativo
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           isEnglish 
-            ? 'You are now in guest mode. You can view recipes but cannot create, edit, or delete them.'
-            : 'Ahora estás en modo invitado. Puedes ver recetas pero no crear, editar o borrarlas.'
+            ? 'Guest mode is temporarily disabled'
+            : 'El modo invitado está temporalmente deshabilitado'
         ),
         backgroundColor: Colors.blue,
         duration: const Duration(seconds: 3),
       ),
     );
 
-    // Navegar a la aplicación principal en modo invitado
+    // Navegar a la aplicación principal
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
   }
 

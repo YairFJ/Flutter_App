@@ -50,6 +50,26 @@ android {
         }
     }
 
+    // Build flavors para manejar diferentes plataformas
+    flavorDimensions "platform"
+    
+    productFlavors {
+        android {
+            dimension "platform"
+            // Configuración específica para Android
+            manifestPlaceholders = [
+                appName: "Gauge Recipe (Android)"
+            ]
+        }
+        ios {
+            dimension "platform"
+            // Configuración específica para iOS
+            manifestPlaceholders = [
+                appName: "Gauge Recipe (iOS)"
+            ]
+        }
+    }
+
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
@@ -57,6 +77,14 @@ android {
 
 flutter {
     source '../..'
+}
+
+// Aplicar configuraciones específicas por flavor
+android.productFlavors.each { flavor ->
+    def flavorBuildFile = file("src/${flavor.name}/build.gradle")
+    if (flavorBuildFile.exists()) {
+        apply from: flavorBuildFile
+    }
 }
 
 dependencies {
