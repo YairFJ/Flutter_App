@@ -277,18 +277,22 @@ class _LoginPageState extends State<LoginPage> {
 
   void _enterGuestMode() {
     final languageService = Provider.of<LanguageService>(context, listen: false);
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
     final isEnglish = languageService.isEnglish;
+    
+    // Activar modo invitado
+    authProvider.enterGuestMode();
     
     // Mostrar mensaje informativo
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           isEnglish 
-            ? 'Guest mode is temporarily disabled'
-            : 'El modo invitado está temporalmente deshabilitado'
+            ? 'Entering guest mode'
+            : 'Entrando en modo invitado'
         ),
-        backgroundColor: Colors.blue,
-        duration: const Duration(seconds: 3),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
       ),
     );
 
